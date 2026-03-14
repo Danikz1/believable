@@ -1,0 +1,378 @@
+[
+  {
+    "name": "Ray Dalio",
+    "domain": "Macro / Principles",
+    "tier": 1,
+    "inclusion_notes": "History's most successful macro investor. His frameworks on debt cycles, economic machinery, and changing world order are foundational to understanding macro regimes. Founded Bridgewater, the world's largest hedge fund.",
+    "expertise_domains": ["macro", "debt_cycles", "geopolitics", "value_investing"],
+    "youtube_search_queries": ["Ray Dalio interview", "Ray Dalio keynote"]
+  },
+  {
+    "name": "Chamath Palihapitiya",
+    "domain": "Venture / Macro",
+    "tier": 1,
+    "inclusion_notes": "Social Capital founder, All-In Podcast host. Bridges venture capital, macro policy, and technology investing. Known for contrarian takes on fiscal policy and tech regulation.",
+    "expertise_domains": ["venture_capital", "macro", "fiscal_policy", "platform_dynamics"],
+    "youtube_search_queries": ["Chamath Palihapitiya interview"]
+  },
+  {
+    "name": "David Sacks",
+    "domain": "SaaS / Venture / Policy",
+    "tier": 1,
+    "inclusion_notes": "Craft Ventures founder, All-In Podcast host, former PayPal COO. Deep expertise in SaaS metrics, AI enterprise adoption, and tech policy. Early Yammer, PayPal mafia.",
+    "expertise_domains": ["venture_capital", "saas_pricing", "enterprise_ai", "geopolitics"],
+    "youtube_search_queries": ["David Sacks interview"]
+  },
+  {
+    "name": "David Friedberg",
+    "domain": "Science / Climate / AI",
+    "tier": 1,
+    "inclusion_notes": "The Production Board CEO, All-In Podcast host. Unique blend of climate science, food tech, and AI. Founded The Climate Corporation (sold to Monsanto for $1.1B).",
+    "expertise_domains": ["climate", "energy", "ai_infrastructure", "startup_formation"],
+    "youtube_search_queries": ["David Friedberg interview"]
+  },
+  {
+    "name": "Jason Calacanis",
+    "domain": "Startups / Angel Investing",
+    "tier": 1,
+    "inclusion_notes": "World's top angel investor, All-In Podcast host, LAUNCH founder. Deep pulse on startup formation, seed investing, and founder dynamics.",
+    "expertise_domains": ["venture_capital", "startup_formation", "creator_economy"],
+    "youtube_search_queries": ["Jason Calacanis interview"]
+  },
+  {
+    "name": "Bill Gurley",
+    "domain": "Venture Capital",
+    "tier": 1,
+    "inclusion_notes": "Legendary VC at Benchmark. Led Uber investment. Known for rigorous thinking on marketplace dynamics, competitive advantage, and tech valuations. BG2Pod co-host.",
+    "expertise_domains": ["venture_capital", "platform_dynamics", "value_investing"],
+    "youtube_search_queries": ["Bill Gurley interview", "Bill Gurley talk"]
+  },
+  {
+    "name": "Brad Gerstner",
+    "domain": "Public Tech Investing",
+    "tier": 1,
+    "inclusion_notes": "Altimeter Capital founder, BG2Pod co-host. Bridges public and private tech markets. Known for shareholder activism (Meta open letter) and AI infrastructure thesis.",
+    "expertise_domains": ["ai_infrastructure", "venture_capital", "platform_dynamics"],
+    "youtube_search_queries": ["Brad Gerstner interview"]
+  },
+  {
+    "name": "Lex Fridman",
+    "domain": "AI / Science / Philosophy",
+    "tier": 1,
+    "inclusion_notes": "MIT researcher and top-tier interviewer. His podcast consistently surfaces deep technical insights on AI safety, consciousness, and geopolitics from world-class guests.",
+    "expertise_domains": ["ai_safety", "ai_infrastructure", "geopolitics"],
+    "youtube_search_queries": ["Lex Fridman podcast"]
+  },
+  {
+    "name": "Jensen Huang",
+    "domain": "AI Infrastructure / Semiconductors",
+    "tier": 1,
+    "inclusion_notes": "NVIDIA CEO. The central figure in AI infrastructure buildout. His keynotes and interviews define the narrative around GPU compute, inference scaling, and AI's industrial adoption.",
+    "expertise_domains": ["ai_infrastructure", "inference_compute", "enterprise_ai"],
+    "youtube_search_queries": ["Jensen Huang interview", "Jensen Huang keynote"]
+  },
+  {
+    "name": "Sam Altman",
+    "domain": "AI / Startups",
+    "tier": 1,
+    "inclusion_notes": "OpenAI CEO, former YC president. Ground zero for AI capabilities trajectory. His statements on safety, scaling laws, and commercialization shape the entire AI landscape.",
+    "expertise_domains": ["ai_infrastructure", "ai_safety", "ai_regulation", "startup_formation"],
+    "youtube_search_queries": ["Sam Altman interview", "Sam Altman talk"]
+  },
+  {
+    "name": "Dario Amodei",
+    "domain": "AI Safety / Research",
+    "tier": 1,
+    "inclusion_notes": "Anthropic CEO. Former OpenAI VP of Research. Leading voice on AI safety, interpretability, and responsible scaling. His essays and interviews define the safety-first AI development paradigm.",
+    "expertise_domains": ["ai_safety", "ai_regulation", "ai_infrastructure"],
+    "youtube_search_queries": ["Dario Amodei interview"]
+  },
+  {
+    "name": "Satya Nadella",
+    "domain": "Enterprise Tech / AI",
+    "tier": 1,
+    "inclusion_notes": "Microsoft CEO. Orchestrated the OpenAI partnership and enterprise AI pivot. His strategy decisions on cloud, AI copilots, and platform economics affect the entire tech landscape.",
+    "expertise_domains": ["enterprise_ai", "ai_infrastructure", "platform_dynamics"],
+    "youtube_search_queries": ["Satya Nadella interview"]
+  },
+  {
+    "name": "Howard Marks",
+    "domain": "Credit / Risk / Cycles",
+    "tier": 1,
+    "inclusion_notes": "Oaktree Capital co-founder. His memos on market cycles, risk assessment, and contrarian thinking are required reading for institutional investors. Master of second-level thinking.",
+    "expertise_domains": ["macro", "debt_cycles", "value_investing"],
+    "youtube_search_queries": ["Howard Marks interview", "Howard Marks Oaktree"]
+  },
+  {
+    "name": "Warren Buffett",
+    "domain": "Value Investing",
+    "tier": 1,
+    "inclusion_notes": "Berkshire Hathaway chairman. The definitive voice on value investing, capital allocation, and long-term economic thinking. His annual meetings and interviews are landmark events.",
+    "expertise_domains": ["value_investing", "macro", "fiscal_policy"],
+    "youtube_search_queries": ["Warren Buffett interview", "Berkshire Hathaway annual meeting"]
+  },
+  {
+    "name": "Charlie Munger",
+    "domain": "Mental Models / Investing",
+    "tier": 1,
+    "inclusion_notes": "Berkshire Hathaway vice chairman. Master of multidisciplinary thinking and mental models. His talks on human misjudgment and investment philosophy are foundational.",
+    "expertise_domains": ["value_investing", "macro"],
+    "youtube_search_queries": ["Charlie Munger interview", "Charlie Munger talk"]
+  },
+  {
+    "name": "Marc Andreessen",
+    "domain": "Venture / Tech Vision",
+    "tier": 1,
+    "inclusion_notes": "a16z co-founder, Netscape creator. Defines the techno-optimist narrative. His frameworks on software eating the world, AI adoption curves, and startup scaling are widely influential.",
+    "expertise_domains": ["venture_capital", "ai_infrastructure", "startup_formation", "ai_open_source"],
+    "youtube_search_queries": ["Marc Andreessen interview"]
+  },
+  {
+    "name": "Ben Horowitz",
+    "domain": "Venture / Operations",
+    "tier": 2,
+    "inclusion_notes": "a16z co-founder. Deep expertise in company building, management, and the hard things about hard things. Brings operator perspective to venture investing.",
+    "expertise_domains": ["venture_capital", "startup_formation", "enterprise_ai"],
+    "youtube_search_queries": ["Ben Horowitz interview"]
+  },
+  {
+    "name": "Patrick Collison",
+    "domain": "Payments / Science Funding",
+    "tier": 1,
+    "inclusion_notes": "Stripe CEO. Rare founder who thinks deeply about economic infrastructure, scientific progress (founded Arc Institute), and internet commerce at global scale.",
+    "expertise_domains": ["payments", "startup_formation", "platform_dynamics"],
+    "youtube_search_queries": ["Patrick Collison interview"]
+  },
+  {
+    "name": "John Collison",
+    "domain": "Payments / Fintech",
+    "tier": 2,
+    "inclusion_notes": "Stripe president. Deep operational expertise in global payments infrastructure, developer platforms, and fintech ecosystem building.",
+    "expertise_domains": ["payments", "startup_formation", "platform_dynamics"],
+    "youtube_search_queries": ["John Collison interview"]
+  },
+  {
+    "name": "Elon Musk",
+    "domain": "AI / Energy / Space",
+    "tier": 1,
+    "inclusion_notes": "Tesla, SpaceX, xAI CEO. His statements on AI development (Grok/xAI), energy transition, space commercialization, and social media dynamics are market-moving.",
+    "expertise_domains": ["ai_infrastructure", "energy", "space", "ai_open_source"],
+    "youtube_search_queries": ["Elon Musk interview"]
+  },
+  {
+    "name": "Vinod Khosla",
+    "domain": "Climate Tech / Venture",
+    "tier": 1,
+    "inclusion_notes": "Khosla Ventures founder, Sun Microsystems co-founder. Pioneer in climate tech investing. Bold thesis on AI replacing 80% of knowledge work. Contrarian on energy transition timelines.",
+    "expertise_domains": ["climate", "energy", "venture_capital", "ai_infrastructure"],
+    "youtube_search_queries": ["Vinod Khosla interview"]
+  },
+  {
+    "name": "Stanley Druckenmiller",
+    "domain": "Macro Trading",
+    "tier": 1,
+    "inclusion_notes": "Duquesne Capital founder. One of the greatest macro traders in history. His views on fiscal policy, debt sustainability, and market positioning are highly influential.",
+    "expertise_domains": ["macro", "fiscal_policy", "interest_rates", "debt_cycles"],
+    "youtube_search_queries": ["Stanley Druckenmiller interview"]
+  },
+  {
+    "name": "Cathie Wood",
+    "domain": "Disruptive Innovation",
+    "tier": 2,
+    "inclusion_notes": "ARK Invest CEO. Leading voice on disruptive innovation investing — AI, genomics, robotics, blockchain. Controversial but data-driven theses on deflation and innovation convergence.",
+    "expertise_domains": ["ai_infrastructure", "crypto", "energy", "healthcare"],
+    "youtube_search_queries": ["Cathie Wood interview", "Cathie Wood ARK"]
+  },
+  {
+    "name": "Balaji Srinivasan",
+    "domain": "Crypto / Network State",
+    "tier": 2,
+    "inclusion_notes": "Former a16z GP, CTO of Coinbase. Provocative thinker on crypto, network states, and technological sovereignty. His predictions are deliberately extreme but directionally insightful.",
+    "expertise_domains": ["crypto", "stablecoins", "geopolitics", "platform_dynamics"],
+    "youtube_search_queries": ["Balaji Srinivasan interview"]
+  },
+  {
+    "name": "Demis Hassabis",
+    "domain": "AI Research / AGI",
+    "tier": 1,
+    "inclusion_notes": "Google DeepMind CEO and Nobel laureate. At the frontier of AI capabilities research — AlphaFold, Gemini. His views on AGI timelines and scientific AI applications carry unique weight.",
+    "expertise_domains": ["ai_infrastructure", "ai_safety", "healthcare"],
+    "youtube_search_queries": ["Demis Hassabis interview"]
+  },
+  {
+    "name": "Yann LeCun",
+    "domain": "AI Research",
+    "tier": 2,
+    "inclusion_notes": "Meta Chief AI Scientist, Turing Award winner. Leading voice for open-source AI and critic of doomerism. His technical blog posts and debates shape AI research direction.",
+    "expertise_domains": ["ai_open_source", "ai_safety", "ai_infrastructure"],
+    "youtube_search_queries": ["Yann LeCun interview"]
+  },
+  {
+    "name": "Ilya Sutskever",
+    "domain": "AI Research / Safety",
+    "tier": 1,
+    "inclusion_notes": "Safe Superintelligence Inc founder, former OpenAI chief scientist. Co-inventor of modern deep learning. Rare public appearances carry enormous signal on AI trajectory.",
+    "expertise_domains": ["ai_safety", "ai_infrastructure"],
+    "youtube_search_queries": ["Ilya Sutskever interview"]
+  },
+  {
+    "name": "Ben Thompson",
+    "domain": "Tech Strategy",
+    "tier": 2,
+    "inclusion_notes": "Stratechery founder. The definitive analyst on tech business strategy — aggregation theory, platform dynamics, and the economics of digital markets.",
+    "expertise_domains": ["platform_dynamics", "enterprise_ai", "saas_pricing"],
+    "youtube_search_queries": ["Ben Thompson Stratechery interview"]
+  },
+  {
+    "name": "Scott Galloway",
+    "domain": "Tech Business / Markets",
+    "tier": 2,
+    "inclusion_notes": "NYU Stern professor, Prof G Pod host. Provocative analysis on Big Tech regulation, higher education disruption, and generational wealth dynamics.",
+    "expertise_domains": ["platform_dynamics", "macro", "real_estate"],
+    "youtube_search_queries": ["Scott Galloway interview", "Prof G"]
+  },
+  {
+    "name": "Tyler Cowen",
+    "domain": "Economics / Culture",
+    "tier": 2,
+    "inclusion_notes": "George Mason economist, Conversations with Tyler host, Marginal Revolution blogger. Uniquely broad intellectual range spanning economics, culture, talent assessment.",
+    "expertise_domains": ["macro", "fiscal_policy", "labor_market"],
+    "youtube_search_queries": ["Tyler Cowen interview"]
+  },
+  {
+    "name": "Dwarkesh Patel",
+    "domain": "AI / History / Economics",
+    "tier": 2,
+    "inclusion_notes": "Dwarkesh Podcast host. Rising interviewer who consistently surfaces novel insights on AI scaling, historical analogies, and economic growth from top researchers.",
+    "expertise_domains": ["ai_infrastructure", "ai_safety", "macro"],
+    "youtube_search_queries": ["Dwarkesh Patel podcast"]
+  },
+  {
+    "name": "David Senra",
+    "domain": "Founder History",
+    "tier": 2,
+    "inclusion_notes": "Founders Podcast host. Deep study of history's greatest entrepreneurs. His synthesis of founder biographies surfaces timeless patterns in company building.",
+    "expertise_domains": ["startup_formation", "value_investing"],
+    "youtube_search_queries": ["Founders Podcast David Senra"]
+  },
+  {
+    "name": "Tim Ferriss",
+    "domain": "Lifestyle / Investing",
+    "tier": 2,
+    "inclusion_notes": "Author, podcaster, angel investor. His show surfaces diverse thinkers across technology, health, and investing. Gateway interviewer for hard-to-access minds.",
+    "expertise_domains": ["startup_formation", "venture_capital"],
+    "youtube_search_queries": ["Tim Ferriss Show interview"]
+  },
+  {
+    "name": "Harry Stebbings",
+    "domain": "Venture Capital",
+    "tier": 2,
+    "inclusion_notes": "20VC founder, youngest VC fund manager. His show (20 Minute VC / 20VC) is the highest-volume source of VC opinions. 3,000+ published interviews.",
+    "expertise_domains": ["venture_capital", "startup_formation", "saas_pricing"],
+    "youtube_search_queries": ["Harry Stebbings 20VC"]
+  },
+  {
+    "name": "Shane Parrish",
+    "domain": "Mental Models / Decision-Making",
+    "tier": 2,
+    "inclusion_notes": "Farnam Street / The Knowledge Project founder. Deep interviews on mental models, decision-making frameworks, and wisdom. Surfaces non-obvious thinking from elite performers.",
+    "expertise_domains": ["value_investing", "startup_formation"],
+    "youtube_search_queries": ["Shane Parrish Knowledge Project"]
+  },
+  {
+    "name": "Patrick O'Shaughnessy",
+    "domain": "Investing / Business Strategy",
+    "tier": 2,
+    "inclusion_notes": "Invest Like the Best host, O'Shaughnessy Asset Management CEO. Best-in-class interviews on business quality, capital allocation, and emerging market structures.",
+    "expertise_domains": ["value_investing", "venture_capital", "platform_dynamics"],
+    "youtube_search_queries": ["Patrick O'Shaughnessy Invest Like the Best"]
+  },
+  {
+    "name": "Sundar Pichai",
+    "domain": "AI / Platform / Search",
+    "tier": 2,
+    "inclusion_notes": "Alphabet/Google CEO. His strategy on Gemini, search AI integration, and cloud AI shapes the competitive landscape against Microsoft/OpenAI.",
+    "expertise_domains": ["ai_infrastructure", "enterprise_ai", "platform_dynamics"],
+    "youtube_search_queries": ["Sundar Pichai interview"]
+  },
+  {
+    "name": "Mark Zuckerberg",
+    "domain": "Social / AI / Metaverse",
+    "tier": 2,
+    "inclusion_notes": "Meta CEO. Leading the open-source AI push with Llama. His strategy on social AI, mixed reality, and creator economics is market-defining.",
+    "expertise_domains": ["ai_open_source", "ai_infrastructure", "platform_dynamics", "creator_economy"],
+    "youtube_search_queries": ["Mark Zuckerberg interview"]
+  },
+  {
+    "name": "Brian Chesky",
+    "domain": "Marketplaces / Design",
+    "tier": 2,
+    "inclusion_notes": "Airbnb CEO. Master of marketplace dynamics, design-led company building, and platform economics. His management philosophy (founder mode) has become widely discussed.",
+    "expertise_domains": ["platform_dynamics", "startup_formation"],
+    "youtube_search_queries": ["Brian Chesky interview"]
+  },
+  {
+    "name": "Jamie Dimon",
+    "domain": "Banking / Macro",
+    "tier": 2,
+    "inclusion_notes": "JPMorgan Chase CEO. The most influential voice in traditional finance. His annual letters and public statements on interest rates, regulation, and geopolitics move markets.",
+    "expertise_domains": ["macro", "interest_rates", "fiscal_policy", "payments"],
+    "youtube_search_queries": ["Jamie Dimon interview"]
+  },
+  {
+    "name": "Larry Fink",
+    "domain": "Asset Management / ESG",
+    "tier": 2,
+    "inclusion_notes": "BlackRock CEO. Manages $10T+. His annual letters define institutional investing narratives on infrastructure, energy transition, and retirement.",
+    "expertise_domains": ["macro", "energy", "real_estate", "value_investing"],
+    "youtube_search_queries": ["Larry Fink interview", "Larry Fink BlackRock"]
+  },
+  {
+    "name": "Ryan Petersen",
+    "domain": "Supply Chain / Logistics",
+    "tier": 3,
+    "inclusion_notes": "Flexport CEO. Real-time signal on global trade flows, supply chain disruptions, and logistics economics. His Twitter threads during supply chain crises were essential reading.",
+    "expertise_domains": ["macro", "geopolitics", "us_china"],
+    "youtube_search_queries": ["Ryan Petersen Flexport interview"]
+  },
+  {
+    "name": "Tobi Lütke",
+    "domain": "E-commerce / Remote Work",
+    "tier": 3,
+    "inclusion_notes": "Shopify CEO. Defines the narrative on e-commerce infrastructure, creator commerce, and AI-augmented development. His management philosophy is widely studied.",
+    "expertise_domains": ["platform_dynamics", "enterprise_ai", "creator_economy"],
+    "youtube_search_queries": ["Tobi Lutke interview"]
+  },
+  {
+    "name": "Daniel Ek",
+    "domain": "Audio / Marketplace",
+    "tier": 3,
+    "inclusion_notes": "Spotify CEO. His strategy on audio marketplaces, creator economics, and AI-curated content shapes the digital media landscape.",
+    "expertise_domains": ["platform_dynamics", "creator_economy"],
+    "youtube_search_queries": ["Daniel Ek interview"]
+  },
+  {
+    "name": "Lisa Su",
+    "domain": "Semiconductors / AI Compute",
+    "tier": 2,
+    "inclusion_notes": "AMD CEO. Transformed AMD into a competitive force in AI chips. Her execution and product roadmap statements are key signals for the semiconductor competitive landscape.",
+    "expertise_domains": ["ai_infrastructure", "inference_compute"],
+    "youtube_search_queries": ["Lisa Su interview", "Lisa Su AMD"]
+  },
+  {
+    "name": "Andrej Karpathy",
+    "domain": "AI Research / Education",
+    "tier": 1,
+    "inclusion_notes": "Former Tesla AI director and OpenAI founding member. The most effective AI educator alive. His YouTube lectures, blog posts, and project releases define how practitioners think about AI.",
+    "expertise_domains": ["ai_infrastructure", "ai_open_source", "ai_safety"],
+    "youtube_search_queries": ["Andrej Karpathy"]
+  },
+  {
+    "name": "Naval Ravikant",
+    "domain": "Philosophy / Angel Investing",
+    "tier": 2,
+    "inclusion_notes": "AngelList co-founder. Rare appearances carry outsized signal on wealth creation, technology philosophy, and startup ecosystems. His almanack is widely read.",
+    "expertise_domains": ["venture_capital", "startup_formation", "crypto"],
+    "youtube_search_queries": ["Naval Ravikant interview"]
+  }
+]

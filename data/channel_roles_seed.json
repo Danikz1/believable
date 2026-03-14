@@ -1,0 +1,17 @@
+[
+  {"channel_name": "All-In Podcast", "person_name": "Chamath Palihapitiya", "role": "host"},
+  {"channel_name": "All-In Podcast", "person_name": "David Sacks", "role": "host"},
+  {"channel_name": "All-In Podcast", "person_name": "David Friedberg", "role": "host"},
+  {"channel_name": "All-In Podcast", "person_name": "Jason Calacanis", "role": "host"},
+  {"channel_name": "BG2Pod", "person_name": "Brad Gerstner", "role": "host"},
+  {"channel_name": "BG2Pod", "person_name": "Bill Gurley", "role": "host"},
+  {"channel_name": "Lex Fridman Podcast", "person_name": "Lex Fridman", "role": "host"},
+  {"channel_name": "The Knowledge Project", "person_name": "Shane Parrish", "role": "host"},
+  {"channel_name": "Invest Like the Best", "person_name": "Patrick O'Shaughnessy", "role": "host"},
+  {"channel_name": "Dwarkesh Podcast", "person_name": "Dwarkesh Patel", "role": "host"},
+  {"channel_name": "20VC", "person_name": "Harry Stebbings", "role": "host"},
+  {"channel_name": "The Prof G Pod", "person_name": "Scott Galloway", "role": "host"},
+  {"channel_name": "Conversations with Tyler", "person_name": "Tyler Cowen", "role": "host"},
+  {"channel_name": "Founders Podcast", "person_name": "David Senra", "role": "host"},
+  {"channel_name": "The Tim Ferriss Show", "person_name": "Tim Ferriss", "role": "host"}
+]

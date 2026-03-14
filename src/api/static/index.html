@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Believable Minds</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a2235;
+            --bg-hover: #1f2a40;
+            --border: #2a3650;
+            --text-primary: #e8ecf4;
+            --text-secondary: #8899b6;
+            --text-muted: #5c6e8a;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --trust-high: #10b981;
+            --trust-medium: #f59e0b;
+            --trust-low: #ef4444;
+            --radius: 10px;
+            --radius-sm: 6px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        /* ── Layout ────────────────────────────────────── */
+        .app { display: flex; min-height: 100vh; }
+        
+        .sidebar {
+            width: 240px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo {
+            padding: 0 20px 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 12px;
+        }
+        .logo h1 {
+            font-size: 16px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.3px;
+        }
+        .logo span {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 2px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border-left: 3px solid transparent;
+        }
+        .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .nav-item.active {
+            background: rgba(59,130,246,0.08);
+            color: var(--accent-blue);
+            border-left-color: var(--accent-blue);
+        }
+        .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+        .main {
+            margin-left: 240px;
+            flex: 1;
+            padding: 28px 32px;
+            max-width: 1400px;
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+        .page-header h2 {
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        /* ── Cards ─────────────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            transition: border-color 0.2s;
+        }
+        .stat-card:hover { border-color: var(--accent-blue); }
+        .stat-card .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+        .stat-card .sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ── Claims ────────────────────────────────────── */
+        .claim-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .claim-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .claim-text {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        .claim-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* ── Badges ────────────────────────────────────── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .badge-trust-high { background: rgba(16,185,129,0.15); color: var(--trust-high); }
+        .badge-trust-medium { background: rgba(245,158,11,0.15); color: var(--trust-medium); }
+        .badge-trust-low { background: rgba(239,68,68,0.15); color: var(--trust-low); }
+        .badge-type { background: rgba(59,130,246,0.12); color: var(--accent-blue); }
+        .badge-topic { background: rgba(139,92,246,0.12); color: var(--accent-purple); }
+        .badge-sentiment-bullish { background: rgba(16,185,129,0.12); color: var(--accent-green); }
+        .badge-sentiment-bearish { background: rgba(239,68,68,0.12); color: var(--accent-red); }
+        .badge-sentiment-neutral { background: rgba(136,153,182,0.12); color: var(--text-secondary); }
+        .badge-approved { background: rgba(16,185,129,0.12); color: var(--accent-green); }
+        .badge-pending { background: rgba(245,158,11,0.12); color: var(--accent-amber); }
+
+        .person-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+        .confidence {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* ── Table ─────────────────────────────────────── */
+        .table-wrap { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 10px 14px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+        th:hover { color: var(--text-primary); }
+        td {
+            padding: 12px 14px;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(42,54,80,0.5);
+        }
+        tr:hover { background: var(--bg-hover); }
+
+        .tier-badge {
+            display: inline-flex;
+            width: 22px; height: 22px;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .tier-1 { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; }
+        .tier-2 { background: linear-gradient(135deg, #94a3b8, #64748b); color: #fff; }
+        .tier-3 { background: linear-gradient(135deg, #78716c, #57534e); color: #fff; }
+
+        /* ── Search ────────────────────────────────────── */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .search-input {
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: var(--accent-blue); }
+        .search-input::placeholder { color: var(--text-muted); }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: all 0.15s;
+        }
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-success {
+            background: rgba(16,185,129,0.15);
+            color: var(--accent-green);
+            border-color: rgba(16,185,129,0.3);
+        }
+        .btn-danger {
+            background: rgba(239,68,68,0.15);
+            color: var(--accent-red);
+            border-color: rgba(239,68,68,0.3);
+        }
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+        }
+        .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+        /* ── Evidence Drawer ───────────────────────────── */
+        .evidence-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        .evidence-panel.open { display: block; }
+        .evidence-quote {
+            border-left: 3px solid var(--accent-blue);
+            padding: 8px 12px;
+            margin: 8px 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* ── Sections ──────────────────────────────────── */
+        .section-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 900px) {
+            .section-grid { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
+            .main { margin-left: 0; }
+        }
+
+        .position-bar {
+            display: flex;
+            gap: 2px;
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        .position-bar .segment {
+            height: 100%;
+            border-radius: 3px;
+        }
+
+        /* ── Loading ───────────────────────────────────── */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        .spinner {
+            width: 20px; height: 20px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+
+        /* ── Animations ────────────────────────────────── */
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h1>Believable Minds</h1>
+                <span>Intelligence Platform</span>
+            </div>
+            <a class="nav-item active" onclick="navigate('dashboard')">
+                <span class="icon">📊</span> Dashboard
+            </a>
+            <a class="nav-item" onclick="navigate('people')">
+                <span class="icon">👤</span> People
+            </a>
+            <a class="nav-item" onclick="navigate('claims')">
+                <span class="icon">💬</span> Claims
+            </a>
+            <a class="nav-item" onclick="navigate('topics')">
+                <span class="icon">🏷️</span> Topics
+            </a>
+            <a class="nav-item" onclick="navigate('review')">
+                <span class="icon">✅</span> Review Queue
+            </a>
+            <a class="nav-item" onclick="navigate('pipeline')">
+                <span class="icon">⚙️</span> Pipeline
+            </a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main" id="main-content">
+            <div class="loading"><div class="spinner"></div> Loading...</div>
+        </main>
+    </div>
+
+    <script>
+        const API = '';  // Same origin
+
+        // ── State ──
+        let currentPage = 'dashboard';
+
+        // ── API Helpers ──
+        async function api(path) {
+            const r = await fetch(`${API}${path}`);
+            if (!r.ok) throw new Error(`API error: ${r.status}`);
+            return r.json();
+        }
+
+        // ── Navigation ──
+        function navigate(page) {
+            currentPage = page;
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event?.target?.closest('.nav-item')?.classList.add('active');
+            // Highlight by page name
+            document.querySelectorAll('.nav-item').forEach(el => {
+                if (el.textContent.trim().toLowerCase().includes(page === 'review' ? 'review' : page)) {
+                    el.classList.add('active');
+                }
+            });
+            loadPage(page);
+        }
+
+        async function loadPage(page) {
+            const main = document.getElementById('main-content');
+            main.innerHTML = '<div class="loading"><div class="spinner"></div> Loading...</div>';
+
+            try {
+                switch(page) {
+                    case 'dashboard': await renderDashboard(main); break;
+                    case 'people': await renderPeople(main); break;
+                    case 'claims': await renderClaims(main); break;
+                    case 'topics': await renderTopics(main); break;
+                    case 'review': await renderReview(main); break;
+                    case 'pipeline': await renderPipeline(main); break;
+                }
+            } catch(e) {
+                main.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Error: ${e.message}</p></div>`;
+            }
+        }
+
+        // ── Dashboard ──
+        async function renderDashboard(el) {
+            const status = await api('/api/pipeline/status');
+            const claims = await api('/api/claims?limit=5');
+            const topics = await api('/api/topics');
+
+            const topTopics = topics.filter(t => t.claim_count > 0).sort((a,b) => b.claim_count - a.claim_count).slice(0, 8);
+
+            el.innerHTML = `
+                <div class="page-header fade-in">
+                    <h2>Dashboard</h2>
+                    <p>Believable Minds Intelligence Platform — real-time overview</p>
+                </div>
+
+                <div class="stats-grid fade-in">
+                    <div class="stat-card">
+                        <div class="label">Tracked People</div>
+                        <div class="value">${status.people}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Videos</div>
+                        <div class="value">${status.videos.total}</div>
+                        <div class="sub">${status.videos.enriched} enriched · ${status.videos.identified} identified</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Claims</div>
+                        <div class="value" style="color: var(--accent-green)">${status.claims.approved}</div>
+                        <div class="sub">${status.claims.pending} pending review</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Embeddings</div>
+                        <div class="value">${status.embeddings}</div>
+                        <div class="sub">${status.positions} positions tracked</div>
+                    </div>
+                </div>
+
+                <div class="section-grid fade-in">
+                    <div class="card">
+                        <div class="card-title">💬 Latest Claims</div>
+                        ${claims.length ? claims.map(c => claimMini(c)).join('') : '<div class="empty-state"><p>No claims yet</p></div>'}
+                    </div>
+                    <div class="card">
+                        <div class="card-title">🏷️ Active Topics</div>
+                        ${topTopics.length ? topTopics.map(t => `
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+                                <span class="badge badge-topic">${t.slug}</span>
+                                <span style="font-size:13px;font-weight:600">${t.claim_count} claims</span>
+                            </div>
+                        `).join('') : '<div class="empty-state"><p>No active topics</p></div>'}
+                    </div>
+                </div>
+
+                <div class="card fade-in" style="margin-top:16px">
+                    <div class="card-title">⚙️ Pipeline Status</div>
+                    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center">
+                        ${pipelineStage('Discovered', status.videos.discovered, '#3b82f6')}
+                        ${pipelineStage('Transcribed', status.videos.transcribed, '#8b5cf6')}
+                        ${pipelineStage('Identified', status.videos.identified, '#f59e0b')}
+                        ${pipelineStage('Enriched', status.videos.enriched, '#10b981')}
+                        ${pipelineStage('Skipped', status.videos.skipped, '#64748b')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function pipelineStage(label, count, color) {
+            return `<div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px">
+                <div style="font-size:24px;font-weight:700;color:${color}">${count}</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${label}</div>
+            </div>`;
+        }
+
+        // ── People ──
+        async function renderPeople(el) {
+            const people = await api('/api/people');
+
+            el.innerHTML = `
+                <div class="page-header fade-in">
+                    <h2>People</h2>
+                    <p>${people.length} tracked minds across multiple domains</p>
+                </div>
+                <div class="card fade-in">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Tier</th>
+                                    <th>Domain</th>
+                                    <th>Expertise</th>
+                                    <th>Claims</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${people.map(p => `
+                                    <tr onclick="navigate('person-${p.id}')" style="cursor:pointer">
+                                        <td style="font-weight:600;color:var(--accent-cyan)">${p.name}</td>
+                                        <td><span class="tier-badge tier-${p.tier}">${p.tier}</span></td>
+                                        <td style="color:var(--text-secondary)">${p.domain || '—'}</td>
+                                        <td>${(p.expertise_domains || []).slice(0,3).map(d => `<span class="badge badge-topic" style="margin:1px">${d}</span>`).join('')}</td>
+                                        <td style="font-weight:600">${p.claim_count}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ── Claims ──
+        async function renderClaims(el) {
+            const claims = await api('/api/claims?limit=50');
+
+            el.innerHTML = `
+                <div class="page-header fade-in">
+                    <h2>Claims Explorer</h2>
+                    <p>Browse and search approved claims with evidence</p>
+                </div>
+                <div class="search-bar fade-in">
+                    <input class="search-input" placeholder="Search claims..." id="claim-search" onkeydown="if(event.key==='Enter')searchClaims()">
+                    <button class="btn btn-primary" onclick="searchClaims()">Search</button>
+                </div>
+                <div id="claims-list" class="fade-in">
+                    ${claims.length ? claims.map(c => claimCard(c)).join('') : '<div class="empty-state"><div class="icon">💬</div><p>No claims found</p></div>'}
+                </div>
+            `;
+        }
+
+        async function searchClaims() {
+            const q = document.getElementById('claim-search').value;
+            const list = document.getElementById('claims-list');
+            if (!q || q.length < 3) return;
+            
+            list.innerHTML = '<div class="loading"><div class="spinner"></div> Searching...</div>';
+            try {
+                const results = await api(`/api/claims/search?q=${encodeURIComponent(q)}`);
+                list.innerHTML = results.length ? 
+                    results.map(c => claimCard(c, true)).join('') :
+                    '<div class="empty-state"><p>No matching claims</p></div>';
+            } catch(e) {
+                list.innerHTML = `<div class="empty-state"><p>Search error: ${e.message}</p></div>`;
+            }
+        }
+
+        function claimCard(c, showSimilarity = false) {
+            return `
+                <div class="claim-card" onclick="toggleEvidence('${c.id}')">
+                    <div class="person-name">${c.person_name || 'Unknown'}</div>
+                    <div class="claim-text">${c.claim_text}</div>
+                    <div class="claim-meta">
+                        <span class="badge badge-trust-${c.trust_level}">${c.trust_level}</span>
+                        ${c.claim_type ? `<span class="badge badge-type">${c.claim_type}</span>` : ''}
+                        ${(c.topics || []).map(t => `<span class="badge badge-topic">${t}</span>`).join('')}
+                        ${c.sentiment ? `<span class="badge badge-sentiment-${c.sentiment}">${c.sentiment}</span>` : ''}
+                        ${c.attribution_confidence ? `<span class="confidence">attr: ${(c.attribution_confidence * 100).toFixed(0)}%</span>` : ''}
+                        ${c.extraction_confidence ? `<span class="confidence">extr: ${(c.extraction_confidence * 100).toFixed(0)}%</span>` : ''}
+                        ${showSimilarity && c.similarity ? `<span class="confidence">sim: ${(c.similarity * 100).toFixed(0)}%</span>` : ''}
+                    </div>
+                    <div class="evidence-panel" id="evidence-${c.id}"></div>
+                </div>
+            `;
+        }
+
+        function claimMini(c) {
+            return `
+                <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+                    <div class="person-name" style="font-size:11px">${c.person_name}</div>
+                    <div style="font-size:13px;margin-top:2px">${c.claim_text.substring(0, 120)}${c.claim_text.length > 120 ? '...' : ''}</div>
+                    <div class="claim-meta" style="margin-top:6px">
+                        <span class="badge badge-trust-${c.trust_level}">${c.trust_level}</span>
+                        ${c.claim_type ? `<span class="badge badge-type">${c.claim_type}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        async function toggleEvidence(claimId) {
+            const panel = document.getElementById(`evidence-${claimId}`);
+            if (panel.classList.contains('open')) {
+                panel.classList.remove('open');
+                return;
+            }
+
+            panel.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            panel.classList.add('open');
+
+            try {
+                const detail = await api(`/api/claims/${claimId}`);
+                panel.innerHTML = `
+                    ${detail.reasoning_text ? `<div style="margin-bottom:10px"><strong style="font-size:11px;color:var(--text-muted)">REASONING</strong><p style="font-size:13px;color:var(--text-secondary);margin-top:4px">${detail.reasoning_text}</p></div>` : ''}
+                    ${detail.evidence_spans.length ? `
+                        <strong style="font-size:11px;color:var(--text-muted)">EVIDENCE SPANS</strong>
+                        ${detail.evidence_spans.map(e => `
+                            <div class="evidence-quote">
+                                <span class="badge badge-type" style="margin-bottom:4px">${e.quote_type}</span>
+                                "${e.quote_text}"
+                                <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${msToTime(e.start_ms)} — ${msToTime(e.end_ms)}</div>
+                            </div>
+                        `).join('')}
+                    ` : '<p style="font-size:12px;color:var(--text-muted)">No evidence spans</p>'}
+                    ${detail.source_video ? `
+                        <a href="${detail.source_video.url}" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:var(--accent-blue);text-decoration:none">
+                            🎬 ${detail.source_video.title || 'Source Video'} →
+                        </a>
+                    ` : ''}
+                `;
+            } catch(e) {
+                panel.innerHTML = `<p style="color:var(--accent-red)">Failed to load</p>`;
+            }
+        }
+
+        function msToTime(ms) {
+            const s = Math.floor(ms / 1000);
+            const m = Math.floor(s / 60);
+            return `${m}:${String(s % 60).padStart(2, '0')}`;
+        }
+
+        // ── Topics ──
+        async function renderTopics(el) {
+            const topics = await api('/api/topics');
+            const active = topics.filter(t => t.claim_count > 0);
+            const inactive = topics.filter(t => t.claim_count === 0);
+
+            el.innerHTML = `
+                <div class="page-header fade-in">
+                    <h2>Topics</h2>
+                    <p>${topics.length} topics in taxonomy, ${active.length} with claims</p>
+                </div>
+                <div class="section-grid fade-in">
+                    <div class="card">
+                        <div class="card-title">🔥 Active Topics</div>
+                        ${active.map(t => topicRow(t)).join('') || '<p style="color:var(--text-muted)">No active topics</p>'}
+                    </div>
+                    <div class="card">
+                        <div class="card-title">📋 All Topics</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:6px">
+                            ${topics.map(t => `<span class="badge ${t.claim_count > 0 ? 'badge-topic' : ''}" style="${t.claim_count === 0 ? 'background:var(--bg-secondary);color:var(--text-muted)' : ''}">${t.slug} (${t.claim_count})</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function topicRow(t) {
+            return `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="viewTopic('${t.slug}')">
+                    <div>
+                        <span style="font-weight:600">${t.label}</span>
+                        <span class="badge badge-topic" style="margin-left:6px">${t.slug}</span>
+                    </div>
+                    <span style="font-size:20px;font-weight:700;color:var(--accent-blue)">${t.claim_count}</span>
+                </div>
+            `;
+        }
+
+        async function viewTopic(slug) {
+            const main = document.getElementById('main-content');
+            main.innerHTML = '<div class="loading"><div class="spinner"></div> Loading topic...</div>';
+
+            try {
+                const [positions, consensus] = await Promise.all([
+                    api(`/api/topics/${slug}/positions`),
+                    api(`/api/topics/${slug}/consensus`),
+                ]);
+
+                main.innerHTML = `
+                    <div class="page-header fade-in">
+                        <h2>Topic: ${slug}</h2>
+                        <p>${consensus.total_claims} claims · ${positions.positions.length} people with positions</p>
+                        <button class="btn btn-ghost" onclick="navigate('topics')" style="margin-top:8px">← Back</button>
+                    </div>
+                    <div class="section-grid fade-in">
+                        <div class="card">
+                            <div class="card-title">📍 Positions</div>
+                            ${positions.positions.map(p => `
+                                <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+                                    <div class="person-name">${p.person_name}</div>
+                                    <div style="font-size:13px;margin-top:4px">${p.current_position || '—'}</div>
+                                    <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${p.claim_count} claims</div>
+                                </div>
+                            `).join('') || '<p style="color:var(--text-muted)">No positions yet</p>'}
+                        </div>
+                        <div class="card">
+                            <div class="card-title">📊 Consensus</div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                                <div style="text-align:center;padding:12px;background:rgba(16,185,129,0.08);border-radius:var(--radius-sm)">
+                                    <div style="font-size:24px;font-weight:700;color:var(--accent-green)">${(consensus.consensus.bullish || []).length}</div>
+                                    <div style="font-size:11px;color:var(--text-muted)">Bullish</div>
+                                </div>
+                                <div style="text-align:center;padding:12px;background:rgba(239,68,68,0.08);border-radius:var(--radius-sm)">
+                                    <div style="font-size:24px;font-weight:700;color:var(--accent-red)">${(consensus.consensus.bearish || []).length}</div>
+                                    <div style="font-size:11px;color:var(--text-muted)">Bearish</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch(e) {
+                main.innerHTML = `<div class="empty-state"><p>Error: ${e.message}</p></div>`;
+            }
+        }
+
+        // ── Review Queue ──
+        async function renderReview(el) {
+            // Fetch pending claims via admin endpoint
+            const claims = await api('/api/claims?limit=50');
+            const pending = claims.filter(c => c.review_status === 'pending_review');
+
+            el.innerHTML = `
+                <div class="page-header fade-in">
+                    <h2>Review Queue</h2>
+                    <p>${pending.length} claims pending review</p>
+                </div>
+                <div id="review-list" class="fade-in">
+                    ${pending.length ? pending.map(c => reviewCard(c)).join('') : `
+                        <div class="empty-state">
+                            <div class="icon">✅</div>
+                            <p>All clear — no pending claims</p>
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        function reviewCard(c) {
+            return `
+                <div class="claim-card" id="review-${c.id}">
+                    <div class="person-name">${c.person_name || 'Unknown'}</div>
+                    <div class="claim-text">${c.claim_text}</div>
+                    <div class="claim-meta">
+                        <span class="badge badge-trust-${c.trust_level}">${c.trust_level}</span>
+                        ${c.claim_type ? `<span class="badge badge-type">${c.claim_type}</span>` : ''}
+                        ${(c.topics || []).map(t => `<span class="badge badge-topic">${t}</span>`).join('')}
+                    </div>
+                    <div style="margin-top:12px;display:flex;gap:8px">
+                        <button class="btn btn-success" onclick="reviewClaim('${c.id}', 'approved')">✓ Approve</button>
+                        <button class="btn btn-danger" onclick="reviewClaim('${c.id}', 'rejected')">✗ Reject</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function reviewClaim(id, status) {
+            try {
+                await fetch(`${API}/admin/claims/${id}/review`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-admin-key': 'bm-admin-key' },
+                    body: JSON.stringify({ review_status: status }),
+                });
+                const card = document.getElementById(`review-${id}`);
+                card.style.opacity = '0.3';
+                card.innerHTML += `<div style="text-align:center;padding:10px;color:${status === 'approved' ? 'var(--accent-green)' : 'var(--accent-red)'};font-weight:600">${status.toUpperCase()}</div>`;
+            } catch(e) {
+                alert('Review failed: ' + e.message);
+            }
+        }
+
+        // ── Pipeline ──
+        async function renderPipeline(el) {
+            const status = await api('/api/pipeline/status');
+
+            el.innerHTML = `
+                <div class="page-header fade-in">
+                    <h2>Pipeline</h2>
+                    <p>End-to-end processing status</p>
+                </div>
+
+                <div class="stats-grid fade-in">
+                    <div class="stat-card">
+                        <div class="label">Total Videos</div>
+                        <div class="value">${status.videos.total}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Segments</div>
+                        <div class="value">${status.segments.toLocaleString()}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Claims</div>
+                        <div class="value">${status.claims.total}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Embeddings</div>
+                        <div class="value">${status.embeddings}</div>
+                    </div>
+                </div>
+
+                <div class="card fade-in">
+                    <div class="card-title">Video Pipeline Stages</div>
+                    <div style="display:flex;gap:4px;align-items:end;height:120px;padding-top:20px">
+                        ${pipelineBar('Discovered', status.videos.discovered, status.videos.total, '#3b82f6')}
+                        ${pipelineBar('Transcribed', status.videos.transcribed, status.videos.total, '#8b5cf6')}
+                        ${pipelineBar('Identified', status.videos.identified, status.videos.total, '#f59e0b')}
+                        ${pipelineBar('Enriched', status.videos.enriched, status.videos.total, '#10b981')}
+                        ${pipelineBar('Skipped', status.videos.skipped, status.videos.total, '#64748b')}
+                    </div>
+                </div>
+
+                <div class="section-grid fade-in" style="margin-top:16px">
+                    <div class="card">
+                        <div class="card-title">📊 Claims Breakdown</div>
+                        <div style="display:flex;gap:16px">
+                            <div>
+                                <div style="font-size:32px;font-weight:700;color:var(--accent-green)">${status.claims.approved}</div>
+                                <div style="font-size:11px;color:var(--text-muted)">Approved</div>
+                            </div>
+                            <div>
+                                <div style="font-size:32px;font-weight:700;color:var(--accent-amber)">${status.claims.pending}</div>
+                                <div style="font-size:11px;color:var(--text-muted)">Pending</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">🔗 Data</div>
+                        <div style="font-size:13px;color:var(--text-secondary)">
+                            <div style="padding:6px 0;border-bottom:1px solid var(--border)">People: <strong>${status.people}</strong></div>
+                            <div style="padding:6px 0;border-bottom:1px solid var(--border)">Positions: <strong>${status.positions}</strong></div>
+                            <div style="padding:6px 0">Embeddings: <strong>${status.embeddings}</strong></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function pipelineBar(label, count, total, color) {
+            const pct = total > 0 ? Math.max((count / total) * 100, count > 0 ? 3 : 0) : 0;
+            return `
+                <div style="flex:1;text-align:center">
+                    <div style="height:${pct}%;min-height:${count>0?'8px':'2px'};background:${color};border-radius:4px 4px 0 0;transition:height 0.5s"></div>
+                    <div style="font-size:16px;font-weight:700;margin-top:6px;color:${color}">${count}</div>
+                    <div style="font-size:10px;color:var(--text-muted)">${label}</div>
+                </div>
+            `;
+        }
+
+        // ── Init ──
+        navigate('dashboard');
+    </script>
+</body>
+</html>
