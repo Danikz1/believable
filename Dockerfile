@@ -16,10 +16,12 @@ COPY src /app/src
 COPY alembic /app/alembic
 COPY data /app/data
 COPY tools /app/tools
+COPY scripts /app/scripts
 COPY believable_minds_final_spec.md /app/
 COPY believable_minds_addendum_official_transcripts.md /app/
 
 RUN pip install --upgrade pip \
-    && pip install .
+    && pip install . \
+    && chmod +x /app/scripts/start.sh
 
-CMD ["sh", "-c", "alembic upgrade head && uvicorn src.api.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["/app/scripts/start.sh"]
