@@ -356,6 +356,114 @@
             border-radius: 3px;
         }
 
+        .detail-grid {
+            display: grid;
+            grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+            gap: 16px;
+            align-items: start;
+        }
+        @media (max-width: 1100px) {
+            .detail-grid { grid-template-columns: 1fr; }
+        }
+        .detail-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .detail-eyebrow {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .person-summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .person-summary h3 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .person-blurb {
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .metric-chip {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+        }
+        .metric-chip .label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: var(--text-muted);
+        }
+        .metric-chip .value {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 72vh;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .history-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
+        .history-item:hover {
+            border-color: var(--accent-blue);
+        }
+        .history-topline {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .history-date {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+        }
+        .history-source {
+            font-size: 12px;
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+        .history-source:hover {
+            text-decoration: underline;
+        }
+        .empty-note {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
         /* ── Loading ───────────────────────────────────── */
         .loading {
             display: flex;
@@ -442,10 +550,9 @@
         function navigate(page) {
             currentPage = page;
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            event?.target?.closest('.nav-item')?.classList.add('active');
-            // Highlight by page name
+            const navPage = page.startsWith('person-') ? 'people' : page;
             document.querySelectorAll('.nav-item').forEach(el => {
-                if (el.textContent.trim().toLowerCase().includes(page === 'review' ? 'review' : page)) {
+                if (el.textContent.trim().toLowerCase().includes(navPage === 'review' ? 'review' : navPage)) {
                     el.classList.add('active');
                 }
             });
@@ -457,6 +564,10 @@
             main.innerHTML = '<div class="loading"><div class="spinner"></div> Loading...</div>';
 
             try {
+                if (page.startsWith('person-')) {
+                    await renderPerson(main, page.slice('person-'.length));
+                    return;
+                }
                 switch(page) {
                     case 'dashboard': await renderDashboard(main); break;
                     case 'people': await renderPeople(main); break;
@@ -549,7 +660,7 @@
             el.innerHTML = `
                 <div class="page-header fade-in">
                     <h2>People</h2>
-                    <p>${people.length} tracked minds across multiple domains</p>
+                    <p>${people.length} tracked minds across multiple domains · claim counts show approved claims only</p>
                 </div>
                 <div class="card fade-in">
                     <div class="table-wrap">
@@ -560,12 +671,12 @@
                                     <th>Tier</th>
                                     <th>Domain</th>
                                     <th>Expertise</th>
-                                    <th>Claims</th>
+                                    <th>Approved Claims</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${people.map(p => `
-                                    <tr onclick="navigate('person-${p.id}')" style="cursor:pointer">
+                                    <tr onclick="navigate('person-${p.id}')" style="cursor:pointer" title="Open person profile">
                                         <td style="font-weight:600;color:var(--accent-cyan)">${p.name}</td>
                                         <td><span class="tier-badge tier-${p.tier}">${p.tier}</span></td>
                                         <td style="color:var(--text-secondary)">${p.domain || '—'}</td>
@@ -575,6 +686,98 @@
                                 `).join('')}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function renderPerson(el, personId) {
+            const person = await api(`/api/people/${personId}?claim_limit=50`);
+            const claimCount = person.claim_count || 0;
+            const claims = person.claims || [];
+            const positions = person.positions || [];
+            const latestClaimDate = claims.length ? formatDate(claims[0].created_at) : 'No approved claims yet';
+
+            el.innerHTML = `
+                <div class="page-header fade-in">
+                    <h2>${person.name}</h2>
+                    <p>${person.domain || 'General'} · ${claimCount} approved claims · latest update ${latestClaimDate}</p>
+                    <button class="btn btn-ghost" onclick="navigate('people')" style="margin-top:8px">← Back to people</button>
+                </div>
+
+                <div class="detail-grid fade-in">
+                    <div class="detail-stack">
+                        <div class="card">
+                            <div class="detail-eyebrow">Profile</div>
+                            <div class="person-summary">
+                                <div>
+                                    <h3>${person.name}</h3>
+                                    <div style="margin-top:6px;color:var(--text-secondary);font-size:13px">${person.domain || 'Generalist'}</div>
+                                </div>
+                                <span class="tier-badge tier-${person.tier}">${person.tier}</span>
+                            </div>
+                            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+                                ${(person.expertise_domains || []).length
+                                    ? person.expertise_domains.map(d => `<span class="badge badge-topic">${d}</span>`).join('')
+                                    : '<span class="badge badge-type">No expertise tags yet</span>'}
+                            </div>
+                            <p class="person-blurb">${person.inclusion_notes || 'This person is tracked, but a fuller profile summary has not been filled in yet.'}</p>
+
+                            <div class="metric-grid">
+                                <div class="metric-chip">
+                                    <div class="label">Approved Claims</div>
+                                    <div class="value">${claimCount}</div>
+                                </div>
+                                <div class="metric-chip">
+                                    <div class="label">Tracked Positions</div>
+                                    <div class="value">${positions.length}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="detail-eyebrow">Current Positions</div>
+                            ${positions.length ? positions.map(p => `
+                                <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+                                    <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+                                        <span class="badge badge-topic">${p.topic || 'unassigned'}</span>
+                                        <span class="confidence">${p.claim_count} claims</span>
+                                    </div>
+                                    <div style="font-size:13px;margin-top:6px;color:var(--text-secondary)">${p.current_position || 'No synthesized position yet'}</div>
+                                </div>
+                            `).join('') : '<div class="empty-note">No topic positions have been synthesized for this person yet.</div>'}
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="detail-eyebrow">Claim History</div>
+                        ${claims.length ? `
+                            <div class="history-list">
+                                ${claims.map(c => `
+                                    <div class="history-item">
+                                        <div class="history-topline">
+                                            <div class="history-date">${formatDate(c.created_at)}</div>
+                                            ${c.source_video_url ? `<a class="history-source" href="${c.source_video_url}" target="_blank">${c.source_video_title || 'Source video'} ↗</a>` : ''}
+                                        </div>
+                                        <div class="claim-text">${c.claim_text}</div>
+                                        <div class="claim-meta">
+                                            <span class="badge badge-trust-${c.trust_level}">${c.trust_level}</span>
+                                            ${c.claim_type ? `<span class="badge badge-type">${c.claim_type}</span>` : ''}
+                                            ${(c.topics || []).map(t => `<span class="badge badge-topic">${t}</span>`).join('')}
+                                            ${c.sentiment ? `<span class="badge badge-sentiment-${c.sentiment}">${c.sentiment}</span>` : ''}
+                                            ${c.attribution_confidence ? `<span class="confidence">attr: ${(c.attribution_confidence * 100).toFixed(0)}%</span>` : ''}
+                                            ${c.extraction_confidence ? `<span class="confidence">extr: ${(c.extraction_confidence * 100).toFixed(0)}%</span>` : ''}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="empty-state" style="padding:40px 20px">
+                                <div class="icon">🫥</div>
+                                <p>No approved claim history yet.</p>
+                                <p style="font-size:12px;margin-top:8px;color:var(--text-muted)">This usually means the person is seeded in the catalog, but the pipeline has not enriched enough videos for them yet.</p>
+                            </div>
+                        `}
                     </div>
                 </div>
             `;
@@ -686,6 +889,17 @@
             const s = Math.floor(ms / 1000);
             const m = Math.floor(s / 60);
             return `${m}:${String(s % 60).padStart(2, '0')}`;
+        }
+
+        function formatDate(value) {
+            if (!value) return 'Unknown date';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return 'Unknown date';
+            return date.toLocaleDateString(undefined, {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+            });
         }
 
         // ── Topics ──

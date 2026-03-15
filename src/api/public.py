@@ -68,16 +68,26 @@ def list_people(
 
 
 @router.get("/people/{person_id}")
-def get_person(person_id: UUID, db: Session = Depends(get_db)):
+def get_person(
+    person_id: UUID,
+    claim_limit: int = Query(default=50, ge=1, le=200),
+    db: Session = Depends(get_db),
+):
     person = db.query(People).filter(People.id == person_id).first()
     if not person:
         raise HTTPException(404, "Person not found")
+
+    claim_count = (
+        db.query(Claims)
+        .filter(Claims.person_id == person.id, Claims.review_status == "approved")
+        .count()
+    )
 
     claims = (
         db.query(Claims)
         .filter(Claims.person_id == person.id, Claims.review_status == "approved")
         .order_by(Claims.created_at.desc())
-        .limit(20)
+        .limit(claim_limit)
         .all()
     )
 
@@ -95,6 +105,7 @@ def get_person(person_id: UUID, db: Session = Depends(get_db)):
         "expertise_domains": person.expertise_domains,
         "inclusion_notes": person.inclusion_notes,
         "active": person.active,
+        "claim_count": claim_count,
         "claims": [_claim_summary(c) for c in claims],
         "positions": [
             {
@@ -482,4 +493,11 @@ def _claim_summary(c: Claims) -> dict:
         "temporal_marker": c.temporal_marker,
         "review_status": c.review_status,
         "created_at": c.created_at.isoformat() if c.created_at else None,
+        "source_video_title": c.video.title if c.video else None,
+        "source_video_youtube_id": c.video.youtube_video_id if c.video else None,
+        "source_video_url": (
+            f"https://youtube.com/watch?v={c.video.youtube_video_id}"
+            if c.video and c.video.youtube_video_id
+            else None
+        ),
     }
