@@ -15,6 +15,9 @@ from src.config import settings
 
 logger = logging.getLogger(__name__)
 DEFAULT_PROVIDER_PRIORITY = ("qwen", "anthropic", "openai")
+DEFAULT_OPENAI_MODEL = "gpt-5.4"
+DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-5"
+DEFAULT_QWEN_MODEL = "qwen3.5-plus"
 QWEN_DEFAULT_BASE_URLS = (
     "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
     "https://dashscope-us.aliyuncs.com/compatible-mode/v1",
@@ -98,11 +101,29 @@ def _dispatch_call(
 ) -> str:
     """Dispatch to the correct provider."""
     if provider == "openai":
-        return _call_openai(system_prompt, user_prompt, model or "gpt-5.4", temperature, max_tokens)
+        return _call_openai(
+            system_prompt,
+            user_prompt,
+            model or settings.openai_model or DEFAULT_OPENAI_MODEL,
+            temperature,
+            max_tokens,
+        )
     elif provider == "anthropic":
-        return _call_anthropic(system_prompt, user_prompt, model or "claude-sonnet-4-20250514", temperature, max_tokens)
+        return _call_anthropic(
+            system_prompt,
+            user_prompt,
+            model or settings.anthropic_model or DEFAULT_ANTHROPIC_MODEL,
+            temperature,
+            max_tokens,
+        )
     elif provider == "qwen":
-        return _call_qwen(system_prompt, user_prompt, model or "qwen-plus", temperature, max_tokens)
+        return _call_qwen(
+            system_prompt,
+            user_prompt,
+            model or settings.qwen_model or DEFAULT_QWEN_MODEL,
+            temperature,
+            max_tokens,
+        )
     else:
         raise RuntimeError(f"Unknown LLM provider: {provider}")
 
@@ -243,7 +264,7 @@ def _dispatch_tool_call(
             system_prompt,
             user_prompt,
             tool,
-            model or "gpt-5",
+            model or settings.openai_model or DEFAULT_OPENAI_MODEL,
             temperature,
             max_tokens,
         )
@@ -252,7 +273,7 @@ def _dispatch_tool_call(
             system_prompt,
             user_prompt,
             tool,
-            model or "claude-sonnet-4-20250514",
+            model or settings.anthropic_model or DEFAULT_ANTHROPIC_MODEL,
             temperature,
             max_tokens,
         )
@@ -261,7 +282,7 @@ def _dispatch_tool_call(
             system_prompt,
             user_prompt,
             tool,
-            model or "qwen-plus",
+            model or settings.qwen_model or DEFAULT_QWEN_MODEL,
             temperature,
             max_tokens,
         )
