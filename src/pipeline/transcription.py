@@ -70,6 +70,16 @@ class CaptionProvider(TranscriptionProvider):
     ) -> TranscribeResult:
         result = TranscribeResult(provider="yt-dlp", mode="caption")
 
+        direct_error = None
+        try:
+            direct_segments = _fetch_direct_transcript_segments(youtube_video_id)
+            if direct_segments:
+                result.provider = "youtube-transcript-api"
+                result.segments = direct_segments
+                return result
+        except Exception as exc:
+            direct_error = str(exc)
+
         with tempfile.TemporaryDirectory() as tmpdir:
             output_template = os.path.join(tmpdir, "%(id)s")
 
@@ -88,13 +98,15 @@ class CaptionProvider(TranscriptionProvider):
             )
 
             if proc.returncode != 0:
-                result.error = f"yt-dlp caption download failed: {proc.stderr[:300]}"
+                ytdlp_error = f"yt-dlp caption download failed: {proc.stderr[:300]}"
+                result.error = f"{direct_error} | {ytdlp_error}" if direct_error else ytdlp_error
                 return result
 
             # Find the VTT file (try various name patterns)
             vtt_files = sorted(Path(tmpdir).glob("*.vtt"))
             if not vtt_files:
-                result.error = "No VTT subtitle file found — video may not have captions"
+                ytdlp_error = "No VTT subtitle file found — video may not have captions"
+                result.error = f"{direct_error} | {ytdlp_error}" if direct_error else ytdlp_error
                 return result
 
             vtt_path = vtt_files[0]
@@ -105,14 +117,55 @@ class CaptionProvider(TranscriptionProvider):
         return result
 
 
+def _fetch_direct_transcript_segments(video_id: str) -> list[Segment]:
+    """Fetch captions without yt-dlp when YouTube exposes a transcript endpoint."""
+    try:
+        from youtube_transcript_api import YouTubeTranscriptApi
+    except Exception as exc:
+        raise RuntimeError(f"direct transcript fetch unavailable: {exc}") from exc
+
+    try:
+        transcript = YouTubeTranscriptApi().fetch(
+            video_id,
+            languages=["en", "en-US", "en-GB", "en-orig"],
+        )
+    except Exception as exc:
+        raise RuntimeError(f"direct transcript fetch failed: {exc}") from exc
+
+    cues = []
+    for item in transcript:
+        text = getattr(item, "text", None) if not isinstance(item, dict) else item.get("text")
+        start = getattr(item, "start", None) if not isinstance(item, dict) else item.get("start")
+        duration = getattr(item, "duration", None) if not isinstance(item, dict) else item.get("duration")
+
+        if not text:
+            continue
+
+        start_ms = int(float(start or 0) * 1000)
+        duration_ms = int(float(duration or 0) * 1000)
+        cues.append(
+            {
+                "start_ms": start_ms,
+                "end_ms": start_ms + max(duration_ms, 1000),
+                "text": str(text).strip(),
+            }
+        )
+
+    return _aggregate_cues_to_segments(cues)
+
+
 def _parse_vtt_to_segments(vtt_text: str, window_ms: int = 30_000) -> list[Segment]:
     """Parse VTT subtitle text into aggregated ~30s segments."""
     # Parse individual cues
     cues = _parse_vtt_cues(vtt_text)
+    return _aggregate_cues_to_segments(cues, window_ms=window_ms)
+
+
+def _aggregate_cues_to_segments(cues: list[dict], window_ms: int = 30_000) -> list[Segment]:
+    """Aggregate timestamped caption cues into larger readable windows."""
     if not cues:
         return []
 
-    # Aggregate into windows
     segments = []
     window_start = cues[0]["start_ms"]
     window_texts = []
