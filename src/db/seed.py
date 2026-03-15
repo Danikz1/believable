@@ -1,6 +1,7 @@
 """Seed the database with initial people, channels, channel_roles, and topics."""
 
 import json
+import os
 from pathlib import Path
 
 from sqlalchemy import or_
@@ -8,13 +9,70 @@ from sqlalchemy.orm import Session
 
 from src.db.models import ChannelRoles, People, PodcastChannels, Topics
 
-DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
+
+def _candidate_data_dirs(
+    *,
+    cwd: Path | None = None,
+    module_file: Path | None = None,
+    explicit_data_dir: str | None = None,
+) -> list[Path]:
+    roots: list[Path] = []
+
+    if explicit_data_dir:
+        roots.append(Path(explicit_data_dir))
+
+    cwd_path = Path.cwd() if cwd is None else Path(cwd)
+    roots.append(cwd_path / "data")
+    roots.extend(parent / "data" for parent in cwd_path.parents)
+
+    module_path = Path(__file__).resolve() if module_file is None else Path(module_file)
+    roots.extend(parent / "data" for parent in module_path.parents)
+
+    # Railway containers keep the checked-out project under /app.
+    roots.append(Path("/app/data"))
+
+    unique_roots: list[Path] = []
+    seen: set[Path] = set()
+    for root in roots:
+        if root in seen:
+            continue
+        seen.add(root)
+        unique_roots.append(root)
+    return unique_roots
+
+
+def _resolve_data_file(
+    filename: str,
+    *,
+    cwd: Path | None = None,
+    module_file: Path | None = None,
+    explicit_data_dir: str | None = None,
+) -> Path:
+    candidates = [
+        data_dir / filename
+        for data_dir in _candidate_data_dirs(
+            cwd=cwd,
+            module_file=module_file,
+            explicit_data_dir=explicit_data_dir,
+        )
+    ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    searched = "\n".join(f"  - {candidate}" for candidate in candidates)
+    raise FileNotFoundError(
+        f"Could not find seed file '{filename}'. Looked in:\n{searched}"
+    )
 
 
 def _load_json(filename: str) -> list[dict]:
-    filepath = DATA_DIR / filename
-    with open(filepath) as f:
-        return json.load(f)
+    filepath = _resolve_data_file(
+        filename,
+        explicit_data_dir=os.getenv("BELIEVABLE_MINDS_DATA_DIR"),
+    )
+    return json.loads(filepath.read_text(encoding="utf-8"))
 
 
 def seed_people(session: Session) -> int:
