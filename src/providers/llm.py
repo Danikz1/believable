@@ -16,7 +16,7 @@ from src.config import settings
 logger = logging.getLogger(__name__)
 DEFAULT_PROVIDER_PRIORITY = ("qwen", "anthropic", "openai")
 DEFAULT_OPENAI_MODEL = "gpt-5.2"
-DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-0"
+DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-6"
 DEFAULT_QWEN_MODEL = "qwen3.5-plus"
 QWEN_DEFAULT_BASE_URLS = (
     "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",

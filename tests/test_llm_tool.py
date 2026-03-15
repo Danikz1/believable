@@ -82,7 +82,7 @@ def test_dispatch_call_uses_settings_backed_default_models(monkeypatch):
     seen = []
 
     monkeypatch.setattr(llm.settings, "openai_model", "gpt-5.2")
-    monkeypatch.setattr(llm.settings, "anthropic_model", "claude-sonnet-4-0")
+    monkeypatch.setattr(llm.settings, "anthropic_model", "claude-sonnet-4-6")
     monkeypatch.setattr(llm.settings, "qwen_model", "qwen3.5-plus")
 
     def fake_openai(system_prompt, user_prompt, model, temperature, max_tokens):
@@ -106,7 +106,7 @@ def test_dispatch_call_uses_settings_backed_default_models(monkeypatch):
     assert llm._dispatch_call("qwen", "sys", "user", None, 0.1, 100) == "ok"
     assert seen == [
         ("openai", "gpt-5.2"),
-        ("anthropic", "claude-sonnet-4-0"),
+        ("anthropic", "claude-sonnet-4-6"),
         ("qwen", "qwen3.5-plus"),
     ]
 
@@ -115,7 +115,7 @@ def test_dispatch_tool_call_uses_settings_backed_default_models(monkeypatch):
     seen = []
 
     monkeypatch.setattr(llm.settings, "openai_model", "gpt-5.2")
-    monkeypatch.setattr(llm.settings, "anthropic_model", "claude-sonnet-4-0")
+    monkeypatch.setattr(llm.settings, "anthropic_model", "claude-sonnet-4-6")
     monkeypatch.setattr(llm.settings, "qwen_model", "qwen3.5-plus")
 
     def fake_openai_tool(system_prompt, user_prompt, tool, model, temperature, max_tokens):
@@ -139,6 +139,6 @@ def test_dispatch_tool_call_uses_settings_backed_default_models(monkeypatch):
     assert llm._dispatch_tool_call("qwen", "sys", "user", EXTRACT_CLAIMS_TOOL, None, 0.1, 100) == {"claims": []}
     assert seen == [
         ("openai", "gpt-5.2"),
-        ("anthropic", "claude-sonnet-4-0"),
+        ("anthropic", "claude-sonnet-4-6"),
         ("qwen", "qwen3.5-plus"),
     ]
