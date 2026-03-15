@@ -9,21 +9,22 @@ import subprocess
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
+from difflib import SequenceMatcher
 
 import httpx
 from sqlalchemy.orm import Session
 
 from src.config import settings
 from src.db.models import People, PodcastChannels, Videos
-from src.executables import resolve_executable
+from src.youtube import run_yt_dlp
 
 logger = logging.getLogger(__name__)
-YT_DLP_BIN = resolve_executable("yt-dlp")
 
 # ── Quota tracking ──────────────────────────────────────────────────────
 QUOTA_SEARCH = 100  # units per search.list call
 QUOTA_VIDEO_LIST = 1  # units per videos.list call (per video)
 MAX_DAILY_SEARCHES = 20
+CHANNEL_REPAIR_THRESHOLD = 0.72
 
 
 @dataclass
@@ -82,23 +83,25 @@ def scan_all_channels(session: Session, limit: int | None = None) -> ScanResult:
     return scan_channel_feeds(session, limit=limit)
 
 
-def _scan_single_channel(session: Session, channel: PodcastChannels, result: ScanResult) -> int:
+def _scan_single_channel(
+    session: Session,
+    channel: PodcastChannels,
+    result: ScanResult,
+    *,
+    allow_channel_repair: bool = True,
+) -> int:
     """Scan a single channel for new videos. Returns new video count."""
     channel_url = f"https://www.youtube.com/channel/{channel.youtube_channel_id}/videos"
 
     # yt-dlp: list recent videos from channel
     try:
-        proc = subprocess.run(
+        proc = run_yt_dlp(
             [
-                YT_DLP_BIN,
                 "--flat-playlist",
                 "-I", "1:20",  # last 20 videos
                 "--print", "%(id)s\t%(title)s\t%(upload_date)s\t%(duration)s\t%(description)s",
-                "--no-warnings",
                 channel_url,
             ],
-            capture_output=True,
-            text=True,
             timeout=60,
         )
     except subprocess.TimeoutExpired:
@@ -106,6 +109,15 @@ def _scan_single_channel(session: Session, channel: PodcastChannels, result: Sca
 
     if proc.returncode != 0:
         stderr = proc.stderr.strip()[:200] if proc.stderr else "unknown error"
+        if allow_channel_repair and _looks_like_missing_channel(stderr):
+            repaired = _repair_channel_id(session, channel, result)
+            if repaired:
+                return _scan_single_channel(
+                    session,
+                    channel,
+                    result,
+                    allow_channel_repair=False,
+                )
         raise RuntimeError(f"yt-dlp failed: {stderr}")
 
     new_count = 0
@@ -172,6 +184,86 @@ def _scan_single_channel(session: Session, channel: PodcastChannels, result: Sca
 
     session.flush()
     return new_count
+
+
+def _looks_like_missing_channel(stderr: str) -> bool:
+    lowered = stderr.lower()
+    return (
+        "this channel does not exist" in lowered
+        or "requested page could not be downloaded" in lowered
+        or "unable to download api page" in lowered
+    )
+
+
+def _repair_channel_id(session: Session, channel: PodcastChannels, result: ScanResult) -> bool:
+    """Try to repair a stale YouTube channel id using the YouTube API."""
+    if not settings.youtube_api_key:
+        return False
+
+    with httpx.Client(timeout=30) as client:
+        match = _find_channel_match(client, channel.name, result)
+
+    if not match or match["channel_id"] == channel.youtube_channel_id:
+        return False
+
+    old_id = channel.youtube_channel_id
+    channel.youtube_channel_id = match["channel_id"]
+    session.flush()
+    logger.info(
+        "Repaired YouTube channel id for %s: %s -> %s (%s)",
+        channel.name,
+        old_id,
+        channel.youtube_channel_id,
+        match["title"],
+    )
+    return True
+
+
+def _find_channel_match(
+    client: httpx.Client,
+    channel_name: str,
+    result: ScanResult,
+) -> dict | None:
+    params = {
+        "part": "snippet",
+        "q": channel_name,
+        "type": "channel",
+        "maxResults": 5,
+        "key": settings.youtube_api_key,
+    }
+    result.quota_used += QUOTA_SEARCH
+    response = _youtube_api_call(client, f"{YOUTUBE_API_BASE}/search", params)
+    return _select_best_channel_match(channel_name, response.get("items", []))
+
+
+def _select_best_channel_match(channel_name: str, items: list[dict]) -> dict | None:
+    best_match = None
+    best_score = 0.0
+    target = _normalize_channel_name(channel_name)
+
+    for item in items:
+        snippet = item.get("snippet", {})
+        title = snippet.get("channelTitle") or snippet.get("title") or ""
+        score = SequenceMatcher(None, target, _normalize_channel_name(title)).ratio()
+        if score > best_score:
+            channel_id = item.get("snippet", {}).get("channelId") or item.get("id", {}).get("channelId")
+            if channel_id:
+                best_score = score
+                best_match = {
+                    "channel_id": channel_id,
+                    "title": title,
+                    "score": score,
+                }
+
+    if best_match and best_score >= CHANNEL_REPAIR_THRESHOLD:
+        return best_match
+    return None
+
+
+def _normalize_channel_name(value: str) -> str:
+    cleaned = "".join(ch for ch in value.lower() if ch.isalnum() or ch.isspace())
+    tokens = [token for token in cleaned.split() if token not in {"podcast", "youtube", "official"}]
+    return " ".join(tokens)
 
 
 # ── Mode 2: Person Search Gap-Fill ───────────────────────────────────

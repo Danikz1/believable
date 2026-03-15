@@ -20,10 +20,9 @@ from sqlalchemy.orm import Session
 
 from src.config import settings
 from src.db.models import ChannelRoles, PodcastChannels, TranscriptRuns, TranscriptSegments, Videos
-from src.executables import resolve_executable
+from src.youtube import run_yt_dlp
 
 logger = logging.getLogger(__name__)
-YT_DLP_BIN = resolve_executable("yt-dlp")
 
 
 # ── Data types ───────────────────────────────────────────────────────
@@ -75,20 +74,16 @@ class CaptionProvider(TranscriptionProvider):
             output_template = os.path.join(tmpdir, "%(id)s")
 
             # Download auto-generated and manual captions
-            proc = subprocess.run(
+            proc = run_yt_dlp(
                 [
-                    YT_DLP_BIN,
                     "--write-auto-sub",
                     "--write-sub",
                     "--sub-lang", "en,en-orig,en-US",
                     "--skip-download",
                     "--sub-format", "vtt",
                     "-o", output_template,
-                    "--no-warnings",
                     f"https://www.youtube.com/watch?v={youtube_video_id}",
                 ],
-                capture_output=True,
-                text=True,
                 timeout=60,
             )
 
@@ -245,17 +240,14 @@ class DeepgramProvider(TranscriptionProvider):
         tmpdir = tempfile.mkdtemp()
         output_path = os.path.join(tmpdir, f"{youtube_video_id}.%(ext)s")
 
-        proc = subprocess.run(
+        proc = run_yt_dlp(
             [
-                YT_DLP_BIN,
                 "-x",
                 "--audio-format", "wav",
                 "--audio-quality", "0",
                 "-o", output_path,
                 f"https://www.youtube.com/watch?v={youtube_video_id}",
             ],
-            capture_output=True,
-            text=True,
             timeout=600,  # 10 min for long videos
         )
 

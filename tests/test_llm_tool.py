@@ -81,8 +81,8 @@ def test_openai_compatible_tool_call_parses_tool_arguments(monkeypatch):
 def test_dispatch_call_uses_settings_backed_default_models(monkeypatch):
     seen = []
 
-    monkeypatch.setattr(llm.settings, "openai_model", "gpt-5.4")
-    monkeypatch.setattr(llm.settings, "anthropic_model", "claude-sonnet-4-5")
+    monkeypatch.setattr(llm.settings, "openai_model", "gpt-5.2")
+    monkeypatch.setattr(llm.settings, "anthropic_model", "claude-sonnet-4-0")
     monkeypatch.setattr(llm.settings, "qwen_model", "qwen3.5-plus")
 
     def fake_openai(system_prompt, user_prompt, model, temperature, max_tokens):
@@ -105,8 +105,8 @@ def test_dispatch_call_uses_settings_backed_default_models(monkeypatch):
     assert llm._dispatch_call("anthropic", "sys", "user", None, 0.1, 100) == "ok"
     assert llm._dispatch_call("qwen", "sys", "user", None, 0.1, 100) == "ok"
     assert seen == [
-        ("openai", "gpt-5.4"),
-        ("anthropic", "claude-sonnet-4-5"),
+        ("openai", "gpt-5.2"),
+        ("anthropic", "claude-sonnet-4-0"),
         ("qwen", "qwen3.5-plus"),
     ]
 
@@ -114,8 +114,8 @@ def test_dispatch_call_uses_settings_backed_default_models(monkeypatch):
 def test_dispatch_tool_call_uses_settings_backed_default_models(monkeypatch):
     seen = []
 
-    monkeypatch.setattr(llm.settings, "openai_model", "gpt-5.4")
-    monkeypatch.setattr(llm.settings, "anthropic_model", "claude-sonnet-4-5")
+    monkeypatch.setattr(llm.settings, "openai_model", "gpt-5.2")
+    monkeypatch.setattr(llm.settings, "anthropic_model", "claude-sonnet-4-0")
     monkeypatch.setattr(llm.settings, "qwen_model", "qwen3.5-plus")
 
     def fake_openai_tool(system_prompt, user_prompt, tool, model, temperature, max_tokens):
@@ -138,7 +138,7 @@ def test_dispatch_tool_call_uses_settings_backed_default_models(monkeypatch):
     assert llm._dispatch_tool_call("anthropic", "sys", "user", EXTRACT_CLAIMS_TOOL, None, 0.1, 100) == {"claims": []}
     assert llm._dispatch_tool_call("qwen", "sys", "user", EXTRACT_CLAIMS_TOOL, None, 0.1, 100) == {"claims": []}
     assert seen == [
-        ("openai", "gpt-5.4"),
-        ("anthropic", "claude-sonnet-4-5"),
+        ("openai", "gpt-5.2"),
+        ("anthropic", "claude-sonnet-4-0"),
         ("qwen", "qwen3.5-plus"),
     ]

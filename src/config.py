@@ -20,8 +20,8 @@ class Settings(BaseSettings):
     qwen_api_key: str = ""
     qwen_api_base: str = ""
     llm_provider: str = "qwen"  # 'qwen', 'anthropic', or 'openai'
-    openai_model: str = "gpt-5.4"
-    anthropic_model: str = "claude-sonnet-4-5"
+    openai_model: str = "gpt-5.2"
+    anthropic_model: str = "claude-sonnet-4-0"
     qwen_model: str = "qwen3.5-plus"
 
     # Stage 5: Embeddings
