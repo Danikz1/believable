@@ -992,6 +992,32 @@ def trigger_channel_scan(channel_id: UUID, db: Session = Depends(get_db)):
     }
 
 
+@router.delete("/channels/{channel_id}")
+def delete_channel(channel_id: UUID, db: Session = Depends(get_db)):
+    """Remove a channel and unlink its videos."""
+    from src.db.models import ChannelRoles
+
+    channel = db.query(PodcastChannels).filter(PodcastChannels.id == channel_id).first()
+    if not channel:
+        raise HTTPException(404, "Channel not found")
+
+    name = channel.name
+
+    # 1. Delete channel favorites
+    db.query(Favorites).filter(Favorites.channel_id == channel_id).delete(synchronize_session=False)
+    # 2. Delete channel roles
+    db.query(ChannelRoles).filter(ChannelRoles.channel_id == channel_id).delete(synchronize_session=False)
+    # 3. Unlink videos (keep the videos, just remove channel reference)
+    db.query(Videos).filter(Videos.podcast_channel_id == channel_id).update(
+        {Videos.podcast_channel_id: None}, synchronize_session=False
+    )
+    # 4. Delete the channel
+    db.delete(channel)
+    db.commit()
+
+    return {"status": "deleted", "name": name}
+
+
 # ── Video Add ──────────────────────────────────────────────────────────
 
 class VideoAddRequest(BaseModel):

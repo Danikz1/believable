@@ -278,12 +278,19 @@
     .channel-count-label { font-size: 11px; color: #666; }
     .channel-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
     .channel-scanned { font-size: 11px; color: #555; }
+    .channel-actions { display: flex; gap: 6px; }
     .btn-check {
       padding: 5px 12px; font-size: 11px; border-radius: 6px;
       background: #1a1a1a; border: 1px solid #333; color: #888;
       cursor: pointer; transition: all 0.2s;
     }
     .btn-check:hover { background: #333; color: #fff; }
+    .btn-delete {
+      padding: 5px 10px; font-size: 11px; border-radius: 6px;
+      background: transparent; border: 1px solid #331111; color: #663333;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-delete:hover { background: #1a0505; border-color: #552222; color: #ef4444; }
 
     /* ── Modal ─────────────────────────────────────────────────────── */
     .modal-overlay {
@@ -442,6 +449,12 @@ function api(path) { return fetch(API + path).then(r => r.json()); }
 function apiPost(path, body) {
   return fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => {
     if (!r.ok) return r.json().then(e => { throw new Error(e.detail || 'Request failed'); });
+    return r.json();
+  });
+}
+function apiDelete(path) {
+  return fetch(API + path, { method: 'DELETE' }).then(r => {
+    if (!r.ok) return r.json().then(e => { throw new Error(e.detail || 'Delete failed'); });
     return r.json();
   });
 }
@@ -931,7 +944,10 @@ async function renderChannels() {
         <div class="channel-count-label">videos tracked</div>
         <div class="channel-bottom">
           <span class="channel-scanned">${scanned}</span>
-          <button class="btn-check" onclick="event.stopPropagation();scanChannel('${ch.id}',this)">↻ Check Now</button>
+          <div class="channel-actions">
+            <button class="btn-delete" onclick="event.stopPropagation();deleteChannel('${ch.id}','${ch.name.replace(/'/g, "\\'")}')">✕ Remove</button>
+            <button class="btn-check" onclick="event.stopPropagation();scanChannel('${ch.id}',this)">↻ Check Now</button>
+          </div>
         </div>
       </div>
     `;
@@ -954,6 +970,17 @@ async function scanChannel(id, btn) {
   } catch (e) {
     btn.textContent = '✗ Failed';
     setTimeout(() => { btn.textContent = '↻ Check Now'; btn.disabled = false; }, 2000);
+  }
+}
+
+async function deleteChannel(id, name) {
+  if (!confirm(`Remove "${name}" from tracked channels? Videos already processed will be kept.`)) return;
+  try {
+    await apiDelete(`/channels/${id}`);
+    showToast(`Removed ${name}`);
+    renderChannels();
+  } catch (e) {
+    showToast('Failed to remove channel');
   }
 }
 
