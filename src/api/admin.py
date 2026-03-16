@@ -220,9 +220,15 @@ def regenerate_summaries(
         try:
             summary = generate_episode_summary(video.id, "full_episode", db)
             if summary:
+                # Check if sections were actually generated
+                detailed = summary.detailed_json or {}
+                sec_count = len(detailed.get("sections", [])) if isinstance(detailed, dict) else 0
                 stats["regenerated"] += 1
+                stats["errors"].append(f"OK: {video.title[:40]} → {sec_count} sections")
+            else:
+                stats["errors"].append(f"RETURNED_NONE: {video.title[:60]}")
         except Exception as e:
-            stats["errors"].append(f"{video.title}: {str(e)[:200]}")
+            stats["errors"].append(f"EXCEPTION: {video.title[:40]}: {str(e)[:200]}")
 
     return {"status": "completed", "stats": stats}
 
