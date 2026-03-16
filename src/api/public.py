@@ -957,21 +957,40 @@ def add_channel(req: ChannelCreate, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(409, f"Channel already tracked: {existing.name}")
 
+    # Look up known channel config from seed data (transcript settings, tier, etc.)
+    import json as _json2
+    from pathlib import Path as _Path
+    seed_config = {}
+    try:
+        seed_path = _Path(__file__).parent.parent.parent / "data" / "channels_seed.json"
+        if seed_path.exists():
+            seed_channels = _json2.loads(seed_path.read_text())
+            for sc in seed_channels:
+                if sc.get("youtube_channel_id") == channel_id:
+                    seed_config = sc
+                    break
+    except Exception:
+        pass  # Seed lookup is best-effort
+
     ch = PodcastChannels(
         youtube_channel_id=channel_id,
-        name=channel_name,
-        tier=2,
-        monitoring_mode="channel_feed",
+        name=seed_config.get("name") or channel_name,
+        tier=seed_config.get("tier", 2),
+        monitoring_mode=seed_config.get("monitoring_mode", "channel_feed"),
+        transcript_url_pattern=seed_config.get("transcript_url_pattern"),
+        transcript_parser=seed_config.get("transcript_parser"),
     )
     db.add(ch)
     db.commit()
 
-    # Auto-scan the new channel for recent videos
+    # Auto-scan the new channel for recent videos (limited to 5 to avoid overwhelm)
     scan_result = {"new_videos": 0}
+    if ch.transcript_url_pattern:
+        scan_result["transcript_source"] = ch.transcript_parser or "official"
     try:
         from src.pipeline.discovery import _scan_single_channel, ScanResult
         result = ScanResult()
-        _scan_single_channel(db, ch, result)
+        _scan_single_channel(db, ch, result, max_videos=5)
         ch.last_scanned_at = datetime.now(timezone.utc)
         ch.video_count = db.query(Videos).filter(Videos.podcast_channel_id == ch.id).count()
         db.commit()

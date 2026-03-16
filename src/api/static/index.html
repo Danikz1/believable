@@ -598,7 +598,8 @@ async function submitChannel() {
   try {
     const res = await apiPost('/channels', { url_or_handle: url });
     closeModal('channel');
-    const msg = res.new_videos ? `Channel added! Found ${res.new_videos} videos` : 'Channel added!';
+    let msg = res.new_videos ? `Channel added! Found ${res.new_videos} videos` : 'Channel added!';
+    if (res.transcript_source) msg += ` (using ${res.transcript_source} transcripts)`;
     showToast(msg);
     if (parseHash().page === 'channels') renderChannels();
   } catch (e) {

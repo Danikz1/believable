@@ -89,6 +89,7 @@ def _scan_single_channel(
     result: ScanResult,
     *,
     allow_channel_repair: bool = True,
+    max_videos: int = 20,
 ) -> int:
     """Scan a single channel for new videos. Returns new video count."""
     channel_url = f"https://www.youtube.com/channel/{channel.youtube_channel_id}/videos"
@@ -98,7 +99,7 @@ def _scan_single_channel(
         proc = run_yt_dlp(
             [
                 "--flat-playlist",
-                "-I", "1:20",  # last 20 videos
+                "-I", f"1:{max_videos}",
                 "--print", "%(id)s\t%(title)s\t%(upload_date)s\t%(duration)s\t%(description)s",
                 channel_url,
             ],
