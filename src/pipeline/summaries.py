@@ -28,31 +28,48 @@ logger = logging.getLogger(__name__)
 
 # ── Prompts ──────────────────────────────────────────────────────────
 
-EPISODE_SUMMARY_SYSTEM = """You are an expert analyst producing structured episode summaries for an intelligence platform.
+EPISODE_SUMMARY_SYSTEM = """You are an expert analyst producing rich, detailed episode summaries for an intelligence platform.
 
 Return ONLY valid JSON with these fields:
-1. "tldr": 2-3 sentences. What happened and why it matters. The "30-second" version.
-2. "summary_body": 2-4 paragraphs. Key positions, arguments, tensions. The "2-minute read" version.
-3. "sections": Array of episode sections, each with:
-   - "title": section title
+
+1. "tldr": 2 substantial paragraphs (6-8 sentences total). Cover ALL major topics discussed,
+   the key arguments made, and why this episode matters. This should feel like a proper executive briefing,
+   not a throwaway blurb. A reader should understand the core value of this episode from the TLDR alone.
+
+2. "summary_body": 8-12 detailed paragraphs. This is the "5-minute deep read" version.
+   Cover every major topic in depth. Include specific claims, data points, and arguments.
+   Capture the nuance and tensions between speakers. Include direct quotes where impactful.
+   Structure it as a flowing article — not bullet points. Each paragraph should add new information.
+   Cover: the main thesis, supporting arguments, counterpoints, surprising revelations,
+   practical implications, and forward-looking predictions.
+
+3. "sections": Array of 8-15 episode sections (be granular!), each with:
+   - "title": descriptive section title
    - "start_ms": approximate start timestamp in milliseconds
-   - "summary": 2-3 sentence section summary
+   - "summary": 6-8 sentences per section. Cover what was discussed, key arguments,
+     specific examples mentioned, data points cited, and conclusions reached.
+     Include notable quotes. This should read like a detailed paragraph, not a headline.
    - "claims": array of claim references [{claim_id, text, speaker}]
-4. "best_moments": The 3 most important/surprising/quotable moments with:
-   - "description": what makes this moment notable
+
+4. "best_moments": 5-8 most important/surprising/quotable moments with:
+   - "description": 2-3 sentences explaining what makes this moment notable and its context
    - "timestamp_ms": approximate timestamp in milliseconds
-   - "quote_snippet": the key quote (under 100 chars)
+   - "quote_snippet": the key quote (under 150 chars)
+
 5. "speakers": Per-speaker summary array:
    - "person_name": speaker name
-   - "main_positions": 2-3 sentence summary of their positions
+   - "main_positions": 4-6 sentences summarizing their positions, arguments, and stance
    - "claim_count": number of claims from this speaker
+
 6. "whats_new": Position shifts vs. prior history. If no shifts, say "Consistent with prior positions."
    If first appearance, say "First tracked appearance — baseline positions established."
+
 7. "watch_verdict": One of "essential", "worth_skimming", "skip_unless_fan"
    - "essential": Drop everything and watch/read this
    - "worth_skimming": Worth 10 minutes, jump to the key moments
    - "skip_unless_fan": Only if you specifically follow this person/topic
-8. "watch_verdict_reason": 1 sentence justifying the verdict."""
+
+8. "watch_verdict_reason": 2-3 sentences justifying the verdict with specific reasons."""
 
 
 PERSON_FOCUSED_SYSTEM = """You are an expert analyst producing a person-focused episode summary.

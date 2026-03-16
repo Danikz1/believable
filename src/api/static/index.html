@@ -731,8 +731,8 @@ async function renderEpisode(videoId) {
     </div>
     ${ytUrl ? `<a href="${ytUrl}" target="_blank" class="btn btn-red" style="margin-bottom:24px;">▶ Watch on YouTube</a>` : ''}
     <div class="depth-toggle">
-      <button class="depth-btn active" onclick="setDepth('tldr', this)">30-Sec TL;DR</button>
-      <button class="depth-btn" onclick="setDepth('summary', this)">2-Min Read</button>
+      <button class="depth-btn active" onclick="setDepth('tldr', this)">TL;DR</button>
+      <button class="depth-btn" onclick="setDepth('summary', this)">5-Min Read</button>
       <button class="depth-btn" onclick="setDepth('full', this)">Full Breakdown</button>
     </div>
     <div id="ep-content"></div>
