@@ -72,14 +72,22 @@ def process_all(
     results = {}
 
     # Step 0: Clean up invalid people names (transcript fragments, etc.)
-    from src.db.models import People as PeopleModel, VideoPeople as VP, Claims as ClaimsModel
+    from src.db.models import People as PeopleModel
     from sqlalchemy import text
 
     invalid_people = [p for p in db.query(PeopleModel).all() if not _is_valid_person_name(p.name)]
     if invalid_people:
         for p in invalid_people:
             pid = str(p.id)
+            # Clean all FK references before deleting
+            db.execute(text("DELETE FROM favorites WHERE person_id = :pid"), {"pid": pid})
+            db.execute(text("DELETE FROM episode_summaries WHERE person_focus_id = :pid"), {"pid": pid})
+            db.execute(text("DELETE FROM shift_notes WHERE person_id = :pid"), {"pid": pid})
+            db.execute(text("DELETE FROM person_topic_positions WHERE person_id = :pid"), {"pid": pid})
+            db.execute(text("DELETE FROM x_posts WHERE person_id = :pid"), {"pid": pid})
+            db.execute(text("DELETE FROM channel_roles WHERE person_id = :pid"), {"pid": pid})
             db.execute(text("DELETE FROM video_people WHERE person_id = :pid"), {"pid": pid})
+            db.execute(text("UPDATE transcript_segments SET person_id = NULL WHERE person_id = :pid"), {"pid": pid})
             db.execute(text("UPDATE claims SET person_id = NULL WHERE person_id = :pid"), {"pid": pid})
             db.execute(text("DELETE FROM people WHERE id = :pid"), {"pid": pid})
         db.commit()
