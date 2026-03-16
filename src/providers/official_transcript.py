@@ -92,6 +92,12 @@ def resolve_transcript_url(
 
         logger.info(f"No valid transcript URL found from {len(candidates)} candidates")
 
+    # Strategy 3: Scrape the channel website for transcript links
+    if video_title and domain:
+        url = _find_transcript_on_website(domain, video_title)
+        if url:
+            return url
+
     return None
 
 
@@ -178,6 +184,92 @@ def _slugify(text: str) -> str | None:
     slug = re.sub(r"\s+", "-", slug)
     slug = slug.strip("-")
     return slug if slug else None
+
+
+def _find_transcript_on_website(domain: str, video_title: str) -> str | None:
+    """Scrape the channel's website for transcript links matching the video title.
+
+    Strategy: fetch the podcast/episodes page, find all transcript links,
+    and fuzzy-match against the video title.
+    """
+    # Common podcast listing paths to try
+    listing_urls = [
+        f"https://{domain}/podcast",
+        f"https://{domain}/episodes",
+        f"https://{domain}/",
+    ]
+
+    # Extract meaningful keywords from title (skip common words)
+    stop_words = {"the", "a", "an", "and", "or", "of", "in", "on", "for", "with",
+                  "is", "it", "to", "at", "by", "lex", "fridman", "podcast", "full",
+                  "exclusive", "footage", "interview"}
+    title_words = set(
+        w.lower() for w in re.sub(r"[^a-zA-Z0-9\s]", "", video_title).split()
+        if len(w) > 2 and w.lower() not in stop_words
+    )
+
+    if len(title_words) < 2:
+        return None
+
+    logger.info(f"Searching {domain} for transcript matching: {title_words}")
+
+    try:
+        with httpx.Client(timeout=15, follow_redirects=True) as client:
+            for listing_url in listing_urls:
+                try:
+                    resp = client.get(listing_url)
+                    if resp.status_code != 200:
+                        continue
+                except Exception:
+                    continue
+
+                # Find all transcript links in the page
+                transcript_links = re.findall(
+                    rf'href="(https?://{re.escape(domain)}/[^"]*-transcript[^"]*)"',
+                    resp.text
+                )
+                # Also find relative transcript links
+                relative_links = re.findall(
+                    r'href="(/[^"]*-transcript[^"]*)"',
+                    resp.text
+                )
+                transcript_links.extend(
+                    f"https://{domain}{link}" for link in relative_links
+                )
+
+                if not transcript_links:
+                    continue
+
+                # Score each transcript link by keyword overlap
+                best_url = None
+                best_score = 0
+
+                for link in transcript_links:
+                    # Extract the slug part from the URL
+                    slug_part = link.rsplit("/", 1)[-1].replace("-transcript", "")
+                    slug_words = set(slug_part.split("-"))
+
+                    # Count matching keywords
+                    overlap = len(title_words & slug_words)
+                    # Also check if title words appear in the slug (partial match)
+                    partial = sum(1 for tw in title_words if tw in slug_part)
+
+                    score = overlap + partial * 0.5
+                    if score > best_score:
+                        best_score = score
+                        best_url = link
+
+                if best_url and best_score >= 1:
+                    logger.info(f"Found transcript via website scrape: {best_url} (score={best_score})")
+                    return best_url
+
+                logger.info(f"No matching transcript found on {listing_url} ({len(transcript_links)} links checked)")
+                break  # Only try the first successful listing page
+
+    except Exception as e:
+        logger.warning(f"Website transcript search failed: {e}")
+
+    return None
 
 
 def validate_url(url: str) -> bool:
