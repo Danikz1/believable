@@ -220,13 +220,13 @@ CHANNEL: {video.podcast_channel.name if video.podcast_channel else 'Unknown'}
 DATE: {video.published_at.strftime('%Y-%m-%d') if video.published_at else 'Unknown'}
 SPEAKERS: {', '.join(speaker_names) if speaker_names else 'Unknown'}
 
-EXTRACTED CLAIMS ({len(claims)} total):
-{_format_claims(claims_json_list)}
+EXTRACTED CLAIMS ({len(claims)} total, showing first 30):
+{_format_claims(claims_json_list[:30])}
 
 {f'PRIOR CONTEXT FOR TRACKED SPEAKERS:{chr(10)}{whats_new_context}' if whats_new_context else ''}
 
 TRANSCRIPT (truncated):
-{transcript_text[:80000]}"""
+{transcript_text[:40000]}"""
 
     try:
         result = call_llm_json(system_prompt, user_prompt, max_tokens=16384)
