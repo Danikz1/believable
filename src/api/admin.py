@@ -185,3 +185,37 @@ def retry_errors(
 
     db.commit()
     return {"requeued": count}
+
+
+# ── Data Cleanup ─────────────────────────────────────────────────────
+
+@router.post("/wipe/videos")
+def wipe_all_video_data(
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_admin),
+):
+    """Delete ALL video-related data for a clean slate."""
+    from src.db.models import (
+        ClaimEmbeddings, ClaimEvidence, ClaimTopics,
+        EpisodeSummaries, PersonTopicPositions, PositionHistoryLog,
+        TranscriptSegments, VideoPeople,
+    )
+
+    counts = {}
+    for model, name in [
+        (PositionHistoryLog, "position_history"),
+        (PersonTopicPositions, "person_topic_positions"),
+        (ClaimEmbeddings, "claim_embeddings"),
+        (ClaimEvidence, "claim_evidence"),
+        (ClaimTopics, "claim_topics"),
+        (Claims, "claims"),
+        (EpisodeSummaries, "episode_summaries"),
+        (TranscriptSegments, "transcript_segments"),
+        (VideoPeople, "video_people"),
+        (Videos, "videos"),
+    ]:
+        n = db.query(model).delete(synchronize_session=False)
+        counts[name] = n
+
+    db.commit()
+    return {"status": "wiped", "deleted": counts}

@@ -594,11 +594,12 @@ async function submitChannel() {
   const url = $('input-channel-url').value.trim();
   if (!url) return;
   const btn = $('btn-submit-channel');
-  btn.textContent = 'Adding...'; btn.disabled = true;
+  btn.textContent = 'Adding & scanning...'; btn.disabled = true;
   try {
-    await apiPost('/channels', { url_or_handle: url });
+    const res = await apiPost('/channels', { url_or_handle: url });
     closeModal('channel');
-    showToast('Channel added!');
+    const msg = res.new_videos ? `Channel added! Found ${res.new_videos} videos` : 'Channel added!';
+    showToast(msg);
     if (parseHash().page === 'channels') renderChannels();
   } catch (e) {
     $('error-channel').textContent = e.message;

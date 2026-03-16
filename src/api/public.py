@@ -966,11 +966,26 @@ def add_channel(req: ChannelCreate, db: Session = Depends(get_db)):
     db.add(ch)
     db.commit()
 
+    # Auto-scan the new channel for recent videos
+    scan_result = {"new_videos": 0}
+    try:
+        from src.pipeline.discovery import _scan_single_channel, ScanResult
+        result = ScanResult()
+        _scan_single_channel(db, ch, result)
+        ch.last_scanned_at = datetime.now(timezone.utc)
+        ch.video_count = db.query(Videos).filter(Videos.podcast_channel_id == ch.id).count()
+        db.commit()
+        scan_result["new_videos"] = result.videos_found
+    except Exception as e:
+        # Don't fail the channel creation if scan fails
+        scan_result["scan_error"] = str(e)[:200]
+
     return {
         "id": str(ch.id),
         "name": ch.name,
         "youtube_channel_id": ch.youtube_channel_id,
         "status": "created",
+        **scan_result,
     }
 
 
