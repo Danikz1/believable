@@ -136,11 +136,15 @@ def identify_speakers_deep(session: Session, video: Videos) -> dict:
                     result["unmatched"] += 1
                     continue
 
-                # Try to match to a tracked person
+                # Try to match to a tracked person, or auto-create
                 person = session.query(People).filter(
                     People.name.ilike(f"%{name}%"),
                     People.active == True,  # noqa: E712
                 ).first()
+
+                if not person and name != "Unknown":
+                    person = _auto_create_person(session, name)
+                    result.setdefault("created", []).append(name)
 
                 if person:
                     _upsert_video_person(
@@ -165,13 +169,8 @@ def identify_speakers_deep(session: Session, video: Videos) -> dict:
         # Fall back to known hosts only
         _match_known_hosts_only(session, video, known_hosts, result)
 
-    # Step 5: Update video status
-    if result["matched"] > 0:
-        video.status = "identified"
-    else:
-        video.status = "skipped"
-        video.skip_reason = "no_tracked_speakers"
-
+    # Step 5: Update video status — always proceed (no more skipping)
+    video.status = "identified"
     session.commit()
     return result
 
@@ -221,6 +220,10 @@ def identify_speakers_fast(session: Session, video: Videos) -> dict:
                     People.active == True,  # noqa: E712
                 ).first()
 
+                if not person and name and confidence >= 0.75:
+                    person = _auto_create_person(session, name)
+                    result.setdefault("created", []).append(name)
+
                 if person:
                     # Skip low-confidence metadata-only matches
                     if confidence < 0.75:
@@ -250,13 +253,8 @@ def identify_speakers_fast(session: Session, video: Videos) -> dict:
     # Step 3: Check auto-upgrade triggers
     _check_upgrade_triggers(session, video, result)
 
-    # Step 4: Update video status
-    if result["matched"] > 0:
-        video.status = "identified"
-    else:
-        video.status = "skipped"
-        video.skip_reason = "no_tracked_speakers"
-
+    # Step 4: Update video status — always proceed
+    video.status = "identified"
     session.commit()
     return result
 
@@ -290,6 +288,10 @@ def identify_speakers_official(session: Session, video: Videos) -> dict:
 
     for name in speaker_names:
         person = _match_speaker_name(session, name, known_hosts)
+        if not person and name and name.lower() not in ("unknown", "narrator"):
+            person = _auto_create_person(session, name)
+            result.setdefault("created", []).append(name)
+
         if person:
             _upsert_video_person(
                 session, video, person,
@@ -307,12 +309,8 @@ def identify_speakers_official(session: Session, video: Videos) -> dict:
 
     session.flush()
 
-    if result["matched"] > 0:
-        video.status = "identified"
-    else:
-        video.status = "skipped"
-        video.skip_reason = "no_tracked_speakers"
-
+    # Always proceed — no more skipping
+    video.status = "identified"
     session.commit()
     return result
 
@@ -349,6 +347,32 @@ def _match_speaker_name(
                 return session.query(People).filter(People.id == host["person_id"]).first()
 
     return None
+
+
+def _auto_create_person(session: Session, name: str) -> People | None:
+    """Auto-create a new People record from a speaker name found in a transcript."""
+    if not name or len(name.strip()) < 2:
+        return None
+
+    clean_name = name.strip()
+
+    # Double-check dedup (case-insensitive exact match)
+    existing = session.query(People).filter(
+        People.name.ilike(clean_name)
+    ).first()
+    if existing:
+        return existing
+
+    person = People(
+        name=clean_name,
+        tier=3,  # Auto-discovered people start at tier 3
+        active=True,
+        inclusion_notes=f"Auto-created from transcript speaker identification",
+    )
+    session.add(person)
+    session.flush()
+    logger.info(f"Auto-created person: {clean_name} (id={person.id})")
+    return person
 
 
 # ── Orchestrator ─────────────────────────────────────────────────────
