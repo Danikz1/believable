@@ -77,37 +77,35 @@ def process_all(
 
     invalid_people = [p for p in db.query(PeopleModel).all() if not _is_valid_person_name(p.name)]
     if invalid_people:
-        # Tables that might reference person_id
-        cleanup_deletes = [
-            "DELETE FROM favorites WHERE person_id = :pid",
-            "DELETE FROM episode_summaries WHERE person_focus_id = :pid",
-            "DELETE FROM shift_notes WHERE person_id = :pid",
-            "DELETE FROM person_topic_positions WHERE person_id = :pid",
-            "DELETE FROM x_posts WHERE person_id = :pid",
-            "DELETE FROM channel_roles WHERE person_id = :pid",
-            "DELETE FROM video_people WHERE person_id = :pid",
-        ]
-        cleanup_nullify = [
-            "UPDATE transcript_segments SET person_id = NULL WHERE person_id = :pid",
-            "UPDATE claims SET person_id = NULL WHERE person_id = :pid",
+        # Tables that reference person_id — try each, skip if table missing
+        fk_tables = [
+            ("DELETE FROM favorites WHERE person_id = :pid", False),
+            ("DELETE FROM episode_summaries WHERE person_focus_id = :pid", False),
+            ("DELETE FROM shift_notes WHERE person_id = :pid", False),
+            ("DELETE FROM person_topic_positions WHERE person_id = :pid", False),
+            ("DELETE FROM x_posts WHERE person_id = :pid", False),
+            ("DELETE FROM channel_roles WHERE person_id = :pid", False),
+            ("DELETE FROM video_people WHERE person_id = :pid", False),
+            ("UPDATE transcript_segments SET person_id = NULL WHERE person_id = :pid", True),
+            ("UPDATE claims SET person_id = NULL WHERE person_id = :pid", True),
         ]
 
+        removed = 0
         for p in invalid_people:
             pid = str(p.id)
-            for stmt in cleanup_deletes + cleanup_nullify:
+            for stmt, _ in fk_tables:
                 try:
                     db.execute(text(stmt), {"pid": pid})
                 except Exception:
-                    pass  # Table might not exist
+                    db.rollback()  # Reset after error
             try:
                 db.execute(text("DELETE FROM people WHERE id = :pid"), {"pid": pid})
+                db.commit()
+                removed += 1
             except Exception:
-                pass
-        try:
-            db.commit()
-        except Exception:
-            db.rollback()
-        results["cleanup"] = {"removed_invalid_people": len(invalid_people)}
+                db.rollback()
+
+        results["cleanup"] = {"removed_invalid_people": removed}
 
     from src.pipeline.enrichment import enrich_pending
 
@@ -120,7 +118,7 @@ def process_all(
     # Step 3: Enrich identified videos
     results["enrich"] = enrich_pending(db, limit=limit)
 
-    # Step 4: Generate summaries for enriched videos without one
+    # Step 4: Generate summaries for enriched videos (overwrite existing)
     from src.pipeline.summaries import generate_episode_summary
     from src.db.models import EpisodeSummaries, Videos as VideosModel
 
@@ -132,16 +130,6 @@ def process_all(
 
     summary_stats = {"generated": 0, "errors": []}
     for video in enriched_videos[:limit]:
-        existing = (
-            db.query(EpisodeSummaries)
-            .filter(
-                EpisodeSummaries.video_id == video.id,
-                EpisodeSummaries.summary_type == "full_episode",
-            )
-            .first()
-        )
-        if existing:
-            continue
         try:
             summary = generate_episode_summary(video.id, "full_episode", db)
             if summary:
