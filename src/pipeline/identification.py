@@ -47,21 +47,25 @@ SPEAKER SAMPLES:
 
 Return JSON: {{"speakers": [{{"speaker_label": "SPEAKER_00", "name": "Person Name", "confidence": 0.85}}]}}"""
 
-METADATA_ID_SYSTEM_PROMPT = """You identify which people appear in a YouTube video based ONLY on the title, description, and channel.
+METADATA_ID_SYSTEM_PROMPT = """You identify which tracked people ACTUALLY SPEAK in a YouTube video based on the title, description, and channel.
 
 You know these tracked people:
 {people_list}
 
-Rules:
-- Only identify people you are confident appear in the video
-- Use title, description, and channel context
+CRITICAL rules:
+- Only identify people who are ACTUALLY SPEAKING in the video (as a host, guest, or interviewee)
+- Do NOT identify someone just because they are MENTIONED or DISCUSSED in the video
+- Do NOT identify someone from AI-generated summary videos, compilations, or commentary channels ABOUT them
+- Videos titled "X and the ..." or "What X thinks about ..." often discuss the person without them being present
+- Look for signals like "interview with", "joins", "sits down with", "featuring" as evidence of actual presence
+- When in doubt, set a LOW confidence score (below 0.5)
 - Return ONLY valid JSON"""
 
 METADATA_ID_USER_TEMPLATE = """VIDEO: {title}
 CHANNEL: {channel_name}
 DESCRIPTION: {description}
 
-Which tracked people appear in this video?
+Which tracked people are ACTUALLY SPEAKING in this video (not just mentioned or discussed)?
 Return JSON: {{"people": [{{"name": "Person Name", "confidence": 0.7, "role": "guest"}}]}}"""
 
 
@@ -218,6 +222,13 @@ def identify_speakers_fast(session: Session, video: Videos) -> dict:
                 ).first()
 
                 if person:
+                    # Skip low-confidence metadata-only matches
+                    if confidence < 0.75:
+                        logger.info(
+                            f"Skipping low-confidence metadata match: "
+                            f"{person.name} ({confidence:.2f}) in {video.title}"
+                        )
+                        continue
                     # Don't duplicate if already matched as host
                     existing = session.query(VideoPeople).filter(
                         VideoPeople.video_id == video.id,
