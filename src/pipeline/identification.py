@@ -384,27 +384,51 @@ def _is_valid_person_name(name: str) -> bool:
     """Check if a string looks like a real person name vs. a transcript fragment."""
     import re
 
-    # Must be 1-5 words
+    # Must be 1-4 words (real names are rarely more than 4 words)
     words = name.split()
-    if len(words) > 5 or len(words) == 0:
+    if len(words) > 4 or len(words) == 0:
         return False
 
-    # Reject very long "names"
-    if len(name) > 60:
+    # Reject long strings — real names are short
+    if len(name) > 40:
         return False
 
-    # Reject names starting with common sentence starters / articles / conjunctions
-    lower = name.lower()
-    bad_starts = [
-        "the ", "a ", "an ", "and ", "or ", "but ", "this ", "that ",
-        "these ", "those ", "it ", "its ", "there ", "here ", "what ",
-        "which ", "who ", "how ", "why ", "when ", "where ", "if ",
-        "for ", "with ", "from ", "about ", "into ", "some ", "any ",
-        "transcript ", "episode ", "part ", "section ", "chapter ",
-    ]
-    for prefix in bad_starts:
-        if lower.startswith(prefix):
+    # Every word in a real person name starts with a capital letter
+    # Exception: particles like "de", "van", "von", "al", "el", "di", "Jr", "Sr", "III", "II"
+    particles = {"de", "van", "von", "al", "el", "di", "du", "da", "la", "le",
+                 "bin", "ibn", "of", "the", "jr", "sr", "jr.", "sr.", "ii", "iii", "iv"}
+    for i, word in enumerate(words):
+        if word.lower() in particles and i > 0:
+            continue  # Allow particles after first word
+        if not word[0].isupper():
             return False
+
+    # Reject common non-name words anywhere in the name
+    lower = name.lower()
+    non_name_words = {
+        "scale", "shapes", "kinds", "things", "stuff", "types", "ways",
+        "transcript", "episode", "part", "section", "chapter", "video",
+        "about", "also", "just", "like", "only", "even", "very", "more",
+        "most", "such", "each", "some", "here", "there", "what", "when",
+        "where", "which", "while", "should", "would", "could", "might",
+        "maybe", "perhaps", "actually", "basically", "literally",
+        "interesting", "important", "different", "specific", "general",
+        "plug", "mention", "notice", "lesson", "learned", "means",
+        "talk", "dive", "detail", "relate", "gradients",
+    }
+    for word in words:
+        if word.lower() in non_name_words:
+            return False
+
+    # Reject common sentence starters as first word
+    bad_first_words = {
+        "So", "All", "And", "But", "The", "This", "That", "These", "Those",
+        "It", "Its", "We", "You", "He", "She", "They", "My", "Our", "Your",
+        "Let", "How", "Why", "What", "When", "Where", "Which", "If", "Or",
+        "Not", "No", "Yes", "For", "With", "From", "Into", "Here", "There",
+    }
+    if words[0] in bad_first_words:
+        return False
 
     # Reject common non-name patterns
     bad_patterns = [
@@ -417,11 +441,6 @@ def _is_valid_person_name(name: str) -> bool:
     for pattern in bad_patterns:
         if re.search(pattern, lower):
             return False
-
-    # At least one word should start with uppercase (looks like a proper noun)
-    has_capital = any(w[0].isupper() for w in words if w)
-    if not has_capital:
-        return False
 
     return True
 
