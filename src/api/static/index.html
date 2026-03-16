@@ -1102,10 +1102,24 @@ async function refreshVideoQueue() {
         <span class="vq-channel">${v.channel_name || 'Manual'}</span>
         ${v.transcript_type ? `<span style="font-size:10px;color:#555;">${v.transcript_type}</span>` : ''}
         ${v.status === 'error' && v.error_message ? `<span style="font-size:10px;color:#ef4444;" title="${v.error_message.replace(/"/g, '&quot;')}">⚠</span>` : ''}
+        <button onclick="deleteVideo('${v.id}',this)" style="background:none;border:none;color:#555;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;transition:color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#555'">✕</button>
       </div>
     `).join('');
   } catch {
     el.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:10px;">Could not load queue</div>';
+  }
+}
+
+async function deleteVideo(id, btn) {
+  const row = btn.closest('.vq-row');
+  const title = row?.querySelector('.vq-title')?.textContent || 'this video';
+  if (!confirm(`Remove "${title}" from queue?`)) return;
+  try {
+    await apiDelete(`/videos/${id}`);
+    row.style.opacity = '0.3';
+    setTimeout(() => refreshVideoQueue(), 500);
+  } catch (e) {
+    showToast('Delete failed: ' + e.message);
   }
 }
 

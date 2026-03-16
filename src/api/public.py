@@ -1095,6 +1095,44 @@ def list_video_queue(
     return result
 
 
+# ── Video Delete ───────────────────────────────────────────────────────
+
+@router.delete("/videos/{video_id}")
+def delete_video(video_id: UUID, db: Session = Depends(get_db)):
+    """Remove a single video and all related data."""
+    from sqlalchemy import text
+
+    video = db.query(Videos).filter(Videos.id == video_id).first()
+    if not video:
+        raise HTTPException(404, "Video not found")
+
+    title = video.title or video.youtube_video_id
+    vid = str(video_id)
+
+    # Delete related data (claims → evidence, topics, embeddings first)
+    db.execute(text("""
+        DELETE FROM claim_evidence WHERE claim_id IN
+            (SELECT id FROM claims WHERE video_id = :vid)
+    """), {"vid": vid})
+    db.execute(text("""
+        DELETE FROM claim_topics WHERE claim_id IN
+            (SELECT id FROM claims WHERE video_id = :vid)
+    """), {"vid": vid})
+    db.execute(text("""
+        DELETE FROM claim_embeddings WHERE claim_id IN
+            (SELECT id FROM claims WHERE video_id = :vid)
+    """), {"vid": vid})
+    db.execute(text("DELETE FROM claims WHERE video_id = :vid"), {"vid": vid})
+    db.execute(text("DELETE FROM transcript_segments WHERE video_id = :vid"), {"vid": vid})
+    db.execute(text("DELETE FROM transcript_runs WHERE video_id = :vid"), {"vid": vid})
+    db.execute(text("DELETE FROM video_people WHERE video_id = :vid"), {"vid": vid})
+    db.execute(text("DELETE FROM episode_summaries WHERE video_id = :vid"), {"vid": vid})
+    db.execute(text("DELETE FROM videos WHERE id = :vid"), {"vid": vid})
+    db.commit()
+
+    return {"status": "deleted", "title": title}
+
+
 # ── Video Add ──────────────────────────────────────────────────────────
 
 class VideoAddRequest(BaseModel):
