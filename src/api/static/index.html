@@ -743,8 +743,8 @@ async function renderEpisode(videoId) {
       <h3 style="font-size:16px;font-weight:600;color:#fff;margin-top:32px;">Best Moments</h3>
       <div class="moments-list">
         ${moments.map(m => {
-          const ts = m.timestamp || m.start_time;
-          const tsSeconds = typeof ts === 'number' ? ts : 0;
+          const tsMs = m.timestamp_ms || m.start_ms || 0;
+          const tsSeconds = Math.floor(tsMs / 1000);
           const tsDisplay = tsSeconds ? `${Math.floor(tsSeconds/60)}:${String(tsSeconds%60).padStart(2,'0')}` : '';
           const tsLink = ep.youtube_video_id ? `https://youtube.com/watch?v=${ep.youtube_video_id}&t=${tsSeconds}s` : '#';
           return `
@@ -752,7 +752,7 @@ async function renderEpisode(videoId) {
               <a href="${tsLink}" target="_blank" class="ts-badge ts-badge-green">${tsDisplay || '—'}</a>
               <div>
                 <div class="moment-desc">${m.description || m.title || ''}</div>
-                ${m.quote ? `<div class="moment-quote">"${m.quote}"</div>` : ''}
+                ${m.quote_snippet ? `<div class="moment-quote">"${m.quote_snippet}"</div>` : ''}
               </div>
             </div>
           `;
@@ -796,8 +796,8 @@ function setDepth(depth, btn) {
       return;
     }
     el.innerHTML = `<div class="section-list">${d.sections.map(s => {
-      const ts = s.timestamp || s.start_time;
-      const tsSeconds = typeof ts === 'number' ? ts : 0;
+      const tsMs = s.start_ms || s.timestamp_ms || 0;
+      const tsSeconds = Math.floor(tsMs / 1000);
       const tsDisplay = tsSeconds ? `${Math.floor(tsSeconds/60)}:${String(tsSeconds%60).padStart(2,'0')}` : '';
       const tsLink = d.ytId ? `https://youtube.com/watch?v=${d.ytId}&t=${tsSeconds}s` : '#';
       return `
