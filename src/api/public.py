@@ -1018,7 +1018,7 @@ def trigger_channel_scan(channel_id: UUID, db: Session = Depends(get_db)):
     from src.pipeline.discovery import _scan_single_channel, ScanResult
     result = ScanResult()
     try:
-        _scan_single_channel(db, channel, result, max_videos=10)
+        _scan_single_channel(db, channel, result, max_videos=5)
     except Exception as e:
         raise HTTPException(500, f"Scan failed: {e}")
 
