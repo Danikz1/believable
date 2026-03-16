@@ -241,10 +241,22 @@ TRANSCRIPT (truncated):
     if watch_verdict not in ("essential", "worth_skimming", "skip_unless_fan"):
         watch_verdict = "worth_skimming"
 
+    sections = result.get("sections", [])
+    speakers = result.get("speakers", [])
+    best_moments = result.get("best_moments", [])
+
+    logger.info(
+        f"Summary LLM result for {video.title}: "
+        f"tldr={len(tldr)}ch, body={len(summary_body)}ch, "
+        f"sections={len(sections)}, speakers={len(speakers)}, "
+        f"best_moments={len(best_moments)}, "
+        f"result_keys={list(result.keys())}"
+    )
+
     detailed = {
-        "sections": result.get("sections", []),
-        "speakers": result.get("speakers", []),
-        "best_moments": result.get("best_moments", []),
+        "sections": sections,
+        "speakers": speakers,
+        "best_moments": best_moments,
     }
 
     # Create or update summary
