@@ -74,13 +74,23 @@ def resolve_transcript_url(
             logger.info(f"Found transcript URL in description: {url}")
             return url
 
-    # Strategy 2: Derive slug from title
-    if video_title:
-        slug = _title_to_slug(video_title)
-        if slug and "{slug}" in url_pattern:
+    # Strategy 2: Try multiple candidate slugs derived from the title
+    if video_title and "{slug}" in url_pattern:
+        candidates = _generate_candidate_slugs(video_title)
+
+        # Also try the original single-slug approach
+        original_slug = _title_to_slug(video_title)
+        if original_slug and original_slug not in candidates:
+            candidates.append(original_slug)
+
+        for slug in candidates:
             url = url_pattern.replace("{slug}", slug)
-            logger.info(f"Derived transcript URL from title: {url}")
-            return url
+            logger.info(f"Trying transcript slug: {slug} → {url}")
+            if validate_url(url):
+                logger.info(f"Found valid transcript URL: {url}")
+                return url
+
+        logger.info(f"No valid transcript URL found from {len(candidates)} candidates")
 
     return None
 
@@ -108,6 +118,65 @@ def _title_to_slug(title: str) -> str | None:
     slug = re.sub(r"\s+", "-", slug)
     slug = slug.strip("-")
 
+    return slug if slug else None
+
+
+def _generate_candidate_slugs(title: str) -> list[str]:
+    """Generate multiple candidate slugs from a video title.
+
+    Handles formats like:
+    - "Guest Name: Topic | Channel Name #123"
+    - "Topic - Guest Name | Channel Name"
+    - "Guest Name | Channel Name"
+    """
+    candidates = []
+
+    # Remove channel name suffix (e.g., "| Lex Fridman Podcast #491")
+    clean = re.sub(r"\|[^|]+$", "", title).strip()
+    clean = re.sub(r"#\d+", "", clean).strip()
+
+    # Candidate 1: part after last " - " (often the guest name)
+    for delim in [" - ", " – ", " — "]:
+        if delim in clean:
+            after = clean.rsplit(delim, 1)[1].strip()
+            slug = _slugify(after)
+            if slug:
+                candidates.append(slug)
+            break
+
+    # Candidate 2: part before first ":" or "-" (could be guest name)
+    for delim in [": ", " - ", " – ", " — "]:
+        if delim in clean:
+            before = clean.split(delim, 1)[0].strip()
+            slug = _slugify(before)
+            if slug:
+                candidates.append(slug)
+            break
+
+    # Candidate 3: the full cleaned title slugified
+    slug = _slugify(clean)
+    if slug:
+        candidates.append(slug)
+
+    # Deduplicate while preserving order
+    seen = set()
+    unique = []
+    for s in candidates:
+        if s not in seen:
+            seen.add(s)
+            unique.append(s)
+
+    return unique
+
+
+def _slugify(text: str) -> str | None:
+    """Convert text to URL slug."""
+    slug = text.lower().strip()
+    slug = re.sub(r"#\d+", "", slug)
+    slug = re.sub(r"Ep\.?\s*\d+", "", slug, flags=re.IGNORECASE)
+    slug = re.sub(r"[^a-z0-9\s-]", "", slug)
+    slug = re.sub(r"\s+", "-", slug)
+    slug = slug.strip("-")
     return slug if slug else None
 
 
