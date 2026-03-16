@@ -65,7 +65,7 @@ def process_all(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin),
 ):
-    """Run the full pipeline: transcribe → identify → enrich on all pending videos."""
+    """Run the full pipeline: transcribe → identify → enrich → summarize."""
     from src.pipeline.transcription import transcribe_pending
     from src.pipeline.identification import identify_pending
     from src.pipeline.enrichment import enrich_pending
@@ -80,6 +80,37 @@ def process_all(
 
     # Step 3: Enrich identified videos
     results["enrich"] = enrich_pending(db, limit=limit)
+
+    # Step 4: Generate summaries for enriched videos without one
+    from src.pipeline.summaries import generate_episode_summary
+    from src.db.models import EpisodeSummaries, Videos as VideosModel
+
+    enriched_videos = (
+        db.query(VideosModel)
+        .filter(VideosModel.status == "enriched")
+        .all()
+    )
+
+    summary_stats = {"generated": 0, "errors": []}
+    for video in enriched_videos[:limit]:
+        existing = (
+            db.query(EpisodeSummaries)
+            .filter(
+                EpisodeSummaries.video_id == video.id,
+                EpisodeSummaries.summary_type == "full_episode",
+            )
+            .first()
+        )
+        if existing:
+            continue
+        try:
+            summary = generate_episode_summary(video.id, "full_episode", db)
+            if summary:
+                summary_stats["generated"] += 1
+        except Exception as e:
+            summary_stats["errors"].append(f"{video.title}: {str(e)[:100]}")
+
+    results["summarize"] = summary_stats
 
     return {"status": "completed", "results": results}
 

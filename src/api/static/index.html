@@ -645,7 +645,7 @@ async function renderFeed(channelFilter) {
       api('/summaries/feed?limit=40' + (channelFilter ? `&channel_id=${channelFilter}` : '')),
       _channelsData.length ? _channelsData : api('/channels'),
     ]);
-    _feedData = feed;
+    _feedData = feed.items || feed;
     _channelsData = channels;
   } catch (e) {
     app().innerHTML = '<div class="empty"><h3>Could not load feed</h3></div>';
