@@ -229,7 +229,7 @@ TRANSCRIPT (truncated):
 {transcript_text[:40000]}"""
 
     try:
-        result = call_llm_json(system_prompt, user_prompt, max_tokens=16384)
+        result = call_llm_json(system_prompt, user_prompt, max_tokens=8192)
     except Exception as e:
         logger.error(f"LLM call failed for summary of video {video_id}: {e}")
         return None
@@ -244,6 +244,11 @@ TRANSCRIPT (truncated):
     sections = result.get("sections", [])
     speakers = result.get("speakers", [])
     best_moments = result.get("best_moments", [])
+
+    # If sections are empty, try a second, focused LLM call just for sections
+    if not sections:
+        logger.info(f"No sections from first call — making dedicated sections call for {video.title}")
+        sections, best_moments = _generate_sections(transcript_text, video.title, speaker_names)
 
     logger.info(
         f"Summary LLM result for {video.title}: "
@@ -309,9 +314,50 @@ TRANSCRIPT (truncated):
     session.commit()
     logger.info(
         f"Generated {summary_type} summary for video {video.title} "
-        f"(verdict: {watch_verdict})"
+        f"(verdict: {watch_verdict}, sections: {len(sections)})"
     )
     return summary
+
+
+SECTIONS_SYSTEM = """You are an expert analyst. Given a podcast transcript, produce a detailed section-by-section breakdown.
+
+Return ONLY valid JSON with these fields:
+
+1. "sections": Array of 8-15 topic sections (each distinct topic/segment is a section), each with:
+   - "title": descriptive section title (5-10 words)
+   - "start_ms": approximate start timestamp in milliseconds
+   - "summary": 4-8 sentences summarizing this section's content thoroughly. Cover the arguments, examples, and conclusions.
+   - "quotes": Array of 1-2 notable quotes. Each: {"speaker": "Name", "text": "exact quote under 150 chars", "timestamp_ms": 0}
+
+2. "best_moments": 3-5 most notable moments with:
+   - "description": 1-2 sentences about why this moment matters
+   - "timestamp_ms": approximate timestamp
+   - "quote_snippet": key quote under 150 chars
+
+Keep the JSON compact. Do NOT include markdown formatting or code blocks."""
+
+
+def _generate_sections(
+    transcript_text: str,
+    video_title: str,
+    speaker_names: list[str],
+) -> tuple[list[dict], list[dict]]:
+    """Generate sections via a dedicated LLM call — lighter prompt, reliable JSON."""
+    user_prompt = f"""VIDEO: {video_title}
+SPEAKERS: {', '.join(speaker_names) if speaker_names else 'Unknown'}
+
+TRANSCRIPT:
+{transcript_text[:30000]}"""
+
+    try:
+        result = call_llm_json(SECTIONS_SYSTEM, user_prompt, max_tokens=8192)
+        sections = result.get("sections", [])
+        best_moments = result.get("best_moments", [])
+        logger.info(f"Sections call returned {len(sections)} sections, {len(best_moments)} moments")
+        return sections, best_moments
+    except Exception as e:
+        logger.error(f"Sections LLM call failed: {e}")
+        return [], []
 
 
 def _format_claims(claims_list: list[dict]) -> str:
