@@ -1095,6 +1095,28 @@ def list_video_queue(
     return result
 
 
+# ── Video Retry ────────────────────────────────────────────────────────
+
+@router.post("/videos/{video_id}/retry")
+def retry_video(video_id: UUID, db: Session = Depends(get_db)):
+    """Reset a video's status to 'discovered' so it can be reprocessed."""
+    video = db.query(Videos).filter(Videos.id == video_id).first()
+    if not video:
+        raise HTTPException(404, "Video not found")
+
+    old_status = video.status
+    video.status = "discovered"
+    video.error_message = None
+    video.retry_count = (video.retry_count or 0) + 1
+    db.commit()
+
+    return {
+        "status": "reset",
+        "title": video.title or video.youtube_video_id,
+        "old_status": old_status,
+    }
+
+
 # ── Video Delete ───────────────────────────────────────────────────────
 
 @router.delete("/videos/{video_id}")
