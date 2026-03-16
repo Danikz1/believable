@@ -395,17 +395,248 @@ class DeepgramProvider(TranscriptionProvider):
         return segments
 
 
+# ── Deep Path: AssemblyAI ────────────────────────────────────────────
+
+class AssemblyAIProvider(TranscriptionProvider):
+    """Transcribe via AssemblyAI with speaker diarization."""
+
+    BASE_URL = "https://api.assemblyai.com/v2"
+
+    def __init__(self, api_key: str | None = None):
+        self.api_key = api_key or settings.assemblyai_api_key
+
+    def transcribe(
+        self, youtube_video_id: str, speaker_config: dict | None = None
+    ) -> TranscribeResult:
+        result = TranscribeResult(provider="assemblyai", mode="asr_diarized")
+
+        if not self.api_key:
+            result.error = "ASSEMBLYAI_API_KEY not set"
+            return result
+
+        audio_url = None
+        audio_path = None
+        try:
+            # Step 1: Download audio and upload to AssemblyAI
+            audio_path = self._download_audio(youtube_video_id)
+            audio_url = self._upload_audio(audio_path)
+
+            # Step 2: Submit transcription request
+            transcript_id = self._submit_transcription(audio_url, speaker_config)
+
+            # Step 3: Poll until complete
+            transcript_data = self._poll_for_completion(transcript_id)
+
+            # Step 4: Parse response into segments
+            result.segments = self._parse_response(transcript_data)
+            logger.info(
+                f"AssemblyAI transcribed {youtube_video_id}: "
+                f"{len(result.segments)} segments"
+            )
+
+        except Exception as e:
+            result.error = str(e)
+        finally:
+            if audio_path and os.path.exists(audio_path):
+                try:
+                    os.remove(audio_path)
+                    parent = os.path.dirname(audio_path)
+                    if parent and os.path.isdir(parent):
+                        os.rmdir(parent)
+                except Exception:
+                    pass
+
+        return result
+
+    def _download_audio(self, youtube_video_id: str) -> str:
+        """Download audio to temp file via yt-dlp."""
+        tmpdir = tempfile.mkdtemp()
+        output_path = os.path.join(tmpdir, f"{youtube_video_id}.%(ext)s")
+
+        proc = run_yt_dlp(
+            [
+                "-x",
+                "--audio-format", "mp3",
+                "--audio-quality", "5",  # medium quality, smaller file
+                "-o", output_path,
+                f"https://www.youtube.com/watch?v={youtube_video_id}",
+            ],
+            timeout=600,
+        )
+
+        if proc.returncode != 0:
+            raise RuntimeError(f"Audio download failed: {proc.stderr[:300]}")
+
+        audio_files = list(Path(tmpdir).glob("*.mp3")) + list(Path(tmpdir).glob("*.m4a")) + list(Path(tmpdir).glob("*.wav"))
+        if not audio_files:
+            raise RuntimeError("No audio file produced by yt-dlp")
+
+        return str(audio_files[0])
+
+    def _upload_audio(self, audio_path: str) -> str:
+        """Upload audio file to AssemblyAI and get the URL."""
+        headers = {"authorization": self.api_key}
+
+        with open(audio_path, "rb") as f:
+            with httpx.Client(timeout=300) as client:
+                resp = client.post(
+                    f"{self.BASE_URL}/upload",
+                    headers=headers,
+                    content=f,
+                )
+
+        if resp.status_code != 200:
+            raise RuntimeError(f"AssemblyAI upload failed: {resp.status_code} {resp.text[:200]}")
+
+        return resp.json()["upload_url"]
+
+    def _submit_transcription(self, audio_url: str, speaker_config: dict | None) -> str:
+        """Submit a transcription job to AssemblyAI."""
+        headers = {
+            "authorization": self.api_key,
+            "content-type": "application/json",
+        }
+
+        payload = {
+            "audio_url": audio_url,
+            "speaker_labels": True,  # Enable diarization
+            "language_code": "en",
+        }
+
+        # Apply speaker hints if available
+        if speaker_config:
+            mode = speaker_config.get("mode")
+            if mode == "exact":
+                payload["speakers_expected"] = speaker_config["count"]
+
+        with httpx.Client(timeout=30) as client:
+            resp = client.post(
+                f"{self.BASE_URL}/transcript",
+                headers=headers,
+                json=payload,
+            )
+
+        if resp.status_code != 200:
+            raise RuntimeError(f"AssemblyAI submit failed: {resp.status_code} {resp.text[:300]}")
+
+        data = resp.json()
+        transcript_id = data.get("id")
+        if not transcript_id:
+            raise RuntimeError("AssemblyAI returned no transcript ID")
+
+        logger.info(f"AssemblyAI job submitted: {transcript_id}")
+        return transcript_id
+
+    def _poll_for_completion(self, transcript_id: str, max_wait: int = 1800) -> dict:
+        """Poll AssemblyAI until transcription is complete (up to 30 min)."""
+        headers = {"authorization": self.api_key}
+        url = f"{self.BASE_URL}/transcript/{transcript_id}"
+
+        start_time = time.time()
+        poll_interval = 5
+
+        while time.time() - start_time < max_wait:
+            with httpx.Client(timeout=30) as client:
+                resp = client.get(url, headers=headers)
+
+            if resp.status_code != 200:
+                raise RuntimeError(f"AssemblyAI poll failed: {resp.status_code}")
+
+            data = resp.json()
+            status = data.get("status")
+
+            if status == "completed":
+                return data
+            elif status == "error":
+                error = data.get("error", "Unknown error")
+                raise RuntimeError(f"AssemblyAI transcription failed: {error}")
+            else:
+                logger.debug(f"AssemblyAI job {transcript_id}: {status}")
+                time.sleep(poll_interval)
+                # Increase interval for long jobs
+                if poll_interval < 30:
+                    poll_interval = min(poll_interval + 5, 30)
+
+        raise RuntimeError(f"AssemblyAI timed out after {max_wait}s")
+
+    def _parse_response(self, data: dict) -> list[Segment]:
+        """Parse AssemblyAI response into segments with speaker labels."""
+        segments = []
+        utterances = data.get("utterances", [])
+
+        if not utterances:
+            # Fallback: use words grouped by speaker
+            words = data.get("words", [])
+            if words:
+                return self._words_to_segments(words)
+            return segments
+
+        for i, utt in enumerate(utterances):
+            segments.append(Segment(
+                index=i,
+                start_ms=utt["start"],
+                end_ms=utt["end"],
+                text=utt["text"],
+                speaker_label=f"SPEAKER_{ord(utt.get('speaker', 'A')) - ord('A'):02d}",
+                source_kind="asr_diarized",
+            ))
+
+        return segments
+
+    def _words_to_segments(self, words: list[dict]) -> list[Segment]:
+        """Fallback: group words by speaker into segments."""
+        segments = []
+        current_speaker = None
+        current_words = []
+        current_start = 0
+
+        for word in words:
+            speaker = word.get("speaker")
+            if speaker != current_speaker and current_words:
+                segments.append(Segment(
+                    index=len(segments),
+                    start_ms=current_start,
+                    end_ms=word["start"],
+                    text=" ".join(w["text"] for w in current_words),
+                    speaker_label=f"SPEAKER_{ord(current_speaker or 'A') - ord('A'):02d}",
+                    source_kind="asr_diarized",
+                ))
+                current_words = []
+                current_start = word["start"]
+
+            current_speaker = speaker
+            current_words.append(word)
+
+        if current_words:
+            segments.append(Segment(
+                index=len(segments),
+                start_ms=current_start,
+                end_ms=current_words[-1].get("end", current_start),
+                text=" ".join(w["text"] for w in current_words),
+                speaker_label=f"SPEAKER_{ord(current_speaker or 'A') - ord('A'):02d}",
+                source_kind="asr_diarized",
+            ))
+
+        return segments
+
+
 # ── Orchestrator ─────────────────────────────────────────────────────
 
 def get_provider(force_deep: bool = False) -> TranscriptionProvider:
     """Get the right transcription provider."""
-    if force_deep:
+    if force_deep or settings.assemblyai_api_key:
+        if settings.assemblyai_api_key:
+            return AssemblyAIProvider()
         return DeepgramProvider()
     return CaptionProvider()
 
 
 def determine_path(video: Videos, session: Session) -> str:
     """Determine whether to use 'fast' or 'deep' path for a video."""
+    # If AssemblyAI is configured, always use deep path for diarization
+    if settings.assemblyai_api_key:
+        return "deep"
+
     # Tier 1 channels always get deep path
     if video.podcast_channel:
         if video.podcast_channel.tier == 1:
@@ -467,7 +698,9 @@ def transcribe_video(
     speaker_config = build_speaker_config(video, session) if path == "deep" else None
 
     # Pick provider
-    if path == "deep" and settings.deepgram_api_key:
+    if path == "deep" and settings.assemblyai_api_key:
+        provider = AssemblyAIProvider()
+    elif path == "deep" and settings.deepgram_api_key:
         provider = DeepgramProvider()
     else:
         provider = CaptionProvider()

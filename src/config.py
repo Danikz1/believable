@@ -14,7 +14,8 @@ class Settings(BaseSettings):
 
     # Stage 3: Transcription
     deepgram_api_key: str = ""
-    transcription_provider: str = "deepgram"  # 'deepgram' or 'whisperx'
+    assemblyai_api_key: str = ""
+    transcription_provider: str = "assemblyai"  # 'assemblyai', 'deepgram', or 'whisperx'
 
     # Stage 4+: LLM
     qwen_api_key: str = ""
