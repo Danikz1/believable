@@ -924,11 +924,18 @@ def add_channel(req: ChannelCreate, db: Session = Depends(get_db)):
         else:
             url = raw
 
-        # Resolve via yt-dlp
+        # Resolve via yt-dlp (metadata only — no download/format needed)
         try:
             from src.youtube import run_yt_dlp
             proc = run_yt_dlp(
-                ["--print", "channel_id", "--print", "channel", "--playlist-items", "1", url],
+                [
+                    "--flat-playlist",
+                    "--skip-download",
+                    "--print", "channel_id",
+                    "--print", "channel",
+                    "--playlist-items", "1",
+                    url,
+                ],
                 timeout=30,
             )
             if proc.returncode != 0:
