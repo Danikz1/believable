@@ -453,11 +453,11 @@ class AssemblyAIProvider(TranscriptionProvider):
         tmpdir = tempfile.mkdtemp()
         output_path = os.path.join(tmpdir, f"{youtube_video_id}.%(ext)s")
 
+        # Use bestaudio without format conversion — more reliable on Railway
         proc = run_yt_dlp(
             [
                 "-x",
-                "--audio-format", "mp3",
-                "--audio-quality", "5",  # medium quality, smaller file
+                "--audio-quality", "5",
                 "-o", output_path,
                 f"https://www.youtube.com/watch?v={youtube_video_id}",
             ],
@@ -467,7 +467,11 @@ class AssemblyAIProvider(TranscriptionProvider):
         if proc.returncode != 0:
             raise RuntimeError(f"Audio download failed: {proc.stderr[:300]}")
 
-        audio_files = list(Path(tmpdir).glob("*.mp3")) + list(Path(tmpdir).glob("*.m4a")) + list(Path(tmpdir).glob("*.wav"))
+        # Find any audio file produced
+        audio_files = list(Path(tmpdir).iterdir())
+        audio_files = [f for f in audio_files if f.is_file() and f.suffix in (
+            '.mp3', '.m4a', '.wav', '.webm', '.opus', '.ogg', '.aac', '.flac'
+        )]
         if not audio_files:
             raise RuntimeError("No audio file produced by yt-dlp")
 
