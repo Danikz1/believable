@@ -136,18 +136,49 @@ def process_all(
     from src.pipeline.summaries import generate_episode_summary
     from src.db.models import EpisodeSummaries, Videos as VideosModel
 
+    # Find videos that need summarization:
+    # 1. Enriched videos without summaries
+    # 2. Videos with existing summaries but empty sections (need regeneration)
     enriched_videos = (
         db.query(VideosModel)
         .filter(VideosModel.status == "enriched")
         .all()
     )
 
-    summary_stats = {"generated": 0, "errors": []}
-    for video in enriched_videos[:limit]:
+    # Also find videos with existing summaries that have empty sections
+    existing_summaries = db.query(EpisodeSummaries).filter(
+        EpisodeSummaries.summary_type == "full_episode"
+    ).all()
+
+    videos_needing_regen = set()
+    for s in existing_summaries:
+        detailed = s.detailed_json or {}
+        sections = detailed.get("sections", []) if isinstance(detailed, dict) else []
+        if not sections:
+            videos_needing_regen.add(s.video_id)
+
+    regen_videos = []
+    if videos_needing_regen:
+        regen_videos = (
+            db.query(VideosModel)
+            .filter(VideosModel.id.in_(videos_needing_regen))
+            .all()
+        )
+
+    all_videos_to_summarize = {v.id: v for v in enriched_videos}
+    for v in regen_videos:
+        all_videos_to_summarize[v.id] = v
+
+    summary_stats = {"generated": 0, "regenerated": 0, "errors": []}
+    for video in list(all_videos_to_summarize.values())[:limit]:
         try:
+            is_regen = video.id in videos_needing_regen
             summary = generate_episode_summary(video.id, "full_episode", db)
             if summary:
-                summary_stats["generated"] += 1
+                if is_regen:
+                    summary_stats["regenerated"] += 1
+                else:
+                    summary_stats["generated"] += 1
         except Exception as e:
             summary_stats["errors"].append(f"{video.title}: {str(e)[:100]}")
 
