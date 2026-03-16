@@ -338,6 +338,31 @@
     .status-dot.active { background: #22c55e; animation: pulse 1.5s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
+    /* ── Video Queue ─────────────────────────────────────────────── */
+    .video-queue { margin-top: 32px; }
+    .video-queue h2 { font-size: 16px; font-weight: 600; color: #e5e5e5; margin-bottom: 12px; }
+    .vq-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; border-radius: 8px;
+      background: #0a0a0a; border: 1px solid #1a1a1a;
+      margin-bottom: 6px; font-size: 13px;
+      transition: border-color 0.2s;
+    }
+    .vq-row:hover { border-color: #333; }
+    .vq-title { flex: 1; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .vq-channel { color: #555; font-size: 11px; min-width: 100px; }
+    .vq-badge {
+      font-size: 10px; padding: 2px 8px; border-radius: 4px;
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+      min-width: 80px; text-align: center;
+    }
+    .vq-badge.discovered { background: #1a1500; color: #f59e0b; border: 1px solid #332800; }
+    .vq-badge.transcribed { background: #0a1520; color: #3b82f6; border: 1px solid #152540; }
+    .vq-badge.identified { background: #150a20; color: #a855f7; border: 1px solid #25154a; }
+    .vq-badge.enriched { background: #0a1a0a; color: #22c55e; border: 1px solid #153015; }
+    .vq-badge.error { background: #1a0505; color: #ef4444; border: 1px solid #331010; }
+    .vq-badge.skipped { background: #111; color: #555; border: 1px solid #222; }
+
     /* ── Modal ─────────────────────────────────────────────────────── */
     .modal-overlay {
       position: fixed; inset: 0; z-index: 200;
@@ -1007,6 +1032,16 @@ async function renderChannels() {
 
   html += '</div>';
 
+  // Video queue section
+  html += `
+    <div class="video-queue">
+      <h2>Video Queue</h2>
+      <div id="video-queue-list">
+        <div style="color:#555;font-size:13px;padding:10px;">Loading...</div>
+      </div>
+    </div>
+  `;
+
   // Pipeline status dashboard
   html += `
     <div class="pipeline-section">
@@ -1026,6 +1061,7 @@ async function renderChannels() {
 
   app().innerHTML = html;
   refreshPipelineStatus();
+  refreshVideoQueue();
 }
 
 const ADMIN_KEY = 'bm-admin-key';
@@ -1052,11 +1088,35 @@ async function processAll(btn) {
     showToast(msg);
     btn.textContent = '✓ Complete';
     refreshPipelineStatus();
+    refreshVideoQueue();
   } catch (e) {
     showToast('Processing failed: ' + e.message);
     btn.textContent = '✗ Failed';
   }
   setTimeout(() => { btn.textContent = '▶ Process All'; btn.disabled = false; }, 4000);
+}
+
+async function refreshVideoQueue() {
+  const el = document.getElementById('video-queue-list');
+  if (!el) return;
+  try {
+    const videos = await api('/videos/queue');
+    if (!videos.length) {
+      el.innerHTML = '<div style="color:#555;font-size:13px;padding:10px;">No videos yet. Add a channel or video to get started.</div>';
+      return;
+    }
+    el.innerHTML = videos.map(v => `
+      <div class="vq-row">
+        <span class="vq-badge ${v.status}">${v.status}</span>
+        <span class="vq-title" title="${(v.title || v.youtube_video_id).replace(/"/g, '&quot;')}">${v.title || v.youtube_video_id}</span>
+        <span class="vq-channel">${v.channel_name || 'Manual'}</span>
+        ${v.transcript_type ? `<span style="font-size:10px;color:#555;">${v.transcript_type}</span>` : ''}
+        ${v.error_message ? `<span style="font-size:10px;color:#ef4444;" title="${v.error_message.replace(/"/g, '&quot;')}">⚠</span>` : ''}
+      </div>
+    `).join('');
+  } catch {
+    el.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:10px;">Could not load queue</div>';
+  }
 }
 
 async function wipeAllData(btn) {

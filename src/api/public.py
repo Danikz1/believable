@@ -1059,6 +1059,42 @@ def delete_channel(channel_id: UUID, db: Session = Depends(get_db)):
     return {"status": "deleted", "name": name}
 
 
+# ── Video Queue ────────────────────────────────────────────────────────
+
+@router.get("/videos/queue")
+def list_video_queue(
+    limit: int = 50,
+    db: Session = Depends(get_db),
+):
+    """List all videos with their pipeline status."""
+    videos = (
+        db.query(Videos)
+        .order_by(Videos.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    result = []
+    for v in videos:
+        channel_name = None
+        if v.podcast_channel:
+            channel_name = v.podcast_channel.name
+
+        result.append({
+            "id": str(v.id),
+            "youtube_video_id": v.youtube_video_id,
+            "title": v.title,
+            "status": v.status,
+            "channel_name": channel_name,
+            "published_at": v.published_at.isoformat() if v.published_at else None,
+            "created_at": v.created_at.isoformat() if v.created_at else None,
+            "transcript_type": v.transcript_type,
+            "error_message": v.error_message,
+        })
+
+    return result
+
+
 # ── Video Add ──────────────────────────────────────────────────────────
 
 class VideoAddRequest(BaseModel):
