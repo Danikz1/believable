@@ -144,17 +144,19 @@ def list_claims(
     topic: list[str] | None = Query(None),
     claim_type: str | None = None,
     trust_level: str | None = None,
-    source: str | None = None,  # Phase 4: 'video' / 'x_post' / None (all)
-    days_back: int = 30,
+    source: str | None = None,  # 'video' / 'x_post' / None (all)
+    review_status: str = "approved",  # 'approved' / 'pending_review' / 'rejected' / 'all'
+    days_back: int = 30,  # 0 = all time
     limit: int = Query(default=50, le=200),
     db: Session = Depends(get_db),
 ):
-    q = db.query(Claims).filter(Claims.review_status == "approved")
+    q = db.query(Claims)
+    if review_status != "all":
+        q = q.filter(Claims.review_status == review_status)
 
     if person_id:
         q = q.filter(Claims.person_id == person_id)
     if topic:
-        # Multi-topic filter with OR logic + DISTINCT (Amendment 6)
         q = q.filter(or_(*[Claims.topics.any(t) for t in topic])).distinct(Claims.id)
     if claim_type:
         q = q.filter(Claims.claim_type == claim_type)
@@ -164,7 +166,7 @@ def list_claims(
         q = q.filter(Claims.video_id.isnot(None))
     elif source == "x_post":
         q = q.filter(Claims.x_post_id.isnot(None))
-    if days_back:
+    if days_back and days_back > 0:
         cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
         q = q.filter(Claims.created_at >= cutoff)
 

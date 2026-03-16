@@ -71,6 +71,7 @@
             font-weight: 700;
             background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: -0.3px;
         }
@@ -848,7 +849,7 @@
                         <div class="empty-state">
                             <div class="icon">\ud83d\udcf0</div>
                             <p>No summaries yet</p>
-                            <p style="font-size:13px;color:var(--text-muted)">Add favorites with <code>bm favorites add person "Ray Dalio"</code>, then run <code>bm summaries generate --pending</code></p>
+                            <p style="font-size:13px;color:var(--text-muted)">Star \u2605 people on the <a href="#" onclick="event.preventDefault();navigate('people')" style="color:var(--accent-cyan)">People page</a> to add them to your feed.</p>
                         </div>
                     `}
                 </div>
@@ -911,7 +912,6 @@
 
                     <div style="margin-top:12px;display:flex;gap:8px">
                         ${s.source_url ? `<a href="${s.source_url}" target="_blank" class="btn btn-ghost" style="font-size:12px">\u25b6 Watch Episode</a>` : ''}
-                        ${s.video_id ? `<button class="btn btn-ghost" style="font-size:12px" onclick="navigate('claims');setTimeout(()=>{},500)">View Claims</button>` : ''}
                     </div>
                 </div>
             `;
@@ -958,8 +958,8 @@
                         <div class="sub">${status.claims.pending} pending review</div>
                     </div>
                     <div class="stat-card">
-                        <div class="label">Embeddings</div>
-                        <div class="value">${status.embeddings}</div>
+                        <div class="label">Active Topics</div>
+                        <div class="value">${topTopics.length}</div>
                         <div class="sub">${status.positions} positions tracked</div>
                     </div>
                 </div>
@@ -980,16 +980,16 @@
                     </div>
                 </div>
 
-                <div class="card fade-in" style="margin-top:16px">
-                    <div class="card-title">⚙️ Pipeline Status</div>
-                    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center">
-                        ${pipelineStage('Discovered', status.videos.discovered, '#3b82f6')}
-                        ${pipelineStage('Transcribed', status.videos.transcribed, '#8b5cf6')}
-                        ${pipelineStage('Identified', status.videos.identified, '#f59e0b')}
-                        ${pipelineStage('Enriched', status.videos.enriched, '#10b981')}
-                        ${pipelineStage('Skipped', status.videos.skipped, '#64748b')}
+                ${status.claims.pending > 0 ? `
+                <div class="card fade-in" style="margin-top:16px;border-left:3px solid var(--accent-amber)">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <div>
+                            <div style="font-weight:600">\u26a0 ${status.claims.pending} claims awaiting review</div>
+                            <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Head to the Review Queue to approve or reject</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="navigate('review')" style="font-size:12px">Review Now</button>
                     </div>
-                </div>
+                </div>` : ''}
             `;
         }
 
@@ -1010,6 +1010,9 @@
                     <p>${people.length} tracked minds across multiple domains \u00b7 claim counts show approved claims only</p>
                 </div>
                 <div id="people-topic-filters" class="fade-in" style="margin-bottom:16px"></div>
+                <div class="search-bar fade-in" style="margin-bottom:16px">
+                    <input class="search-input" placeholder="Search by name..." id="people-search" oninput="filterPeopleByName(this.value)">
+                </div>
                 <div class="card fade-in">
                     <div class="table-wrap">
                         <table>
@@ -1025,12 +1028,12 @@
                             </thead>
                             <tbody>
                                 ${people.map(p => `
-                                    <tr onclick="navigate('person-${p.id}')" style="cursor:pointer" title="Open person profile">
+                                    <tr onclick="navigate('person-${p.id}')" style="cursor:pointer" title="Open person profile" data-name="${p.name.toLowerCase()}">
                                         <td onclick="event.stopPropagation()" style="width:36px;text-align:center">
                                             <button id="fav-btn-${p.id}" onclick="toggleFavorite(event,'${p.id}',this)" title="Favorite" style="background:none;border:none;cursor:pointer;font-size:18px;padding:2px 4px;opacity:0.25;transition:opacity 0.15s,transform 0.15s,color 0.15s">&#9734;</button>
                                         </td>
                                         <td style="font-weight:600;color:var(--accent-cyan)">${p.name}</td>
-                                        <td><span class="tier-badge tier-${p.tier}">${p.tier}</span></td>
+                                        <td><span class="tier-badge tier-${p.tier}" title="Tier ${p.tier}: ${p.tier === 1 ? 'Core — highest priority, most tracked' : p.tier === 2 ? 'Standard — regularly tracked' : 'Peripheral — lower priority'}">${p.tier}</span></td>
                                         <td style="color:var(--text-secondary)">${p.domain || '&mdash;'}</td>
                                         <td>${(p.expertise_domains || []).slice(0, 3).map(d => `<span class="badge badge-topic" style="margin:1px">${d}</span>`).join('')}</td>
                                         <td style="font-weight:600">${p.claim_count}</td>
@@ -1078,6 +1081,13 @@
             }
         }
 
+        function filterPeopleByName(query) {
+            const q = query.toLowerCase();
+            document.querySelectorAll('tbody tr[data-name]').forEach(row => {
+                row.style.display = !q || row.dataset.name.includes(q) ? '' : 'none';
+            });
+        }
+
         async function renderPerson(el, personId) {
             const person = await api(`/api/people/${personId}?claim_limit=50`);
             const claimCount = person.claim_count || 0;
@@ -1098,10 +1108,9 @@
                             <div class="detail-eyebrow">Profile</div>
                             <div class="person-summary">
                                 <div>
-                                    <h3>${person.name}</h3>
-                                    <div style="margin-top:6px;color:var(--text-secondary);font-size:13px">${person.domain || 'Generalist'}</div>
+                                    <span class="tier-badge tier-${person.tier}" title="Tier ${person.tier}: ${person.tier === 1 ? 'Core \u2014 highest priority' : person.tier === 2 ? 'Standard \u2014 regularly tracked' : 'Peripheral \u2014 lower priority'}">${person.tier}</span>
+                                    <span style="margin-left:8px;color:var(--text-secondary);font-size:13px">${person.domain || 'Generalist'}</span>
                                 </div>
-                                <span class="tier-badge tier-${person.tier}">${person.tier}</span>
                             </div>
                             <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
                                 ${(person.expertise_domains || []).length
@@ -1109,17 +1118,6 @@
                     : '<span class="badge badge-type">No expertise tags yet</span>'}
                             </div>
                             <p class="person-blurb">${person.inclusion_notes || 'This person is tracked, but a fuller profile summary has not been filled in yet.'}</p>
-
-                            <div class="metric-grid">
-                                <div class="metric-chip">
-                                    <div class="label">Approved Claims</div>
-                                    <div class="value">${claimCount}</div>
-                                </div>
-                                <div class="metric-chip">
-                                    <div class="label">Tracked Positions</div>
-                                    <div class="value">${positions.length}</div>
-                                </div>
-                            </div>
                         </div>
 
                         <div class="card">
@@ -1187,6 +1185,11 @@
                     <button class="btn btn-ghost source-filter active" data-source="" onclick="filterBySource(this, '')">All</button>
                     <button class="btn btn-ghost source-filter" data-source="video" onclick="filterBySource(this, 'video')">Video</button>
                     <button class="btn btn-ghost source-filter" data-source="x_post" onclick="filterBySource(this, 'x_post')">X</button>
+                    <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Range:</span>
+                    <button class="btn btn-ghost range-filter active" onclick="filterByRange(this, 30)">30d</button>
+                    <button class="btn btn-ghost range-filter" onclick="filterByRange(this, 90)">90d</button>
+                    <button class="btn btn-ghost range-filter" onclick="filterByRange(this, 365)">1y</button>
+                    <button class="btn btn-ghost range-filter" onclick="filterByRange(this, 0)">All</button>
                 </div>
                 <div id="claims-topic-filters" class="fade-in" style="margin-bottom:16px"></div>
                 <div id="claims-list" class="fade-in">
@@ -1194,8 +1197,9 @@
                 </div>
             `;
 
-            // Track active source filter
+            // Track active filters
             window._claimsSourceFilter = '';
+            window._claimsDaysBack = 30;
 
             // Load topic filter chips
             loadTopicChips('claims-topic-filters', async (topic) => {
@@ -1204,6 +1208,7 @@
                 let url = `/api/claims?limit=50`;
                 if (topic) url += `&topic=${encodeURIComponent(topic)}`;
                 if (window._claimsSourceFilter) url += `&source=${window._claimsSourceFilter}`;
+                url += `&days_back=${window._claimsDaysBack ?? 30}`;
                 const filtered = await api(url);
                 list.innerHTML = filtered.length ?
                     filtered.map(c => claimCard(c)).join('') :
@@ -1215,14 +1220,28 @@
             window._claimsSourceFilter = source;
             document.querySelectorAll('.source-filter').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            await reloadClaims();
+        }
+
+        async function filterByRange(btn, days) {
+            window._claimsDaysBack = days;
+            document.querySelectorAll('.range-filter').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            await reloadClaims();
+        }
+
+        async function reloadClaims() {
             const list = document.getElementById('claims-list');
             list.innerHTML = '<div class="loading"><div class="spinner"></div> Filtering...</div>';
             let url = `/api/claims?limit=50`;
+            const source = window._claimsSourceFilter || '';
+            const days = window._claimsDaysBack ?? 30;
             if (source) url += `&source=${source}`;
+            url += `&days_back=${days}`;
             const filtered = await api(url);
             list.innerHTML = filtered.length ?
                 filtered.map(c => claimCard(c)).join('') :
-                '<div class="empty-state"><p>No claims for this source</p></div>';
+                '<div class="empty-state"><p>No claims for this filter</p></div>';
         }
 
         async function searchClaims() {
@@ -1353,9 +1372,15 @@
                         ${active.map(t => topicRow(t)).join('') || '<p style="color:var(--text-muted)">No active topics</p>'}
                     </div>
                     <div class="card">
-                        <div class="card-title">📋 All Topics</div>
+                        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+                            <span>📋 All Topics</span>
+                            ${inactive.length ? `<button class="btn btn-ghost" style="font-size:11px" onclick="const el=document.getElementById('inactive-topics');el.style.display=el.style.display==='none'?'flex':'none';this.textContent=el.style.display==='none'?'Show ${inactive.length} empty':'Hide empty'">Show ${inactive.length} empty</button>` : ''}
+                        </div>
                         <div style="display:flex;flex-wrap:wrap;gap:6px">
-                            ${topics.map(t => `<span class="badge ${t.claim_count > 0 ? 'badge-topic' : ''}" style="${t.claim_count === 0 ? 'background:var(--bg-secondary);color:var(--text-muted)' : ''}">${t.slug} (${t.claim_count})</span>`).join('')}
+                            ${active.map(t => `<span class="badge badge-topic" style="cursor:pointer" onclick="viewTopic('${t.slug}')">${t.slug} (${t.claim_count})</span>`).join('')}
+                        </div>
+                        <div id="inactive-topics" style="display:none;flex-wrap:wrap;gap:6px;margin-top:8px">
+                            ${inactive.map(t => `<span class="badge" style="background:var(--bg-secondary);color:var(--text-muted)">${t.slug}</span>`).join('')}
                         </div>
                     </div>
                 </div>
@@ -1428,9 +1453,7 @@
 
         // ── Review Queue ──
         async function renderReview(el) {
-            // Fetch pending claims via admin endpoint
-            const claims = await api('/api/claims?limit=50');
-            const pending = claims.filter(c => c.review_status === 'pending_review');
+            const pending = await api('/api/claims?review_status=pending_review&days_back=0&limit=50');
 
             el.innerHTML = `
                 <div class="page-header fade-in">
@@ -1535,14 +1558,6 @@
                                 <div style="font-size:32px;font-weight:700;color:var(--accent-amber)">${status.claims.pending}</div>
                                 <div style="font-size:11px;color:var(--text-muted)">Pending</div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-title">🔗 Data</div>
-                        <div style="font-size:13px;color:var(--text-secondary)">
-                            <div style="padding:6px 0;border-bottom:1px solid var(--border)">People: <strong>${status.people}</strong></div>
-                            <div style="padding:6px 0;border-bottom:1px solid var(--border)">Positions: <strong>${status.positions}</strong></div>
-                            <div style="padding:6px 0">Embeddings: <strong>${status.embeddings}</strong></div>
                         </div>
                     </div>
                 </div>
