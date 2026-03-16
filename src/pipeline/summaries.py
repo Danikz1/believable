@@ -43,12 +43,14 @@ Return ONLY valid JSON with these fields:
    Cover: the main thesis, supporting arguments, counterpoints, surprising revelations,
    practical implications, and forward-looking predictions.
 
-3. "sections": Array of 8-15 episode sections (be granular!), each with:
+3. "sections": Array of 15-25 episode sections (be VERY granular — treat each distinct topic shift as a new section!), each with:
    - "title": descriptive section title
    - "start_ms": approximate start timestamp in milliseconds
-   - "summary": 6-8 sentences per section. Cover what was discussed, key arguments,
-     specific examples mentioned, data points cited, and conclusions reached.
-     Include notable quotes. This should read like a detailed paragraph, not a headline.
+   - "summary": 10-15 sentences per section. This is the MOST IMPORTANT field — be extremely thorough.
+     Cover: the exact arguments made, specific examples and anecdotes mentioned, data points or numbers cited,
+     direct quotes from speakers, counterarguments or pushback, practical implications discussed,
+     and any conclusions reached. Include the full context of WHY something was said.
+     A reader should feel like they watched this part of the episode after reading the section.
    - "claims": array of claim references [{claim_id, text, speaker}]
 
 4. "best_moments": 5-8 most important/surprising/quotable moments with:
@@ -222,7 +224,7 @@ TRANSCRIPT (truncated):
 {transcript_text[:80000]}"""
 
     try:
-        result = call_llm_json(system_prompt, user_prompt)
+        result = call_llm_json(system_prompt, user_prompt, max_tokens=16384)
     except Exception as e:
         logger.error(f"LLM call failed for summary of video {video_id}: {e}")
         return None

@@ -133,6 +133,7 @@ def call_llm_json(
     user_prompt: str,
     provider: str | None = None,
     model: str | None = None,
+    max_tokens: int = 8192,
 ) -> dict:
     """Call LLM and parse the response as JSON.
 
@@ -143,7 +144,7 @@ def call_llm_json(
         user_prompt,
         provider=provider,
         model=model,
-        max_tokens=8192,
+        max_tokens=max_tokens,
     )
 
     # Strip markdown code fences if present
