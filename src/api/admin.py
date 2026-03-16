@@ -59,6 +59,31 @@ def trigger_pipeline(
     return {"stage": stage, "result": result}
 
 
+@router.post("/pipeline/process-all")
+def process_all(
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_admin),
+):
+    """Run the full pipeline: transcribe → identify → enrich on all pending videos."""
+    from src.pipeline.transcription import transcribe_pending
+    from src.pipeline.identification import identify_pending
+    from src.pipeline.enrichment import enrich_pending
+
+    results = {}
+
+    # Step 1: Transcribe discovered videos
+    results["transcribe"] = transcribe_pending(db, limit=limit)
+
+    # Step 2: Identify speakers in transcribed videos
+    results["identify"] = identify_pending(db, limit=limit)
+
+    # Step 3: Enrich identified videos
+    results["enrich"] = enrich_pending(db, limit=limit)
+
+    return {"status": "completed", "results": results}
+
+
 # ── Claim Review ─────────────────────────────────────────────────────
 
 class ReviewRequest(BaseModel):

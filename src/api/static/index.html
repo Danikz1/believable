@@ -1018,9 +1018,7 @@ async function renderChannels() {
         <div class="pipe-stat"><div class="pipe-stat-num clr-gray">—</div><div class="pipe-stat-label">Loading...</div></div>
       </div>
       <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn-check" onclick="triggerPipeline('transcribe',this)">▶ Transcribe</button>
-        <button class="btn-check" onclick="triggerPipeline('identify',this)">▶ Identify</button>
-        <button class="btn-check" onclick="triggerPipeline('enrich',this)">▶ Enrich</button>
+        <button class="btn btn-primary" style="font-size:13px;padding:8px 20px;" onclick="processAll(this)">▶ Process All</button>
         <button class="btn-delete" onclick="wipeAllData(this)">⚠ Reset All Data</button>
       </div>
     </div>
@@ -1042,18 +1040,23 @@ function adminPost(path) {
   });
 }
 
-async function triggerPipeline(stage, btn) {
-  btn.textContent = '⏳ Running...'; btn.disabled = true;
+async function processAll(btn) {
+  btn.textContent = '⏳ Transcribing...'; btn.disabled = true;
   try {
-    const res = await adminPost(`/pipeline/trigger/${stage}?limit=10`);
-    showToast(`${stage}: done`);
-    btn.textContent = '✓ Done';
+    const res = await adminPost('/pipeline/process-all?limit=10');
+    const r = res.results || {};
+    const t = r.transcribe || {};
+    const i = r.identify || {};
+    const e = r.enrich || {};
+    const msg = `Done! Transcribed: ${t.succeeded || 0}, Identified: ${i.identified || 0}, Enriched: ${e.succeeded || e.processed || 0}`;
+    showToast(msg);
+    btn.textContent = '✓ Complete';
     refreshPipelineStatus();
   } catch (e) {
-    showToast(`${stage} failed: ${e.message}`);
+    showToast('Processing failed: ' + e.message);
     btn.textContent = '✗ Failed';
   }
-  setTimeout(() => { btn.textContent = `▶ ${stage.charAt(0).toUpperCase() + stage.slice(1)}`; btn.disabled = false; }, 3000);
+  setTimeout(() => { btn.textContent = '▶ Process All'; btn.disabled = false; }, 4000);
 }
 
 async function wipeAllData(btn) {
