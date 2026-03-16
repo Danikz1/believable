@@ -292,6 +292,52 @@
     }
     .btn-delete:hover { background: #1a0505; border-color: #552222; color: #ef4444; }
 
+    /* ── Pipeline Status ───────────────────────────────────────────── */
+    .pipeline-section {
+      margin-top: 32px; padding: 24px;
+      background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 14px;
+    }
+    .pipeline-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .pipeline-header h2 { font-size: 16px; font-weight: 600; color: #e5e5e5; }
+    .pipeline-refresh {
+      padding: 4px 12px; font-size: 11px; border-radius: 6px;
+      background: transparent; border: 1px solid #222; color: #555;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .pipeline-refresh:hover { border-color: #444; color: #aaa; }
+    .pipeline-stats {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    .pipe-stat {
+      background: #111; border: 1px solid #1a1a1a; border-radius: 10px;
+      padding: 14px; text-align: center; transition: border-color 0.2s;
+    }
+    .pipe-stat:hover { border-color: #333; }
+    .pipe-stat-num {
+      font-size: 26px; font-weight: 700; line-height: 1;
+    }
+    .pipe-stat-label {
+      font-size: 10px; color: #555; text-transform: uppercase;
+      letter-spacing: 0.5px; margin-top: 6px;
+    }
+    .pipe-stat-num.clr-blue { color: #3b82f6; }
+    .pipe-stat-num.clr-amber { color: #f59e0b; }
+    .pipe-stat-num.clr-green { color: #22c55e; }
+    .pipe-stat-num.clr-purple { color: #a855f7; }
+    .pipe-stat-num.clr-red { color: #ef4444; }
+    .pipe-stat-num.clr-gray { color: #555; }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+      margin-right: 6px;
+    }
+    .status-dot.idle { background: #333; }
+    .status-dot.active { background: #22c55e; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
     /* ── Modal ─────────────────────────────────────────────────────── */
     .modal-overlay {
       position: fixed; inset: 0; z-index: 200;
@@ -958,7 +1004,48 @@ async function renderChannels() {
   }
 
   html += '</div>';
+
+  // Pipeline status dashboard
+  html += `
+    <div class="pipeline-section">
+      <div class="pipeline-header">
+        <h2><span id="pipeline-dot" class="status-dot idle"></span> System Status</h2>
+        <button class="pipeline-refresh" onclick="refreshPipelineStatus()">↻ Refresh</button>
+      </div>
+      <div id="pipeline-stats" class="pipeline-stats">
+        <div class="pipe-stat"><div class="pipe-stat-num clr-gray">—</div><div class="pipe-stat-label">Loading...</div></div>
+      </div>
+    </div>
+  `;
+
   app().innerHTML = html;
+  refreshPipelineStatus();
+}
+
+async function refreshPipelineStatus() {
+  try {
+    const s = await api('/pipeline/status');
+    const v = s.videos || {};
+    const c = s.claims || {};
+    const isActive = (v.discovered || 0) > 0 || (v.transcribed || 0) > 0 || (v.identified || 0) > 0;
+    const dot = document.getElementById('pipeline-dot');
+    if (dot) dot.className = `status-dot ${isActive ? 'active' : 'idle'}`;
+    const el = document.getElementById('pipeline-stats');
+    if (!el) return;
+    el.innerHTML = `
+      <div class="pipe-stat"><div class="pipe-stat-num clr-blue">${v.total || 0}</div><div class="pipe-stat-label">Total Videos</div></div>
+      <div class="pipe-stat"><div class="pipe-stat-num clr-amber">${v.discovered || 0}</div><div class="pipe-stat-label">Discovered</div></div>
+      <div class="pipe-stat"><div class="pipe-stat-num clr-purple">${v.transcribed || 0}</div><div class="pipe-stat-label">Transcribed</div></div>
+      <div class="pipe-stat"><div class="pipe-stat-num clr-green">${v.enriched || 0}</div><div class="pipe-stat-label">Enriched</div></div>
+      <div class="pipe-stat"><div class="pipe-stat-num clr-green">${c.approved || 0}</div><div class="pipe-stat-label">Claims Approved</div></div>
+      <div class="pipe-stat"><div class="pipe-stat-num clr-red">${c.pending || 0}</div><div class="pipe-stat-label">Claims Pending</div></div>
+      <div class="pipe-stat"><div class="pipe-stat-num clr-gray">${s.positions || 0}</div><div class="pipe-stat-label">Positions</div></div>
+      <div class="pipe-stat"><div class="pipe-stat-num clr-gray">${s.people || 0}</div><div class="pipe-stat-label">People</div></div>
+    `;
+  } catch {
+    const el = document.getElementById('pipeline-stats');
+    if (el) el.innerHTML = '<div class="pipe-stat"><div class="pipe-stat-num clr-red">!</div><div class="pipe-stat-label">Could not load</div></div>';
+  }
 }
 
 async function scanChannel(id, btn) {
