@@ -1206,11 +1206,14 @@ def add_video(req: VideoAddRequest, db: Session = Depends(get_db)):
 
     # Fetch title via yt-dlp (quick metadata grab)
     title = None
+    description = None
     channel_yt_id = None
+    published_at = None
     try:
         from src.youtube import run_yt_dlp
         proc = run_yt_dlp(
-            ["--print", "title", "--print", "channel_id", "--skip-download",
+            ["--print", "title", "--print", "channel_id", "--print", "description",
+             "--print", "upload_date", "--skip-download",
              f"https://youtube.com/watch?v={video_id}"],
             timeout=15,
         )
@@ -1218,8 +1221,42 @@ def add_video(req: VideoAddRequest, db: Session = Depends(get_db)):
             lines = proc.stdout.strip().split("\n")
             title = lines[0] if lines and lines[0] != "NA" else None
             channel_yt_id = lines[1].strip() if len(lines) > 1 and lines[1].strip() != "NA" else None
+            description = lines[2].strip() if len(lines) > 2 and lines[2].strip() != "NA" else None
+            if len(lines) > 3 and lines[3].strip() != "NA":
+                try:
+                    from datetime import datetime
+                    published_at = datetime.strptime(lines[3].strip(), "%Y%m%d")
+                except Exception:
+                    pass
     except Exception:
-        pass  # Not critical, we can proceed without title
+        pass
+
+    # Fallback: YouTube Data API if yt-dlp failed to get title
+    if not title:
+        try:
+            from src.config import settings as cfg
+            if cfg.youtube_api_key:
+                import httpx
+                resp = httpx.get(
+                    "https://www.googleapis.com/youtube/v3/videos",
+                    params={"id": video_id, "part": "snippet", "key": cfg.youtube_api_key},
+                    timeout=10,
+                )
+                if resp.status_code == 200:
+                    items = resp.json().get("items", [])
+                    if items:
+                        snippet = items[0]["snippet"]
+                        title = snippet.get("title")
+                        description = description or snippet.get("description")
+                        channel_yt_id = channel_yt_id or snippet.get("channelId")
+                        if not published_at and snippet.get("publishedAt"):
+                            try:
+                                from datetime import datetime
+                                published_at = datetime.fromisoformat(snippet["publishedAt"].replace("Z", "+00:00"))
+                            except Exception:
+                                pass
+        except Exception:
+            pass
 
     # Try to match to a tracked channel
     podcast_channel_id = None
@@ -1232,7 +1269,9 @@ def add_video(req: VideoAddRequest, db: Session = Depends(get_db)):
 
     video = Videos(
         youtube_video_id=video_id,
-        title=title,
+        title=title or video_id,
+        description=description,
+        published_at=published_at,
         source_channel_youtube_id=channel_yt_id,
         podcast_channel_id=podcast_channel_id,
         discovery_method="manual",
