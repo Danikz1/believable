@@ -210,7 +210,14 @@ def _extract_batch(
             logger.error(f"LLM extraction failed for {person.name}: {fallback_error}")
             raise EnrichmentError(str(fallback_error)) from fallback_error
 
-    raw_claims = result.get("claims", [])
+    raw_claims = []
+    if isinstance(result, dict):
+        raw_claims = result.get("claims", [])
+    elif isinstance(result, list):
+        # LLM returned a list directly — treat as claims list
+        raw_claims = result
+    else:
+        logger.warning(f"Unexpected LLM result type: {type(result)}")
     stored_claims = []
 
     # Derive trust level
