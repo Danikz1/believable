@@ -67,6 +67,7 @@ def _update_position_for_topic(
         position.current_position = claim.claim_text[:500]
         position.last_updated = datetime.now(timezone.utc)
         position.claim_count = (position.claim_count or 0) + 1
+        position.sentiment = claim.sentiment  # v2: track sentiment
     else:
         position = PersonTopicPositions(
             person_id=person_id,
@@ -74,6 +75,7 @@ def _update_position_for_topic(
             current_position=claim.claim_text[:500],
             last_updated=datetime.now(timezone.utc),
             claim_count=1,
+            sentiment=claim.sentiment,  # v2: track sentiment
         )
         session.add(position)
 
@@ -82,6 +84,16 @@ def _update_position_for_topic(
     if previous_position and claim.claim_text:
         is_shift = _detect_shift(previous_position, claim.claim_text)
 
+    # Generate shift note if shift detected (v2)
+    shift_note = None
+    if is_shift:
+        shift_note = _generate_shift_note(
+            person_name=claim.person.name if claim.person else "Unknown",
+            topic_name=topic.name,
+            previous=previous_position,
+            current=claim.claim_text,
+        )
+
     # Log to position history
     log_entry = PositionHistoryLog(
         person_id=person_id,
@@ -89,6 +101,8 @@ def _update_position_for_topic(
         position_summary=claim.claim_text[:500],
         source_claim_id=claim.id,
         is_shift=is_shift,
+        previous_position=previous_position,  # v2
+        shift_note=shift_note,                # v2
     )
     session.add(log_entry)
 
@@ -131,6 +145,35 @@ def _detect_shift(previous: str, current: str) -> bool:
         return True
 
     return False
+
+
+def _generate_shift_note(
+    person_name: str, topic_name: str, previous: str, current: str
+) -> str:
+    """Generate a human-readable shift explanation using LLM."""
+    try:
+        from src.providers.llm import call_llm, get_available_provider
+
+        if not get_available_provider():
+            return f"Position shifted from a prior view on {topic_name}."
+
+        prompt = (
+            f"{person_name}'s previous position on {topic_name} was:\n"
+            f'"{previous}"\n\n'
+            f"Their new position is:\n"
+            f'"{current}"\n\n'
+            "In 1-2 sentences, explain what shifted and why it matters. "
+            "Be specific about what changed. Do not say 'the position shifted.' "
+            "Say WHAT changed and in WHICH direction."
+        )
+        return call_llm(
+            system_prompt="You are an analyst summarizing position changes.",
+            user_prompt=prompt,
+            max_tokens=200,
+        )
+    except Exception as e:
+        logger.warning(f"Failed to generate shift note: {e}")
+        return f"Position shifted from a prior view on {topic_name}."
 
 
 def update_positions_for_video(session: Session, video_id) -> dict:

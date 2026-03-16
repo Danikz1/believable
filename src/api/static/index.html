@@ -1,1623 +1,967 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Believable Minds</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-primary: #0a0e17;
-            --bg-secondary: #111827;
-            --bg-card: #1a2235;
-            --bg-hover: #1f2a40;
-            --border: #2a3650;
-            --text-primary: #e8ecf4;
-            --text-secondary: #8899b6;
-            --text-muted: #5c6e8a;
-            --accent-blue: #3b82f6;
-            --accent-cyan: #06b6d4;
-            --accent-green: #10b981;
-            --accent-amber: #f59e0b;
-            --accent-red: #ef4444;
-            --accent-purple: #8b5cf6;
-            --trust-high: #10b981;
-            --trust-medium: #f59e0b;
-            --trust-low: #ef4444;
-            --radius: 10px;
-            --radius-sm: 6px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            line-height: 1.5;
-        }
-
-        /* ── Layout ────────────────────────────────────── */
-        .app {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 240px;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border);
-            padding: 20px 0;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: 100;
-        }
-
-        .logo {
-            padding: 0 20px 24px;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 12px;
-        }
-
-        .logo h1 {
-            font-size: 16px;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.3px;
-        }
-
-        .logo span {
-            font-size: 11px;
-            color: var(--text-muted);
-            display: block;
-            margin-top: 2px;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 20px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            border-left: 3px solid transparent;
-        }
-
-        .nav-item:hover {
-            background: var(--bg-hover);
-            color: var(--text-primary);
-        }
-
-        .nav-item.active {
-            background: rgba(59, 130, 246, 0.08);
-            color: var(--accent-blue);
-            border-left-color: var(--accent-blue);
-        }
-
-        .nav-item .icon {
-            font-size: 16px;
-            width: 20px;
-            text-align: center;
-        }
-
-        .main {
-            margin-left: 240px;
-            flex: 1;
-            padding: 28px 32px;
-            max-width: 1400px;
-        }
-
-        .page-header {
-            margin-bottom: 24px;
-        }
-
-        .page-header h2 {
-            font-size: 22px;
-            font-weight: 600;
-            letter-spacing: -0.3px;
-        }
-
-        .page-header p {
-            color: var(--text-secondary);
-            font-size: 13px;
-            margin-top: 4px;
-        }
-
-        /* ── Cards ─────────────────────────────────────── */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 14px;
-            margin-bottom: 24px;
-        }
-
-        .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 18px;
-            transition: border-color 0.2s;
-        }
-
-        .stat-card:hover {
-            border-color: var(--accent-blue);
-        }
-
-        .stat-card .label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
-
-        .stat-card .value {
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: -1px;
-        }
-
-        .stat-card .sub {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-top: 4px;
-        }
-
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            margin-bottom: 16px;
-        }
-
-        .card-title {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* ── Claims ────────────────────────────────────── */
-        .claim-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px 20px;
-            margin-bottom: 10px;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-
-        .claim-card:hover {
-            border-color: var(--accent-blue);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .claim-text {
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 10px;
-        }
-
-        .claim-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
-        }
-
-        /* ── Badges ────────────────────────────────────── */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-        }
-
-        .badge-trust-high {
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--trust-high);
-        }
-
-        .badge-trust-medium {
-            background: rgba(245, 158, 11, 0.15);
-            color: var(--trust-medium);
-        }
-
-        .badge-trust-low {
-            background: rgba(239, 68, 68, 0.15);
-            color: var(--trust-low);
-        }
-
-        .badge-type {
-            background: rgba(59, 130, 246, 0.12);
-            color: var(--accent-blue);
-        }
-
-        .badge-topic {
-            background: rgba(139, 92, 246, 0.12);
-            color: var(--accent-purple);
-        }
-
-        .badge-sentiment-bullish {
-            background: rgba(16, 185, 129, 0.12);
-            color: var(--accent-green);
-        }
-
-        .badge-sentiment-bearish {
-            background: rgba(239, 68, 68, 0.12);
-            color: var(--accent-red);
-        }
-
-        .badge-sentiment-neutral {
-            background: rgba(136, 153, 182, 0.12);
-            color: var(--text-secondary);
-        }
-
-        .badge-approved {
-            background: rgba(16, 185, 129, 0.12);
-            color: var(--accent-green);
-        }
-
-        .badge-pending {
-            background: rgba(245, 158, 11, 0.12);
-            color: var(--accent-amber);
-        }
-
-        .person-name {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--accent-cyan);
-        }
-
-        .confidence {
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-
-        /* ── Table ─────────────────────────────────────── */
-        .table-wrap {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            text-align: left;
-            padding: 10px 14px;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--text-muted);
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-        }
-
-        th:hover {
-            color: var(--text-primary);
-        }
-
-        td {
-            padding: 12px 14px;
-            font-size: 13px;
-            border-bottom: 1px solid rgba(42, 54, 80, 0.5);
-        }
-
-        tr:hover {
-            background: var(--bg-hover);
-        }
-
-        .tier-badge {
-            display: inline-flex;
-            width: 22px;
-            height: 22px;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            font-size: 11px;
-            font-weight: 700;
-        }
-
-        .tier-1 {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: #000;
-        }
-
-        .tier-2 {
-            background: linear-gradient(135deg, #94a3b8, #64748b);
-            color: #fff;
-        }
-
-        .tier-3 {
-            background: linear-gradient(135deg, #78716c, #57534e);
-            color: #fff;
-        }
-
-        /* ── Search ────────────────────────────────────── */
-        .search-bar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .search-input {
-            flex: 1;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 10px 14px;
-            color: var(--text-primary);
-            font-size: 13px;
-            font-family: inherit;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .search-input:focus {
-            border-color: var(--accent-blue);
-        }
-
-        .search-input::placeholder {
-            color: var(--text-muted);
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border-radius: var(--radius-sm);
-            font-size: 13px;
-            font-weight: 500;
-            font-family: inherit;
-            cursor: pointer;
-            border: 1px solid var(--border);
-            transition: all 0.15s;
-        }
-
-        .btn-primary {
-            background: var(--accent-blue);
-            color: white;
-            border-color: var(--accent-blue);
-        }
-
-        .btn-primary:hover {
-            background: #2563eb;
-        }
-
-        .btn-success {
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--accent-green);
-            border-color: rgba(16, 185, 129, 0.3);
-        }
-
-        .btn-danger {
-            background: rgba(239, 68, 68, 0.15);
-            color: var(--accent-red);
-            border-color: rgba(239, 68, 68, 0.3);
-        }
-
-        .btn-ghost {
-            background: transparent;
-            color: var(--text-secondary);
-        }
-
-        .btn-ghost:hover {
-            background: var(--bg-hover);
-            color: var(--text-primary);
-        }
-
-        /* ── Evidence Drawer ───────────────────────────── */
-        .evidence-panel {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 14px;
-            margin-top: 10px;
-            display: none;
-        }
-
-        .evidence-panel.open {
-            display: block;
-        }
-
-        .evidence-quote {
-            background: var(--bg-primary);
-            border-left: 2px solid var(--accent-blue);
-            padding: 8px 12px;
-            margin: 8px 0;
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-style: italic;
-        }
-
-        .source-line {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 6px;
-        }
-
-        .source-line a {
-            color: var(--accent-blue);
-            text-decoration: none;
-        }
-
-        .source-line a:hover {
-            text-decoration: underline;
-        }
-
-        .source-line .ts {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            background: rgba(59, 130, 246, 0.1);
-            padding: 1px 5px;
-            border-radius: 3px;
-            color: var(--accent-blue);
-        }
-
-        .best-quote {
-            font-style: italic;
-            color: var(--text-secondary);
-            font-size: 0.88rem;
-            margin: 6px 0;
-            padding-left: 10px;
-            border-left: 2px solid var(--accent-blue);
-            max-height: 40px;
-            overflow: hidden;
-        }
-
-        /* Verdict badges */
-        .verdict-badge {
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .verdict-essential {
-            background: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-        }
-
-        .verdict-worth_skimming {
-            background: rgba(245, 158, 11, 0.15);
-            color: #f59e0b;
-        }
-
-        .verdict-skip_unless_fan {
-            background: rgba(107, 114, 128, 0.15);
-            color: #6b7280;
-        }
-
-        .summary-expand {
-            cursor: pointer;
-            color: var(--accent-blue);
-            font-size: 12px;
-            font-weight: 600;
-            margin-top: 8px;
-            display: inline-block;
-        }
-
-        .summary-expand:hover {
-            text-decoration: underline;
-        }
-
-        /* ── Sections ──────────────────────────────────── */
-        .section-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        @media (max-width: 900px) {
-            .section-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .sidebar {
-                display: none;
-            }
-
-            .main {
-                margin-left: 0;
-            }
-        }
-
-        .position-bar {
-            display: flex;
-            gap: 2px;
-            height: 6px;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-top: 8px;
-        }
-
-        .position-bar .segment {
-            height: 100%;
-            border-radius: 3px;
-        }
-
-        .detail-grid {
-            display: grid;
-            grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
-            gap: 16px;
-            align-items: start;
-        }
-
-        @media (max-width: 1100px) {
-            .detail-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .detail-stack {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .detail-eyebrow {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
-
-        .person-summary {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 14px;
-        }
-
-        .person-summary h3 {
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        .person-blurb {
-            color: var(--text-secondary);
-            font-size: 13px;
-            line-height: 1.7;
-        }
-
-        .metric-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-            margin-top: 16px;
-        }
-
-        .metric-chip {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 10px 12px;
-        }
-
-        .metric-chip .label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.7px;
-            color: var(--text-muted);
-        }
-
-        .metric-chip .value {
-            font-size: 18px;
-            font-weight: 700;
-            margin-top: 4px;
-        }
-
-        .history-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-height: 72vh;
-            overflow-y: auto;
-            padding-right: 4px;
-        }
-
-        .history-item {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px;
-        }
-
-        .history-item:hover {
-            border-color: var(--accent-blue);
-        }
-
-        .history-topline {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .history-date {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.7px;
-        }
-
-        .history-source {
-            font-size: 12px;
-            color: var(--accent-blue);
-            text-decoration: none;
-        }
-
-        .history-source:hover {
-            text-decoration: underline;
-        }
-
-        .empty-note {
-            padding: 16px;
-            background: var(--bg-secondary);
-            border: 1px dashed var(--border);
-            border-radius: var(--radius-sm);
-            color: var(--text-secondary);
-            font-size: 13px;
-        }
-
-        /* ── Loading ───────────────────────────────────── */
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            color: var(--text-muted);
-        }
-
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--border);
-            border-top-color: var(--accent-blue);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-right: 10px;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-        }
-
-        .empty-state .icon {
-            font-size: 40px;
-            margin-bottom: 12px;
-        }
-
-        /* ── Animations ────────────────────────────────── */
-        .fade-in {
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(8px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Believable Minds — Intelligence Feed</title>
+  <meta name="description" content="Track what the world's most influential minds are saying. Real-time position tracking, episode summaries, and shift detection." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Newsreader:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 15px; scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #050505; color: #e5e5e5;
+      line-height: 1.6; min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Header / Nav ─────────────────────────────────────────────── */
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(5,5,5,0.85); backdrop-filter: blur(16px);
+      border-bottom: 1px solid #1a1a1a;
+      padding: 0 24px; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .site-logo { font-weight: 700; font-size: 17px; letter-spacing: -0.3px; color: #fff; }
+    .site-nav { display: flex; gap: 0; height: 100%; }
+    .nav-tab {
+      padding: 0 20px; height: 56px; line-height: 56px;
+      font-size: 13px; font-weight: 500; color: #555;
+      border-bottom: 2px solid transparent;
+      cursor: pointer; transition: color 0.2s, border-color 0.2s;
+      user-select: none;
+    }
+    .nav-tab:hover { color: #999; }
+    .nav-tab.active { color: #fff; border-bottom-color: #fff; }
+    .header-actions { display: flex; gap: 10px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      border: 1px solid #333; background: #111; color: #e5e5e5;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: #1a1a1a; border-color: #444; }
+    .btn-primary { background: #fff; color: #050505; border-color: #fff; }
+    .btn-primary:hover { background: #e5e5e5; }
+    .btn-red { background: #dc2626; color: #fff; border-color: #dc2626; }
+    .btn-red:hover { background: #b91c1c; }
+
+    /* ── Main Container ───────────────────────────────────────────── */
+    .main { max-width: 900px; margin: 0 auto; padding: 32px 24px 80px; }
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; color: #fff; }
+    .page-header p { font-size: 13px; color: #666; margin-top: 4px; }
+
+    /* ── Cards ─────────────────────────────────────────────────────── */
+    .card {
+      background: #111; border: 1px solid #222;
+      border-radius: 12px; padding: 20px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: #333; }
+
+    /* ── Chips / Pills ────────────────────────────────────────────── */
+    .chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .chip {
+      padding: 6px 14px; border-radius: 20px;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+      background: #111; border: 1px solid #222; color: #888;
+      transition: all 0.2s; user-select: none;
+    }
+    .chip:hover { border-color: #444; color: #ccc; }
+    .chip.active { background: #fff; color: #050505; border-color: #fff; }
+    .tag-pill {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: 10px; font-weight: 500; background: #1a1a1a;
+      color: #777; border: 1px solid #252525;
+    }
+
+    /* ── Avatar ────────────────────────────────────────────────────── */
+    .avatar {
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 50%; font-weight: 700; font-size: 14px;
+      color: #fff; flex-shrink: 0;
+    }
+    .avatar-sm { width: 36px; height: 36px; font-size: 12px; }
+    .avatar-md { width: 48px; height: 48px; font-size: 16px; }
+    .avatar-lg { width: 72px; height: 72px; font-size: 24px; }
+
+    /* ── Verdict Badges ────────────────────────────────────────────── */
+    .verdict {
+      display: inline-block; padding: 3px 10px; border-radius: 6px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .verdict-essential { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .verdict-skim { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .verdict-skip { background: rgba(100,100,100,0.15); color: #888; }
+    .verdict-oneoff { background: rgba(168,85,247,0.15); color: #a855f7; }
+
+    /* ── Feed list ─────────────────────────────────────────────────── */
+    .feed-list { display: flex; flex-direction: column; gap: 2px; }
+    .feed-item {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px; padding: 18px 16px; border-radius: 10px;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .feed-item:hover { background: #111; }
+    .feed-meta {
+      font-size: 11px; color: #666; display: flex; align-items: center; gap: 8px;
+      margin-bottom: 4px;
+    }
+    .feed-meta .channel-name { font-weight: 600; }
+    .feed-meta .dot { color: #333; }
+    .feed-title { font-size: 15px; font-weight: 600; color: #e5e5e5; line-height: 1.35; }
+    .feed-tldr {
+      font-size: 13px; color: #888; margin-top: 4px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .feed-right { flex-shrink: 0; text-align: right; padding-top: 4px; }
+
+    /* ── Verdict legend ────────────────────────────────────────────── */
+    .verdict-legend {
+      display: flex; gap: 16px; padding: 10px 16px; border-radius: 10px;
+      background: #0a0a0a; margin-bottom: 20px; font-size: 11px; color: #555;
+      flex-wrap: wrap; align-items: center;
+    }
+    .verdict-legend span { display: flex; align-items: center; gap: 5px; }
+
+    /* ── Episode Detail ────────────────────────────────────────────── */
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; color: #666; margin-bottom: 20px;
+      cursor: pointer; transition: color 0.2s;
+    }
+    .back-link:hover { color: #fff; }
+    .ep-meta { font-size: 12px; color: #666; margin-bottom: 8px; }
+    .ep-title { font-family: 'Newsreader', serif; font-size: 28px; font-weight: 500; color: #fff; line-height: 1.3; margin-bottom: 16px; }
+    .ep-verdict-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .ep-verdict-reason { font-size: 13px; color: #888; font-style: italic; }
+    .depth-toggle { display: flex; gap: 0; margin-bottom: 24px; }
+    .depth-btn {
+      padding: 8px 18px; font-size: 12px; font-weight: 600;
+      background: #111; border: 1px solid #222; color: #888;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .depth-btn:first-child { border-radius: 8px 0 0 8px; }
+    .depth-btn:last-child { border-radius: 0 8px 8px 0; }
+    .depth-btn.active { background: #fff; color: #050505; border-color: #fff; }
+    .ep-body { font-family: 'Newsreader', serif; font-size: 17px; line-height: 1.75; color: #ccc; }
+    .ep-body p { margin-bottom: 16px; }
+    .section-list { display: flex; flex-direction: column; gap: 16px; }
+    .section-item { display: flex; gap: 12px; align-items: flex-start; }
+    .ts-badge {
+      display: inline-block; padding: 3px 8px; border-radius: 6px;
+      font-family: 'DM Sans', monospace; font-size: 11px; font-weight: 600;
+      background: #1a1a1a; color: #888; cursor: pointer;
+      transition: background 0.2s; white-space: nowrap; flex-shrink: 0;
+    }
+    .ts-badge:hover { background: #333; color: #fff; }
+    .ts-badge-green { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .ts-badge-green:hover { background: rgba(34,197,94,0.3); }
+    .section-title { font-weight: 600; font-size: 14px; color: #e5e5e5; }
+    .section-summary { font-size: 13px; color: #888; margin-top: 2px; }
+    .moments-list { display: flex; flex-direction: column; gap: 14px; margin-top: 24px; }
+    .moment-item { display: flex; gap: 12px; align-items: flex-start; }
+    .moment-desc { font-weight: 600; font-size: 13px; color: #e5e5e5; }
+    .moment-quote { font-size: 12px; color: #777; font-style: italic; margin-top: 2px; }
+    .shift-card {
+      background: #1a1000; border: 1px solid #332800;
+      border-radius: 12px; padding: 16px; margin-top: 24px;
+    }
+    .shift-card h3 { font-size: 14px; font-weight: 600; color: #f59e0b; margin-bottom: 8px; }
+    .shift-card p { font-size: 13px; color: #cca800; }
+
+    /* ── People List ────────────────────────────────────────────────── */
+    .people-list { display: flex; flex-direction: column; gap: 2px; }
+    .person-row {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px; border-radius: 10px;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .person-row:hover { background: #111; }
+    .person-info { flex: 1; min-width: 0; }
+    .person-name-row { display: flex; align-items: center; gap: 8px; }
+    .person-name { font-size: 15px; font-weight: 600; color: #e5e5e5; }
+    .shift-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: 10px; font-weight: 600; background: rgba(245,158,11,0.15);
+      color: #f59e0b;
+    }
+    .person-role { font-size: 12px; color: #666; margin-top: 2px; }
+    .person-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+    .person-stat { text-align: right; flex-shrink: 0; }
+    .person-stat-num { font-size: 22px; font-weight: 700; color: #444; }
+    .person-stat-label { font-size: 10px; color: #555; }
+
+    /* ── Shifts Banner ─────────────────────────────────────────────── */
+    .shifts-banner {
+      background: #1a1000; border: 1px solid #332800;
+      border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;
+    }
+    .shifts-banner h2 { font-size: 14px; font-weight: 600; color: #f59e0b; margin-bottom: 12px; }
+    .shift-list { display: flex; flex-direction: column; gap: 12px; }
+    .shift-row {
+      display: flex; align-items: center; gap: 10px;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .shift-row:hover { opacity: 0.8; }
+    .shift-text { font-size: 13px; color: #cca800; flex: 1; }
+    .shift-text strong { color: #e5c200; font-weight: 600; }
+
+    /* ── Person Detail ─────────────────────────────────────────────── */
+    .person-header { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px; }
+    .person-header-info { flex: 1; }
+    .person-detail-name { font-family: 'Newsreader', serif; font-size: 28px; font-weight: 500; color: #fff; }
+    .person-detail-role { font-size: 14px; color: #888; margin-top: 2px; }
+    .person-detail-meta { font-size: 12px; color: #555; margin-top: 4px; }
+    .person-bio {
+      font-family: 'Newsreader', serif; font-size: 16px; line-height: 1.7;
+      color: #bbb; border-left: 3px solid; padding-left: 16px;
+      margin: 20px 0 28px;
+    }
+    .positions-section { margin-top: 28px; }
+    .positions-section h2 { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 16px; }
+    .position-item { padding: 14px 0; border-bottom: 1px solid #1a1a1a; }
+    .position-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .sentiment-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .sentiment-bullish { background: #22c55e; }
+    .sentiment-bearish { background: #ef4444; }
+    .sentiment-cautious, .sentiment-urgent { background: #f59e0b; }
+    .sentiment-strong { background: #a855f7; }
+    .sentiment-neutral { background: #888; }
+    .position-topic { font-size: 14px; font-weight: 600; color: #e5e5e5; cursor: pointer; }
+    .position-topic:hover { color: #fff; text-decoration: underline; }
+    .position-date { font-size: 11px; color: #555; margin-left: auto; }
+    .position-text { font-size: 13px; color: #999; line-height: 1.5; }
+    .position-shift-note {
+      background: #1a1000; border: 1px solid #332800;
+      border-radius: 8px; padding: 10px 14px; margin-top: 8px;
+      font-size: 12px; color: #cca800;
+    }
+    .appearances-section { margin-top: 32px; }
+    .appearances-section h2 { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 16px; }
+    .appearance-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 0; border-bottom: 1px solid #1a1a1a;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .appearance-row:hover { opacity: 0.8; }
+    .appearance-info { flex: 1; }
+    .appearance-title { font-size: 14px; font-weight: 500; color: #e5e5e5; }
+    .appearance-meta { font-size: 11px; color: #666; margin-top: 2px; }
+
+    /* ── Channels Grid ─────────────────────────────────────────────── */
+    .channels-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .channel-card {
+      background: #111; border: 1px solid #222; border-radius: 12px;
+      padding: 20px; border-left: 4px solid;
+      cursor: pointer; transition: border-color 0.2s, transform 0.15s;
+    }
+    .channel-card:hover { border-color: #444; transform: translateY(-2px); }
+    .channel-name { font-size: 16px; font-weight: 600; color: #fff; }
+    .channel-handle { font-size: 12px; color: #555; margin-top: 2px; }
+    .channel-count { font-size: 32px; font-weight: 700; margin: 14px 0 4px; }
+    .channel-count-label { font-size: 11px; color: #666; }
+    .channel-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+    .channel-scanned { font-size: 11px; color: #555; }
+    .btn-check {
+      padding: 5px 12px; font-size: 11px; border-radius: 6px;
+      background: #1a1a1a; border: 1px solid #333; color: #888;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-check:hover { background: #333; color: #fff; }
+
+    /* ── Modal ─────────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      display: none; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #111; border: 1px solid #333; border-radius: 16px;
+      padding: 28px; width: 90%; max-width: 480px;
+      animation: modalSlide 0.2s ease-out;
+    }
+    @keyframes modalSlide { from { opacity: 0; transform: translateY(8px); } }
+    .modal h2 { font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+    .modal p { font-size: 13px; color: #666; margin-bottom: 20px; }
+    .modal-input {
+      width: 100%; padding: 12px 14px; border-radius: 10px;
+      background: #0a0a0a; border: 1px solid #333; color: #e5e5e5;
+      font-size: 14px; font-family: inherit; outline: none;
+      transition: border-color 0.2s;
+    }
+    .modal-input:focus { border-color: #555; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
+    .modal-error { color: #ef4444; font-size: 12px; margin-top: 8px; display: none; }
+
+    /* ── Toast ─────────────────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #22c55e; color: #050505; padding: 10px 24px;
+      border-radius: 10px; font-size: 13px; font-weight: 600;
+      z-index: 300; opacity: 0; transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+
+    /* ── Loading & Empty ───────────────────────────────────────────── */
+    .loading { text-align: center; padding: 60px 20px; color: #444; font-size: 14px; }
+    .empty { text-align: center; padding: 60px 20px; color: #444; }
+    .empty h3 { font-size: 18px; color: #555; margin-bottom: 8px; }
+    .empty p { font-size: 13px; }
+
+    /* ── Responsive ────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .site-header { padding: 0 16px; }
+      .nav-tab { padding: 0 12px; font-size: 12px; }
+      .main { padding: 20px 16px 60px; }
+      .page-header h1 { font-size: 22px; }
+      .channels-grid { grid-template-columns: 1fr; }
+      .ep-title { font-size: 22px; }
+      .person-detail-name { font-size: 22px; }
+      .btn span.hide-mobile { display: none; }
+    }
+  </style>
 </head>
-
 <body>
-    <div class="app">
-        <!-- Sidebar -->
-        <nav class="sidebar">
-            <div class="logo">
-                <h1>Believable Minds</h1>
-                <span>Intelligence Platform</span>
-            </div>
-            <a class="nav-item active" onclick="navigate('dashboard')">
-                <span class="icon">📊</span> Dashboard
-            </a>
-            <a class="nav-item" onclick="navigate('feed')">
-                <span class="icon">📰</span> Feed
-            </a>
-            <a class="nav-item" onclick="navigate('people')">
-                <span class="icon">👤</span> People
-            </a>
-            <a class="nav-item" onclick="navigate('claims')">
-                <span class="icon">💬</span> Claims
-            </a>
-            <a class="nav-item" onclick="navigate('topics')">
-                <span class="icon">🏷️</span> Topics
-            </a>
-            <a class="nav-item" onclick="navigate('review')">
-                <span class="icon">✅</span> Review Queue
-            </a>
-            <a class="nav-item" onclick="navigate('pipeline')">
-                <span class="icon">⚙️</span> Pipeline
-            </a>
-        </nav>
 
-        <!-- Main Content -->
-        <main class="main" id="main-content">
-            <div class="loading">
-                <div class="spinner"></div> Loading...
-            </div>
-        </main>
+<!-- ── Header ──────────────────────────────────────────────────────── -->
+<header class="site-header">
+  <div class="site-logo">Believable Minds</div>
+  <nav class="site-nav">
+    <div class="nav-tab active" data-page="feed" onclick="navigate('feed')">Feed</div>
+    <div class="nav-tab" data-page="people" onclick="navigate('people')">People</div>
+    <div class="nav-tab" data-page="channels" onclick="navigate('channels')">Channels</div>
+  </nav>
+  <div class="header-actions">
+    <button class="btn btn-primary" onclick="openModal('video')">+ <span class="hide-mobile">Add Video</span></button>
+  </div>
+</header>
+
+<!-- ── Pages ───────────────────────────────────────────────────────── -->
+<div id="app" class="main"></div>
+
+<!-- ── Add Video Modal ─────────────────────────────────────────────── -->
+<div id="modal-video" class="modal-overlay" onclick="if(event.target===this)closeModal('video')">
+  <div class="modal">
+    <h2>Add Video</h2>
+    <p>Paste any YouTube video URL. It'll be transcribed and summarized — even if the channel isn't tracked.</p>
+    <input id="input-video-url" class="modal-input" placeholder="https://youtube.com/watch?v=..." />
+    <div id="error-video" class="modal-error"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('video')">Cancel</button>
+      <button class="btn btn-primary" id="btn-submit-video" onclick="submitVideo()">Add Video</button>
     </div>
-
-    <script>
-        const API = '';  // Same origin
-
-        // ── State ──
-        let currentPage = 'dashboard';
-
-        // ── API Helpers ──
-        async function api(path) {
-            const r = await fetch(`${API}${path}`);
-            if (!r.ok) throw new Error(`API error: ${r.status}`);
-            return r.json();
-        }
-
-        // ── Navigation ──
-        function navigate(page) {
-            currentPage = page;
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            const navPage = page.startsWith('person-') ? 'people' : page;
-            document.querySelectorAll('.nav-item').forEach(el => {
-                if (el.textContent.trim().toLowerCase().includes(navPage === 'review' ? 'review' : navPage)) {
-                    el.classList.add('active');
-                }
-            });
-            loadPage(page);
-        }
-
-        async function loadPage(page) {
-            const main = document.getElementById('main-content');
-            main.innerHTML = '<div class="loading"><div class="spinner"></div> Loading...</div>';
-
-            try {
-                if (page.startsWith('person-')) {
-                    await renderPerson(main, page.slice('person-'.length));
-                    return;
-                }
-                switch (page) {
-                    case 'dashboard': await renderDashboard(main); break;
-                    case 'feed': await renderFeed(main); break;
-                    case 'people': await renderPeople(main); break;
-                    case 'claims': await renderClaims(main); break;
-                    case 'topics': await renderTopics(main); break;
-                    case 'review': await renderReview(main); break;
-                    case 'pipeline': await renderPipeline(main); break;
-                }
-            } catch (e) {
-                main.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Error: ${e.message}</p></div>`;
-            }
-        }
-
-        // ── Feed ──
-        async function renderFeed(el) {
-            const feed = await api('/api/summaries/feed?limit=20');
-            const items = feed.items || [];
-
-            el.innerHTML = `
-                <div class="page-header fade-in">
-                    <h2>\ud83d\udcf0 Feed</h2>
-                    <p>Intelligence summaries for your tracked people and channels</p>
-                </div>
-                <div id="feed-list" class="fade-in">
-                    ${items.length ? items.map(s => feedCard(s)).join('') : `
-                        <div class="empty-state">
-                            <div class="icon">\ud83d\udcf0</div>
-                            <p>No summaries yet</p>
-                            <p style="font-size:13px;color:var(--text-muted)">Star \u2605 people on the <a href="#" onclick="event.preventDefault();navigate('people')" style="color:var(--accent-cyan)">People page</a> to add them to your feed.</p>
-                        </div>
-                    `}
-                </div>
-            `;
-        }
-
-        function feedCard(s) {
-            const verdictClass = 'verdict-' + (s.watch_verdict || 'worth_skimming');
-            const verdictLabel = (s.watch_verdict || '').replace(/_/g, ' ');
-            const date = s.published_at ? new Date(s.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-            const detailed = s.detailed || {};
-            const bestMoments = detailed.best_moments || [];
-            const sections = detailed.sections || [];
-            const cardId = 'feed-' + s.id.substring(0, 8);
-
-            return `
-                <div class="card" style="margin-bottom:16px">
-                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-                        <div>
-                            <span style="font-size:12px;color:var(--text-muted)">${s.channel_name || ''} \u00b7 ${date}</span>
-                            ${s.person_focus_name ? `<span class="badge badge-type" style="margin-left:8px">\ud83c\udfaf ${s.person_focus_name}</span>` : ''}
-                        </div>
-                        <span class="verdict-badge ${verdictClass}">${verdictLabel}</span>
-                    </div>
-
-                    <div style="font-size:16px;font-weight:700;margin-bottom:8px">
-                        ${s.source_url ? `<a href="${s.source_url}" target="_blank" style="color:var(--text-primary);text-decoration:none">${s.video_title || 'Untitled'}</a>` : (s.video_title || 'Untitled')}
-                    </div>
-
-                    <p style="font-size:14px;line-height:1.6;color:var(--text-secondary);margin-bottom:8px">${s.tldr}</p>
-
-                    ${s.watch_verdict_reason ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">\u2192 ${s.watch_verdict_reason}</div>` : ''}
-
-                    <div id="${cardId}-body" style="display:none;margin-bottom:12px">
-                        <div style="font-size:14px;line-height:1.7;white-space:pre-line">${s.summary_body || ''}</div>
-                    </div>
-
-                    <span class="summary-expand" onclick="toggleFeedSection('${cardId}-body', this)">\u25b8 Read more</span>
-
-                    ${bestMoments.length ? `
-                        <div style="margin-top:12px">
-                            <div style="font-size:11px;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:8px">Best Moments</div>
-                            ${bestMoments.slice(0, 3).map(m => {
-                const ts = m.timestamp_ms ? Math.floor(m.timestamp_ms / 1000) : null;
-                const tsDisplay = ts ? (ts >= 3600 ? Math.floor(ts / 3600) + ':' + String(Math.floor((ts % 3600) / 60)).padStart(2, '0') + ':' + String(ts % 60).padStart(2, '0') : Math.floor(ts / 60) + ':' + String(ts % 60).padStart(2, '0')) : '';
-                const url = s.source_url && ts ? s.source_url + '&t=' + ts + 's' : s.source_url;
-                return `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">
-                                    <span style="color:var(--accent-blue)">${tsDisplay ? `<a href="${url}" target="_blank" class="source-link">${tsDisplay}</a>` : ''}</span>
-                                    <span style="margin-left:8px">${m.quote_snippet || m.description || ''}</span>
-                                </div>`;
-            }).join('')}
-                        </div>
-                    ` : ''}
-
-                    ${s.whats_new && s.whats_new !== 'Consistent with prior positions.' ? `
-                        <div style="margin-top:12px;padding:10px 14px;background:rgba(245,158,11,0.08);border-left:3px solid #f59e0b;border-radius:0 8px 8px 0;font-size:13px">
-                            <strong style="color:#f59e0b">What's New:</strong> ${s.whats_new}
-                        </div>
-                    ` : ''}
-
-                    <div style="margin-top:12px;display:flex;gap:8px">
-                        ${s.source_url ? `<a href="${s.source_url}" target="_blank" class="btn btn-ghost" style="font-size:12px">\u25b6 Watch Episode</a>` : ''}
-                    </div>
-                </div>
-            `;
-        }
-
-        function toggleFeedSection(id, trigger) {
-            const el = document.getElementById(id);
-            if (el.style.display === 'none') {
-                el.style.display = 'block';
-                trigger.textContent = '\u25be Hide';
-            } else {
-                el.style.display = 'none';
-                trigger.textContent = '\u25b8 Read more';
-            }
-        }
-
-        // ── Dashboard ──
-        async function renderDashboard(el) {
-            const status = await api('/api/pipeline/status');
-            const claims = await api('/api/claims?limit=5');
-            const topics = await api('/api/topics');
-
-            const topTopics = topics.filter(t => t.claim_count > 0).sort((a, b) => b.claim_count - a.claim_count).slice(0, 8);
-
-            el.innerHTML = `
-                <div class="page-header fade-in">
-                    <h2>Dashboard</h2>
-                    <p>Believable Minds Intelligence Platform — real-time overview</p>
-                </div>
-
-                <div class="stats-grid fade-in">
-                    <div class="stat-card">
-                        <div class="label">Tracked People</div>
-                        <div class="value">${status.people}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="label">Videos</div>
-                        <div class="value">${status.videos.total}</div>
-                        <div class="sub">${status.videos.enriched} enriched · ${status.videos.identified} identified</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="label">Claims</div>
-                        <div class="value" style="color: var(--accent-green)">${status.claims.approved}</div>
-                        <div class="sub">${status.claims.pending} pending review</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="label">Active Topics</div>
-                        <div class="value">${topTopics.length}</div>
-                        <div class="sub">${status.positions} positions tracked</div>
-                    </div>
-                </div>
-
-                <div class="section-grid fade-in">
-                    <div class="card">
-                        <div class="card-title">💬 Latest Claims</div>
-                        ${claims.length ? claims.map(c => claimMini(c)).join('') : '<div class="empty-state"><p>No claims yet</p></div>'}
-                    </div>
-                    <div class="card">
-                        <div class="card-title">🏷️ Active Topics</div>
-                        ${topTopics.length ? topTopics.map(t => `
-                            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-                                <span class="badge badge-topic" style="cursor:pointer" onclick="viewTopic('${t.slug}')">${t.slug}</span>
-                                <span style="font-size:13px;font-weight:600">${t.claim_count} claims</span>
-                            </div>
-                        `).join('') : '<div class="empty-state"><p>No active topics</p></div>'}
-                    </div>
-                </div>
-
-                ${status.claims.pending > 0 ? `
-                <div class="card fade-in" style="margin-top:16px;border-left:3px solid var(--accent-amber)">
-                    <div style="display:flex;justify-content:space-between;align-items:center">
-                        <div>
-                            <div style="font-weight:600">\u26a0 ${status.claims.pending} claims awaiting review</div>
-                            <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Head to the Review Queue to approve or reject</div>
-                        </div>
-                        <button class="btn btn-primary" onclick="navigate('review')" style="font-size:12px">Review Now</button>
-                    </div>
-                </div>` : ''}
-            `;
-        }
-
-        function pipelineStage(label, count, color) {
-            return `<div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px">
-                <div style="font-size:24px;font-weight:700;color:${color}">${count}</div>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${label}</div>
-            </div>`;
-        }
-
-        // ── People ──
-        async function renderPeople(el) {
-            const people = await api('/api/people');
-
-            el.innerHTML = `
-                <div class="page-header fade-in">
-                    <h2>People</h2>
-                    <p>${people.length} tracked minds across multiple domains \u00b7 claim counts show approved claims only</p>
-                </div>
-                <div id="people-topic-filters" class="fade-in" style="margin-bottom:16px"></div>
-                <div class="search-bar fade-in" style="margin-bottom:16px">
-                    <input class="search-input" placeholder="Search by name..." id="people-search" oninput="filterPeopleByName(this.value)">
-                </div>
-                <div class="card fade-in">
-                    <div class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th></th>
-                                    <th>Name</th>
-                                    <th>Tier</th>
-                                    <th>Domain</th>
-                                    <th>Expertise</th>
-                                    <th>Approved Claims</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${people.map(p => `
-                                    <tr onclick="navigate('person-${p.id}')" style="cursor:pointer" title="Open person profile" data-name="${p.name.toLowerCase()}">
-                                        <td onclick="event.stopPropagation()" style="width:36px;text-align:center">
-                                            <button id="fav-btn-${p.id}" onclick="toggleFavorite(event,'${p.id}',this)" title="Favorite" style="background:none;border:none;cursor:pointer;font-size:18px;padding:2px 4px;opacity:0.25;transition:opacity 0.15s,transform 0.15s,color 0.15s">&#9734;</button>
-                                        </td>
-                                        <td style="font-weight:600;color:var(--accent-cyan)">${p.name}</td>
-                                        <td><span class="tier-badge tier-${p.tier}" title="Tier ${p.tier}: ${p.tier === 1 ? 'Core — highest priority, most tracked' : p.tier === 2 ? 'Standard — regularly tracked' : 'Peripheral — lower priority'}">${p.tier}</span></td>
-                                        <td style="color:var(--text-secondary)">${p.domain || '&mdash;'}</td>
-                                        <td>${(p.expertise_domains || []).slice(0, 3).map(d => `<span class="badge badge-topic" style="margin:1px">${d}</span>`).join('')}</td>
-                                        <td style="font-weight:600">${p.claim_count}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-
-            // Hydrate star states
-            try {
-                const favs = await api('/api/favorites');
-                window._favMap = {};
-                favs.forEach(f => {
-                    if (f.person_id) {
-                        window._favMap[f.person_id] = f.id;
-                        const btn = document.getElementById('fav-btn-' + f.person_id);
-                        if (btn) { btn.innerHTML = '&#9733;'; btn.style.opacity = '1'; btn.style.color = '#f5a623'; }
-                    }
-                });
-            } catch(e) {}
-        }
-
-        async function toggleFavorite(event, personId, btn) {
-            event.stopPropagation();
-            if (!window._favMap) window._favMap = {};
-            btn.style.transform = 'scale(1.4)';
-            setTimeout(() => btn.style.transform = '', 200);
-            const existingId = window._favMap[personId];
-            if (existingId) {
-                await fetch('/api/favorites/' + existingId, { method: 'DELETE' });
-                delete window._favMap[personId];
-                btn.innerHTML = '&#9734;'; btn.style.opacity = '0.25'; btn.style.color = '';
-            } else {
-                const res = await fetch('/api/favorites', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ person_id: personId, priority: 5, notify: true }),
-                });
-                const data = await res.json();
-                window._favMap[personId] = data.id;
-                btn.innerHTML = '&#9733;'; btn.style.opacity = '1'; btn.style.color = '#f5a623';
-            }
-        }
-
-        function filterPeopleByName(query) {
-            const q = query.toLowerCase();
-            document.querySelectorAll('tbody tr[data-name]').forEach(row => {
-                row.style.display = !q || row.dataset.name.includes(q) ? '' : 'none';
-            });
-        }
-
-        async function renderPerson(el, personId) {
-            const person = await api(`/api/people/${personId}?claim_limit=50`);
-            const claimCount = person.claim_count || 0;
-            const claims = person.claims || [];
-            const positions = person.positions || [];
-            const latestClaimDate = claims.length ? formatDate(claims[0].created_at) : 'No approved claims yet';
-
-            el.innerHTML = `
-                <div class="page-header fade-in">
-                    <h2>${person.name}</h2>
-                    <p>${person.domain || 'General'} · ${claimCount} approved claims · latest update ${latestClaimDate}</p>
-                    <button class="btn btn-ghost" onclick="navigate('people')" style="margin-top:8px">← Back to people</button>
-                </div>
-
-                <div class="detail-grid fade-in">
-                    <div class="detail-stack">
-                        <div class="card">
-                            <div class="detail-eyebrow">Profile</div>
-                            <div class="person-summary">
-                                <div>
-                                    <span class="tier-badge tier-${person.tier}" title="Tier ${person.tier}: ${person.tier === 1 ? 'Core \u2014 highest priority' : person.tier === 2 ? 'Standard \u2014 regularly tracked' : 'Peripheral \u2014 lower priority'}">${person.tier}</span>
-                                    <span style="margin-left:8px;color:var(--text-secondary);font-size:13px">${person.domain || 'Generalist'}</span>
-                                </div>
-                            </div>
-                            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
-                                ${(person.expertise_domains || []).length
-                    ? person.expertise_domains.map(d => `<span class="badge badge-topic">${d}</span>`).join('')
-                    : '<span class="badge badge-type">No expertise tags yet</span>'}
-                            </div>
-                            <p class="person-blurb">${person.inclusion_notes || 'This person is tracked, but a fuller profile summary has not been filled in yet.'}</p>
-                        </div>
-
-                        <div class="card">
-                            <div class="detail-eyebrow">Current Positions</div>
-                            ${positions.length ? positions.map(p => `
-                                <div style="padding:10px 0;border-bottom:1px solid var(--border)">
-                                    <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
-                                        <span class="badge badge-topic">${p.topic || 'unassigned'}</span>
-                                        <span class="confidence">${p.claim_count} claims</span>
-                                    </div>
-                                    <div style="font-size:13px;margin-top:6px;color:var(--text-secondary)">${p.current_position || 'No synthesized position yet'}</div>
-                                </div>
-                            `).join('') : '<div class="empty-note">No topic positions have been synthesized for this person yet.</div>'}
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="detail-eyebrow">Claim History</div>
-                        ${claims.length ? `
-                            <div class="history-list">
-                                ${claims.map(c => `
-                                    <div class="history-item">
-                                        <div class="history-topline">
-                                            <div class="history-date">${formatDate(c.created_at)}</div>
-                                            ${c.source_video_url ? `<a class="history-source" href="${c.source_video_url}" target="_blank">${c.source_type === 'x_post' ? 'X' : 'vid'} ${c.source_video_title || 'Source'}${c.source_timestamp_display ? ' @' + c.source_timestamp_display : ''}</a>` : ''}
-                                        </div>
-                                        <div class="claim-text">${c.claim_text}</div>
-                                        ${c.best_quote ? `<div class="best-quote">"${c.best_quote}"</div>` : ''}
-                                        <div class="claim-meta">
-                                            <span class="badge badge-trust-${c.trust_level}">${c.trust_level}</span>
-                                            ${c.claim_type ? `<span class="badge badge-type">${c.claim_type}</span>` : ''}
-                                            ${(c.topics || []).map(t => `<span class="badge badge-topic" style="cursor:pointer" onclick="event.stopPropagation();viewTopic('${t}')">${t}</span>`).join('')}
-                                            ${c.sentiment ? `<span class="badge badge-sentiment-${c.sentiment}">${c.sentiment}</span>` : ''}
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : `
-                            <div class="empty-state" style="padding:40px 20px">
-                                <div class="icon">🫥</div>
-                                <p>No approved claim history yet.</p>
-                                <p style="font-size:12px;margin-top:8px;color:var(--text-muted)">This usually means the person is seeded in the catalog, but the pipeline has not enriched enough videos for them yet.</p>
-                            </div>
-                        `}
-                    </div>
-                </div>
-            `;
-        }
-
-        // ── Claims ──
-        async function renderClaims(el) {
-            const claims = await api('/api/claims?limit=50');
-
-            el.innerHTML = `
-                <div class="page-header fade-in">
-                    <h2>Claims Explorer</h2>
-                    <p>Browse and search approved claims with evidence</p>
-                </div>
-                <div class="search-bar fade-in">
-                    <input class="search-input" placeholder="Search claims..." id="claim-search" onkeydown="if(event.key==='Enter')searchClaims()">
-                    <button class="btn btn-primary" onclick="searchClaims()">Search</button>
-                </div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px" class="fade-in">
-                    <span style="font-size:12px;color:var(--text-muted);margin-right:4px">Source:</span>
-                    <button class="btn btn-ghost source-filter active" data-source="" onclick="filterBySource(this, '')">All</button>
-                    <button class="btn btn-ghost source-filter" data-source="video" onclick="filterBySource(this, 'video')">Video</button>
-                    <button class="btn btn-ghost source-filter" data-source="x_post" onclick="filterBySource(this, 'x_post')">X</button>
-                    <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Range:</span>
-                    <button class="btn btn-ghost range-filter active" onclick="filterByRange(this, 30)">30d</button>
-                    <button class="btn btn-ghost range-filter" onclick="filterByRange(this, 90)">90d</button>
-                    <button class="btn btn-ghost range-filter" onclick="filterByRange(this, 365)">1y</button>
-                    <button class="btn btn-ghost range-filter" onclick="filterByRange(this, 0)">All</button>
-                </div>
-                <div id="claims-topic-filters" class="fade-in" style="margin-bottom:16px"></div>
-                <div id="claims-list" class="fade-in">
-                    ${claims.length ? claims.map(c => claimCard(c)).join('') : '<div class="empty-state"><div class="icon">💬</div><p>No claims found</p></div>'}
-                </div>
-            `;
-
-            // Track active filters
-            window._claimsSourceFilter = '';
-            window._claimsDaysBack = 30;
-
-            // Load topic filter chips
-            loadTopicChips('claims-topic-filters', async (topic) => {
-                const list = document.getElementById('claims-list');
-                list.innerHTML = '<div class="loading"><div class="spinner"></div> Filtering...</div>';
-                let url = `/api/claims?limit=50`;
-                if (topic) url += `&topic=${encodeURIComponent(topic)}`;
-                if (window._claimsSourceFilter) url += `&source=${window._claimsSourceFilter}`;
-                url += `&days_back=${window._claimsDaysBack ?? 30}`;
-                const filtered = await api(url);
-                list.innerHTML = filtered.length ?
-                    filtered.map(c => claimCard(c)).join('') :
-                    '<div class="empty-state"><p>No claims for this filter</p></div>';
-            });
-        }
-
-        async function filterBySource(btn, source) {
-            window._claimsSourceFilter = source;
-            document.querySelectorAll('.source-filter').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            await reloadClaims();
-        }
-
-        async function filterByRange(btn, days) {
-            window._claimsDaysBack = days;
-            document.querySelectorAll('.range-filter').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            await reloadClaims();
-        }
-
-        async function reloadClaims() {
-            const list = document.getElementById('claims-list');
-            list.innerHTML = '<div class="loading"><div class="spinner"></div> Filtering...</div>';
-            let url = `/api/claims?limit=50`;
-            const source = window._claimsSourceFilter || '';
-            const days = window._claimsDaysBack ?? 30;
-            if (source) url += `&source=${source}`;
-            url += `&days_back=${days}`;
-            const filtered = await api(url);
-            list.innerHTML = filtered.length ?
-                filtered.map(c => claimCard(c)).join('') :
-                '<div class="empty-state"><p>No claims for this filter</p></div>';
-        }
-
-        async function searchClaims() {
-            const q = document.getElementById('claim-search').value;
-            const list = document.getElementById('claims-list');
-            if (!q || q.length < 3) return;
-
-            list.innerHTML = '<div class="loading"><div class="spinner"></div> Searching...</div>';
-            try {
-                const results = await api(`/api/claims/search?q=${encodeURIComponent(q)}`);
-                list.innerHTML = results.length ?
-                    results.map(c => claimCard(c, true)).join('') :
-                    '<div class="empty-state"><p>No matching claims</p></div>';
-            } catch (e) {
-                list.innerHTML = `<div class="empty-state"><p>Search error: ${e.message}</p></div>`;
-            }
-        }
-
-        function claimCard(c, showSimilarity = false) {
-            return `
-                <div class="claim-card" onclick="toggleEvidence('${c.id}')">
-                    <div class="person-name">${c.person_name || 'Unknown'}</div>
-                    <div class="claim-text">${c.claim_text}</div>
-                    ${c.best_quote ? `<div class="best-quote">"${c.best_quote}"</div>` : ''}
-                    ${sourceLineHtml(c)}
-                    <div class="claim-meta">
-                        <span class="badge badge-trust-${c.trust_level}">${c.trust_level}</span>
-                        ${c.claim_type ? `<span class="badge badge-type">${c.claim_type}</span>` : ''}
-                        ${(c.topics || []).map(t => `<span class="badge badge-topic" style="cursor:pointer" onclick="event.stopPropagation();viewTopic('${t}')">${t}</span>`).join('')}
-                        ${c.sentiment ? `<span class="badge badge-sentiment-${c.sentiment}">${c.sentiment}</span>` : ''}
-                        ${showSimilarity && c.similarity ? `<span class="confidence">sim: ${(c.similarity * 100).toFixed(0)}%</span>` : ''}
-                    </div>
-                    <div class="evidence-panel" id="evidence-${c.id}"></div>
-                </div>
-            `;
-        }
-
-        function claimMini(c) {
-            return `
-                <div style="padding:8px 0;border-bottom:1px solid var(--border)">
-                    <div class="person-name" style="font-size:11px">${c.person_name}</div>
-                    <div style="font-size:13px;margin-top:2px">${c.claim_text.substring(0, 120)}${c.claim_text.length > 120 ? '...' : ''}</div>
-                    ${sourceLineHtml(c)}
-                    <div class="claim-meta" style="margin-top:6px">
-                        <span class="badge badge-trust-${c.trust_level}">${c.trust_level}</span>
-                        ${c.claim_type ? `<span class="badge badge-type">${c.claim_type}</span>` : ''}
-                    </div>
-                </div>
-            `;
-        }
-
-        async function toggleEvidence(claimId) {
-            const panel = document.getElementById(`evidence-${claimId}`);
-            if (panel.classList.contains('open')) {
-                panel.classList.remove('open');
-                return;
-            }
-
-            panel.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-            panel.classList.add('open');
-
-            try {
-                const detail = await api(`/api/claims/${claimId}`);
-                panel.innerHTML = `
-                    ${detail.reasoning_text ? `<div style="margin-bottom:10px"><strong style="font-size:11px;color:var(--text-muted)">REASONING</strong><p style="font-size:13px;color:var(--text-secondary);margin-top:4px">${detail.reasoning_text}</p></div>` : ''}
-                    ${detail.evidence_spans.length ? `
-                        <strong style="font-size:11px;color:var(--text-muted)">EVIDENCE SPANS</strong>
-                        ${detail.evidence_spans.map(e => `
-                            <div class="evidence-quote">
-                                <span class="badge badge-type" style="margin-bottom:4px">${e.quote_type}</span>
-                                "${e.quote_text}"
-                                <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${msToTime(e.start_ms)} — ${msToTime(e.end_ms)}</div>
-                            </div>
-                        `).join('')}
-                    ` : '<p style="font-size:12px;color:var(--text-muted)">No evidence spans</p>'}
-                    ${detail.source_video ? `
-                        <a href="${detail.source_video.url}" target="_blank" style="display:inline-block;margin-top:8px;font-size:12px;color:var(--accent-blue);text-decoration:none">
-                            🎬 ${detail.source_video.title || 'Source Video'} →
-                        </a>
-                    ` : ''}
-                `;
-            } catch (e) {
-                panel.innerHTML = `<p style="color:var(--accent-red)">Failed to load</p>`;
-            }
-        }
-
-        function msToTime(ms) {
-            const s = Math.floor(ms / 1000);
-            const m = Math.floor(s / 60);
-            return `${m}:${String(s % 60).padStart(2, '0')}`;
-        }
-
-        function sourceLineHtml(c) {
-            if (!c.source_video_url) return '';
-            const icon = c.source_type === 'x_post' ? '𝕏' : '🎬';
-            const title = c.source_video_title || 'Source';
-            const ts = c.source_timestamp_display ? `<span class="ts">@${c.source_timestamp_display}</span>` : '';
-            return `<div class="source-line" onclick="event.stopPropagation()">
-                ${icon} <a href="${c.source_video_url}" target="_blank">${title}</a> ${ts}
-            </div>`;
-        }
-
-        function formatDate(value) {
-            if (!value) return 'Unknown date';
-            const date = new Date(value);
-            if (Number.isNaN(date.getTime())) return 'Unknown date';
-            return date.toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-            });
-        }
-
-        // ── Topics ──
-        async function renderTopics(el) {
-            const topics = await api('/api/topics');
-            const active = topics.filter(t => t.claim_count > 0);
-            const inactive = topics.filter(t => t.claim_count === 0);
-
-            el.innerHTML = `
-                <div class="page-header fade-in">
-                    <h2>Topics</h2>
-                    <p>${topics.length} topics in taxonomy, ${active.length} with claims</p>
-                </div>
-                <div class="section-grid fade-in">
-                    <div class="card">
-                        <div class="card-title">🔥 Active Topics</div>
-                        ${active.map(t => topicRow(t)).join('') || '<p style="color:var(--text-muted)">No active topics</p>'}
-                    </div>
-                    <div class="card">
-                        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
-                            <span>📋 All Topics</span>
-                            ${inactive.length ? `<button class="btn btn-ghost" style="font-size:11px" onclick="const el=document.getElementById('inactive-topics');el.style.display=el.style.display==='none'?'flex':'none';this.textContent=el.style.display==='none'?'Show ${inactive.length} empty':'Hide empty'">Show ${inactive.length} empty</button>` : ''}
-                        </div>
-                        <div style="display:flex;flex-wrap:wrap;gap:6px">
-                            ${active.map(t => `<span class="badge badge-topic" style="cursor:pointer" onclick="viewTopic('${t.slug}')">${t.slug} (${t.claim_count})</span>`).join('')}
-                        </div>
-                        <div id="inactive-topics" style="display:none;flex-wrap:wrap;gap:6px;margin-top:8px">
-                            ${inactive.map(t => `<span class="badge" style="background:var(--bg-secondary);color:var(--text-muted)">${t.slug}</span>`).join('')}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function topicRow(t) {
-            return `
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="viewTopic('${t.slug}')">
-                    <div>
-                        <span style="font-weight:600">${t.label}</span>
-                        <span class="badge badge-topic" style="margin-left:6px">${t.slug}</span>
-                    </div>
-                    <span style="font-size:20px;font-weight:700;color:var(--accent-blue)">${t.claim_count}</span>
-                </div>
-            `;
-        }
-
-        async function viewTopic(slug) {
-            currentPage = 'topics';
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(el => {
-                if (el.textContent.trim().toLowerCase().includes('topics')) el.classList.add('active');
-            });
-
-            const main = document.getElementById('main-content');
-            main.innerHTML = '<div class="loading"><div class="spinner"></div> Loading topic...</div>';
-
-            try {
-                const detail = await api(`/api/topics/${encodeURIComponent(slug)}`);
-
-                main.innerHTML = `
-                    <div class="page-header fade-in">
-                        <h2>Topic: ${detail.name || slug}</h2>
-                        <p>${detail.claim_count} claims \u00b7 ${detail.person_count} people with positions</p>
-                        <button class="btn btn-ghost" onclick="navigate('topics')" style="margin-top:8px">\u2190 Back</button>
-                    </div>
-                    <div class="section-grid fade-in">
-                        <div class="card">
-                            <div class="card-title">\ud83d\udccd People & Positions</div>
-                            ${detail.people_with_positions.length ? detail.people_with_positions.map(p => `
-                                <div style="padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('person-${p.person_id}')">
-                                    <div class="person-name">${p.person_name}</div>
-                                    <div style="font-size:13px;margin-top:4px">${p.current_position || '\u2014'}</div>
-                                    <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${p.claim_count} claims</div>
-                                </div>
-                            `).join('') : '<p style="color:var(--text-muted)">No positions yet</p>'}
-                        </div>
-                        <div class="card">
-                            <div class="card-title">\ud83d\udcac Recent Claims</div>
-                            ${detail.recent_claims.length ? detail.recent_claims.map(c => `
-                                <div style="padding:10px 0;border-bottom:1px solid var(--border)">
-                                    <div class="person-name" style="font-size:11px">${c.person_name}</div>
-                                    <div style="font-size:13px;margin-top:2px">${c.claim_text.substring(0, 150)}${c.claim_text.length > 150 ? '...' : ''}</div>
-                                    ${c.best_quote ? `<div class="best-quote">"${c.best_quote}"</div>` : ''}
-                                    ${sourceLineHtml(c)}
-                                    <div class="claim-meta" style="margin-top:6px">
-                                        <span class="badge badge-trust-${c.trust_level}">${c.trust_level}</span>
-                                        ${c.claim_type ? `<span class="badge badge-type">${c.claim_type}</span>` : ''}
-                                    </div>
-                                </div>
-                            `).join('') : '<p style="color:var(--text-muted)">No approved claims on this topic yet</p>'}
-                        </div>
-                    </div>
-                `;
-            } catch (e) {
-                main.innerHTML = `<div class="empty-state"><p>Error: ${e.message}</p></div>`;
-            }
-        }
-
-        // ── Review Queue ──
-        async function renderReview(el) {
-            const pending = await api('/api/claims?review_status=pending_review&days_back=0&limit=50');
-
-            el.innerHTML = `
-                <div class="page-header fade-in">
-                    <h2>Review Queue</h2>
-                    <p>${pending.length} claims pending review</p>
-                </div>
-                <div id="review-list" class="fade-in">
-                    ${pending.length ? pending.map(c => reviewCard(c)).join('') : `
-                        <div class="empty-state">
-                            <div class="icon">✅</div>
-                            <p>All clear — no pending claims</p>
-                        </div>
-                    `}
-                </div>
-            `;
-        }
-
-        function reviewCard(c) {
-            return `
-                <div class="claim-card" id="review-${c.id}">
-                    <div class="person-name">${c.person_name || 'Unknown'}</div>
-                    <div class="claim-text">${c.claim_text}</div>
-                    ${c.best_quote ? `<div class="best-quote">"${c.best_quote}"</div>` : ''}
-                    ${sourceLineHtml(c)}
-                    <div class="claim-meta">
-                        <span class="badge badge-trust-${c.trust_level}">${c.trust_level}</span>
-                        ${c.claim_type ? `<span class="badge badge-type">${c.claim_type}</span>` : ''}
-                        ${(c.topics || []).map(t => `<span class="badge badge-topic" style="cursor:pointer" onclick="event.stopPropagation();viewTopic('${t}')">${t}</span>`).join('')}
-                    </div>
-                    <div style="margin-top:12px;display:flex;gap:8px">
-                        <button class="btn btn-success" onclick="reviewClaim('${c.id}', 'approved')">✓ Approve</button>
-                        <button class="btn btn-danger" onclick="reviewClaim('${c.id}', 'rejected')">✗ Reject</button>
-                    </div>
-                </div>
-            `;
-        }
-
-        async function reviewClaim(id, status) {
-            try {
-                await fetch(`${API}/admin/claims/${id}/review`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-admin-key': 'bm-admin-key' },
-                    body: JSON.stringify({ review_status: status }),
-                });
-                const card = document.getElementById(`review-${id}`);
-                card.style.opacity = '0.3';
-                card.innerHTML += `<div style="text-align:center;padding:10px;color:${status === 'approved' ? 'var(--accent-green)' : 'var(--accent-red)'};font-weight:600">${status.toUpperCase()}</div>`;
-            } catch (e) {
-                alert('Review failed: ' + e.message);
-            }
-        }
-
-        // ── Pipeline ──
-        async function renderPipeline(el) {
-            const status = await api('/api/pipeline/status');
-
-            el.innerHTML = `
-                <div class="page-header fade-in">
-                    <h2>Pipeline</h2>
-                    <p>End-to-end processing status</p>
-                </div>
-
-                <div class="stats-grid fade-in">
-                    <div class="stat-card">
-                        <div class="label">Total Videos</div>
-                        <div class="value">${status.videos.total}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="label">Segments</div>
-                        <div class="value">${status.segments.toLocaleString()}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="label">Claims</div>
-                        <div class="value">${status.claims.total}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="label">Embeddings</div>
-                        <div class="value">${status.embeddings}</div>
-                    </div>
-                </div>
-
-                <div class="card fade-in">
-                    <div class="card-title">Video Pipeline Stages</div>
-                    <div style="display:flex;gap:4px;align-items:end;height:120px;padding-top:20px">
-                        ${pipelineBar('Discovered', status.videos.discovered, status.videos.total, '#3b82f6')}
-                        ${pipelineBar('Transcribed', status.videos.transcribed, status.videos.total, '#8b5cf6')}
-                        ${pipelineBar('Identified', status.videos.identified, status.videos.total, '#f59e0b')}
-                        ${pipelineBar('Enriched', status.videos.enriched, status.videos.total, '#10b981')}
-                        ${pipelineBar('Skipped', status.videos.skipped, status.videos.total, '#64748b')}
-                    </div>
-                </div>
-
-                <div class="section-grid fade-in" style="margin-top:16px">
-                    <div class="card">
-                        <div class="card-title">📊 Claims Breakdown</div>
-                        <div style="display:flex;gap:16px">
-                            <div>
-                                <div style="font-size:32px;font-weight:700;color:var(--accent-green)">${status.claims.approved}</div>
-                                <div style="font-size:11px;color:var(--text-muted)">Approved</div>
-                            </div>
-                            <div>
-                                <div style="font-size:32px;font-weight:700;color:var(--accent-amber)">${status.claims.pending}</div>
-                                <div style="font-size:11px;color:var(--text-muted)">Pending</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function pipelineBar(label, count, total, color) {
-            const pct = total > 0 ? Math.max((count / total) * 100, count > 0 ? 3 : 0) : 0;
-            return `
-                <div style="flex:1;text-align:center">
-                    <div style="height:${pct}%;min-height:${count > 0 ? '8px' : '2px'};background:${color};border-radius:4px 4px 0 0;transition:height 0.5s"></div>
-                    <div style="font-size:16px;font-weight:700;margin-top:6px;color:${color}">${count}</div>
-                    <div style="font-size:10px;color:var(--text-muted)">${label}</div>
-                </div>
-            `;
-        }
-
-        // ── Topic Filter Chips (reusable) ──
-        async function loadTopicChips(containerId, onFilterChange) {
-            try {
-                const topics = await api('/api/topics');
-                const active = topics.filter(t => t.claim_count > 0).sort((a, b) => b.claim_count - a.claim_count).slice(0, 12);
-                const container = document.getElementById(containerId);
-                if (!container || !active.length) return;
-
-                container.innerHTML = `
-                    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
-                        <span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-right:4px">Filter:</span>
-                        <button class="badge badge-topic topic-chip" data-topic="" onclick="filterByTopicChip(this, '${containerId}')"
-                            style="cursor:pointer;border:1px solid var(--accent-blue)">All</button>
-                        ${active.map(t => `
-                            <button class="badge badge-topic topic-chip" data-topic="${t.slug}" onclick="filterByTopicChip(this, '${containerId}')"
-                                style="cursor:pointer;opacity:0.7">${t.slug} (${t.claim_count})</button>
-                        `).join('')}
-                    </div>
-                `;
-
-                container._onFilter = onFilterChange;
-            } catch (e) {
-                // silently skip if topics fail to load
-            }
-        }
-
-        function filterByTopicChip(chip, containerId) {
-            event.stopPropagation();
-            const container = document.getElementById(containerId);
-            container.querySelectorAll('.topic-chip').forEach(c => {
-                c.style.opacity = '0.7';
-                c.style.border = 'none';
-            });
-            chip.style.opacity = '1';
-            chip.style.border = '1px solid var(--accent-blue)';
-
-            const topic = chip.dataset.topic;
-            if (container._onFilter) container._onFilter(topic || null);
-        }
-
-        // ── Init ──
-        navigate('dashboard');
-    </script>
+  </div>
+</div>
+
+<!-- ── Add Channel Modal ───────────────────────────────────────────── -->
+<div id="modal-channel" class="modal-overlay" onclick="if(event.target===this)closeModal('channel')">
+  <div class="modal">
+    <h2>Add Channel</h2>
+    <p>Paste a YouTube channel URL or handle (e.g. @dwarkesh).</p>
+    <input id="input-channel-url" class="modal-input" placeholder="@dwarkesh or https://youtube.com/@dwarkesh" />
+    <div id="error-channel" class="modal-error"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('channel')">Cancel</button>
+      <button class="btn btn-primary" id="btn-submit-channel" onclick="submitChannel()">Add Channel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast ───────────────────────────────────────────────────────── -->
+<div id="toast" class="toast"></div>
+
+<script>
+/* ═════════════════════════════════════════════════════════════════════
+   STATE
+   ═════════════════════════════════════════════════════════════════════ */
+const API = '/api';
+let _feedData = [];
+let _channelsData = [];
+let _peopleData = [];
+let _shiftsData = [];
+
+/* ═════════════════════════════════════════════════════════════════════
+   ROUTING
+   ═════════════════════════════════════════════════════════════════════ */
+function navigate(page, params = {}) {
+  let hash = '#' + page;
+  const qs = Object.entries(params).filter(([,v]) => v).map(([k,v]) => `${k}=${v}`).join('&');
+  if (qs) hash += '?' + qs;
+  location.hash = hash;
+}
+
+function parseHash() {
+  const raw = location.hash.slice(1) || 'feed';
+  const [path, qs] = raw.split('?');
+  const params = {};
+  if (qs) qs.split('&').forEach(p => {
+    const [k, v] = p.split('=');
+    params[k] = decodeURIComponent(v);
+  });
+  const parts = path.split('/');
+  return { page: parts[0], id: parts[1], params };
+}
+
+window.addEventListener('hashchange', () => route());
+function route() {
+  const { page, id, params } = parseHash();
+  // Update nav tabs
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.page === page || (page === 'episode' && t.dataset.page === 'feed') || (id && t.dataset.page === page)));
+  if (page === 'feed' && !id) renderFeed(params.channel);
+  else if (page === 'episode') renderEpisode(id);
+  else if (page === 'people' && !id) renderPeople(params.tag);
+  else if (page === 'people' && id) renderPersonDetail(id);
+  else if (page === 'channels') renderChannels();
+  else renderFeed();
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   HELPERS
+   ═════════════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const app = () => $('app');
+function api(path) { return fetch(API + path).then(r => r.json()); }
+function apiPost(path, body) {
+  return fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => {
+    if (!r.ok) return r.json().then(e => { throw new Error(e.detail || 'Request failed'); });
+    return r.json();
+  });
+}
+
+function timeAgo(iso) {
+  if (!iso) return '';
+  const diff = (Date.now() - new Date(iso)) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function verdictClass(v) {
+  if (!v) return 'verdict-skip';
+  const l = v.toLowerCase();
+  if (l.includes('essential') || l.includes('must')) return 'verdict-essential';
+  if (l.includes('skim') || l.includes('worth')) return 'verdict-skim';
+  return 'verdict-skip';
+}
+
+function verdictLabel(v) {
+  if (!v) return 'NO VERDICT';
+  const l = v.toLowerCase();
+  if (l.includes('essential') || l.includes('must')) return '● ESSENTIAL';
+  if (l.includes('skim') || l.includes('worth')) return '◐ WORTH SKIMMING';
+  return '○ SKIP UNLESS FAN';
+}
+
+function avatarHTML(initials, color, size = 'sm') {
+  return `<div class="avatar avatar-${size}" style="background:${color || '#666'};">${initials || '??'}</div>`;
+}
+
+function sentimentClass(s) {
+  if (!s) return 'sentiment-neutral';
+  const l = s.toLowerCase();
+  if (l === 'bullish') return 'sentiment-bullish';
+  if (l === 'bearish') return 'sentiment-bearish';
+  if (l === 'cautious' || l === 'urgent') return 'sentiment-cautious';
+  if (l === 'strong') return 'sentiment-strong';
+  return 'sentiment-neutral';
+}
+
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* Rotating accent colors for channels without stored color */
+const CHANNEL_COLORS = ['#6366f1','#8b5cf6','#ec4899','#f43f5e','#f97316','#eab308','#22c55e','#14b8a6','#0ea5e9','#3b82f6'];
+function channelColor(name, idx) {
+  return CHANNEL_COLORS[idx % CHANNEL_COLORS.length];
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   MODALS
+   ═════════════════════════════════════════════════════════════════════ */
+function openModal(type) {
+  $(`modal-${type}`).classList.add('open');
+  $(`input-${type}-url`).focus();
+}
+function closeModal(type) {
+  $(`modal-${type}`).classList.remove('open');
+  $(`input-${type}-url`).value = '';
+  $(`error-${type}`).style.display = 'none';
+}
+async function submitVideo() {
+  const url = $('input-video-url').value.trim();
+  if (!url) return;
+  const btn = $('btn-submit-video');
+  btn.textContent = 'Adding...'; btn.disabled = true;
+  try {
+    const res = await apiPost('/videos/add', { youtube_url: url });
+    closeModal('video');
+    showToast(res.status === 'already_exists' ? 'Video already tracked' : `Video queued: ${res.title || res.youtube_video_id}`);
+  } catch (e) {
+    $('error-video').textContent = e.message;
+    $('error-video').style.display = 'block';
+  }
+  btn.textContent = 'Add Video'; btn.disabled = false;
+}
+async function submitChannel() {
+  const url = $('input-channel-url').value.trim();
+  if (!url) return;
+  const btn = $('btn-submit-channel');
+  btn.textContent = 'Adding...'; btn.disabled = true;
+  try {
+    await apiPost('/channels', { url_or_handle: url });
+    closeModal('channel');
+    showToast('Channel added!');
+    if (parseHash().page === 'channels') renderChannels();
+  } catch (e) {
+    $('error-channel').textContent = e.message;
+    $('error-channel').style.display = 'block';
+  }
+  btn.textContent = 'Add Channel'; btn.disabled = false;
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   FEED PAGE
+   ═════════════════════════════════════════════════════════════════════ */
+async function renderFeed(channelFilter) {
+  app().innerHTML = '<div class="loading">Loading feed...</div>';
+
+  try {
+    const [feed, channels] = await Promise.all([
+      api('/summaries/feed?limit=40' + (channelFilter ? `&channel_id=${channelFilter}` : '')),
+      _channelsData.length ? _channelsData : api('/channels'),
+    ]);
+    _feedData = feed;
+    _channelsData = channels;
+  } catch (e) {
+    app().innerHTML = '<div class="empty"><h3>Could not load feed</h3></div>';
+    return;
+  }
+
+  let html = `
+    <div class="page-header">
+      <h1>Feed</h1>
+      <p>Episode summaries from your tracked channels</p>
+    </div>
+    <div class="chip-row">
+      <div class="chip ${!channelFilter ? 'active' : ''}" onclick="navigate('feed')">All</div>
+      ${_channelsData.map(ch =>
+        `<div class="chip ${channelFilter === ch.id ? 'active' : ''}" onclick="navigate('feed',{channel:'${ch.id}'})">${ch.name}</div>`
+      ).join('')}
+    </div>
+    <div class="verdict-legend">
+      <span><span class="verdict verdict-essential" style="font-size:9px;">●</span> Essential — must watch</span>
+      <span><span class="verdict verdict-skim" style="font-size:9px;">◐</span> Worth skimming</span>
+      <span><span class="verdict verdict-skip" style="font-size:9px;">○</span> Skip unless fan</span>
+    </div>
+  `;
+
+  if (!_feedData.length) {
+    html += '<div class="empty"><h3>No episodes yet</h3><p>Add channels or videos to get started.</p></div>';
+  } else {
+    html += '<div class="feed-list">';
+    for (const ep of _feedData) {
+      const isOneOff = ep.discovery_method === 'manual' && !ep.channel_id;
+      html += `
+        <div class="feed-item" onclick="navigate('episode','${ep.video_id}')">
+          <div style="flex:1;min-width:0;">
+            <div class="feed-meta">
+              <span class="channel-name" style="color:${_channelsData.find(c => c.id === ep.channel_id)?.name ? channelColor(ep.channel_name, _channelsData.findIndex(c => c.id === ep.channel_id)) : '#888'}">${ep.channel_name || 'One-off'}</span>
+              <span class="dot">·</span>
+              <span>${timeAgo(ep.published_at)}</span>
+              ${ep.duration_display ? `<span class="dot">·</span><span>${ep.duration_display}</span>` : ''}
+            </div>
+            <div class="feed-title">${ep.video_title || 'Untitled'}</div>
+            <div class="feed-tldr">${ep.tldr || ''}</div>
+          </div>
+          <div class="feed-right">
+            ${isOneOff ? '<span class="verdict verdict-oneoff">ONE-OFF</span>' : `<span class="verdict ${verdictClass(ep.watch_verdict)}">${verdictLabel(ep.watch_verdict)}</span>`}
+          </div>
+        </div>
+      `;
+    }
+    html += '</div>';
+  }
+
+  app().innerHTML = html;
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   EPISODE DETAIL
+   ═════════════════════════════════════════════════════════════════════ */
+async function renderEpisode(videoId) {
+  // Find in cached feed data or fetch
+  let ep = _feedData.find(e => e.video_id === videoId);
+  if (!ep) {
+    app().innerHTML = '<div class="loading">Loading episode...</div>';
+    try {
+      const feed = await api(`/summaries/feed?limit=100`);
+      ep = feed.find(e => e.video_id === videoId);
+      if (!ep) { app().innerHTML = '<div class="empty"><h3>Episode not found</h3></div>'; return; }
+    } catch { app().innerHTML = '<div class="empty"><h3>Could not load episode</h3></div>'; return; }
+  }
+
+  const ytUrl = ep.youtube_video_id ? `https://youtube.com/watch?v=${ep.youtube_video_id}` : null;
+  const detailed = ep.detailed || {};
+  const sections = detailed.sections || [];
+  const moments = detailed.best_moments || [];
+  const hasShift = ep.whats_new && !ep.whats_new.toLowerCase().includes('consistent');
+
+  let html = `
+    <div class="back-link" onclick="navigate('feed')">← Back to feed</div>
+    <div class="ep-meta">${ep.channel_name || 'One-off'} · ${formatDate(ep.published_at)}${ep.duration_display ? ' · ' + ep.duration_display : ''}</div>
+    <div class="ep-title">${ep.video_title || 'Untitled'}</div>
+    <div class="ep-verdict-row">
+      <span class="verdict ${verdictClass(ep.watch_verdict)}">${verdictLabel(ep.watch_verdict)}</span>
+      ${ep.watch_verdict_reason ? `<span class="ep-verdict-reason">${ep.watch_verdict_reason}</span>` : ''}
+    </div>
+    ${ytUrl ? `<a href="${ytUrl}" target="_blank" class="btn btn-red" style="margin-bottom:24px;">▶ Watch on YouTube</a>` : ''}
+    <div class="depth-toggle">
+      <button class="depth-btn active" onclick="setDepth('tldr', this)">30-Sec TL;DR</button>
+      <button class="depth-btn" onclick="setDepth('summary', this)">2-Min Read</button>
+      <button class="depth-btn" onclick="setDepth('full', this)">Full Breakdown</button>
+    </div>
+    <div id="ep-content"></div>
+  `;
+
+  if (moments.length) {
+    html += `
+      <h3 style="font-size:16px;font-weight:600;color:#fff;margin-top:32px;">Best Moments</h3>
+      <div class="moments-list">
+        ${moments.map(m => {
+          const ts = m.timestamp || m.start_time;
+          const tsSeconds = typeof ts === 'number' ? ts : 0;
+          const tsDisplay = tsSeconds ? `${Math.floor(tsSeconds/60)}:${String(tsSeconds%60).padStart(2,'0')}` : '';
+          const tsLink = ep.youtube_video_id ? `https://youtube.com/watch?v=${ep.youtube_video_id}&t=${tsSeconds}s` : '#';
+          return `
+            <div class="moment-item">
+              <a href="${tsLink}" target="_blank" class="ts-badge ts-badge-green">${tsDisplay || '—'}</a>
+              <div>
+                <div class="moment-desc">${m.description || m.title || ''}</div>
+                ${m.quote ? `<div class="moment-quote">"${m.quote}"</div>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  if (hasShift) {
+    html += `
+      <div class="shift-card">
+        <h3>⚡ Position Shift Detected</h3>
+        <p>${ep.whats_new}</p>
+      </div>
+    `;
+  }
+
+  app().innerHTML = html;
+
+  // Store for depth toggle
+  window._epData = { tldr: ep.tldr, summary: ep.summary_body, sections, ytId: ep.youtube_video_id };
+  setDepth('tldr');
+}
+
+function setDepth(depth, btn) {
+  document.querySelectorAll('.depth-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  else document.querySelector(`.depth-btn[onclick*="${depth}"]`)?.classList.add('active');
+  const el = $('ep-content');
+  const d = window._epData;
+  if (!d) return;
+
+  if (depth === 'tldr') {
+    el.innerHTML = `<div class="ep-body"><p>${d.tldr || 'No TL;DR available.'}</p></div>`;
+  } else if (depth === 'summary') {
+    const paragraphs = (d.summary || 'No summary available.').split('\n').filter(Boolean).map(p => `<p>${p}</p>`).join('');
+    el.innerHTML = `<div class="ep-body">${paragraphs}</div>`;
+  } else {
+    if (!d.sections.length) {
+      el.innerHTML = '<div class="empty"><p>No detailed breakdown available.</p></div>';
+      return;
+    }
+    el.innerHTML = `<div class="section-list">${d.sections.map(s => {
+      const ts = s.timestamp || s.start_time;
+      const tsSeconds = typeof ts === 'number' ? ts : 0;
+      const tsDisplay = tsSeconds ? `${Math.floor(tsSeconds/60)}:${String(tsSeconds%60).padStart(2,'0')}` : '';
+      const tsLink = d.ytId ? `https://youtube.com/watch?v=${d.ytId}&t=${tsSeconds}s` : '#';
+      return `
+        <div class="section-item">
+          <a href="${tsLink}" target="_blank" class="ts-badge">${tsDisplay || '—'}</a>
+          <div>
+            <div class="section-title">${s.title || ''}</div>
+            <div class="section-summary">${s.summary || ''}</div>
+          </div>
+        </div>
+      `;
+    }).join('')}</div>`;
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   PEOPLE PAGE
+   ═════════════════════════════════════════════════════════════════════ */
+async function renderPeople(tagFilter) {
+  app().innerHTML = '<div class="loading">Loading people...</div>';
+
+  try {
+    const [people, shifts] = await Promise.all([
+      api('/people'),
+      api('/positions/shifts?limit=10'),
+    ]);
+    _peopleData = people;
+    _shiftsData = shifts;
+  } catch {
+    app().innerHTML = '<div class="empty"><h3>Could not load people</h3></div>';
+    return;
+  }
+
+  // Collect tags
+  const allTags = new Set();
+  _peopleData.forEach(p => (p.expertise_domains || []).forEach(d => allTags.add(d)));
+  const sortedTags = [...allTags].sort();
+
+  // Filter
+  let filtered = _peopleData;
+  if (tagFilter) {
+    filtered = _peopleData.filter(p => (p.expertise_domains || []).includes(tagFilter));
+  }
+
+  // Build shift counts per person
+  const shiftCounts = {};
+  _shiftsData.forEach(s => { shiftCounts[s.person_id] = (shiftCounts[s.person_id] || 0) + 1; });
+
+  let html = `
+    <div class="page-header">
+      <h1>People</h1>
+      <p>Tracked minds and their current positions</p>
+    </div>
+    <div class="chip-row">
+      <div class="chip ${!tagFilter ? 'active' : ''}" onclick="navigate('people')">All</div>
+      ${sortedTags.map(t =>
+        `<div class="chip ${tagFilter === t ? 'active' : ''}" onclick="navigate('people',{tag:'${t}'})">${t.replace(/_/g,' ')}</div>`
+      ).join('')}
+    </div>
+  `;
+
+  // Shifts banner
+  if (_shiftsData.length && !tagFilter) {
+    html += `
+      <div class="shifts-banner">
+        <h2>⚡ Recent Position Shifts</h2>
+        <div class="shift-list">
+          ${_shiftsData.slice(0, 5).map(s => `
+            <div class="shift-row" onclick="navigate('people','${s.person_id}')">
+              ${avatarHTML(s.person_photo_initials, s.person_accent_color, 'sm')}
+              <div class="shift-text"><strong>${s.person_name}</strong> on ${s.topic_name}: ${s.shift_note || s.position_summary?.slice(0,100) || ''}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  html += '<div class="people-list">';
+  for (const p of filtered) {
+    const sc = shiftCounts[p.id] || 0;
+    const tags = (p.expertise_domains || []).slice(0, 4).map(t => `<span class="tag-pill">${t.replace(/_/g,' ')}</span>`).join('');
+    const roleNet = [p.role_title, p.net_worth].filter(Boolean).join(' · ');
+    html += `
+      <div class="person-row" onclick="navigate('people','${p.id}')">
+        ${avatarHTML(p.photo_initials, p.accent_color, 'md')}
+        <div class="person-info">
+          <div class="person-name-row">
+            <span class="person-name">${p.name}</span>
+            ${sc ? `<span class="shift-badge">⚡ ${sc} shift${sc > 1 ? 's' : ''}</span>` : ''}
+          </div>
+          ${roleNet ? `<div class="person-role">${roleNet}</div>` : ''}
+          <div class="person-tags">${tags}</div>
+        </div>
+        <div class="person-stat">
+          <div class="person-stat-num">${p.claim_count || 0}</div>
+          <div class="person-stat-label">positions</div>
+        </div>
+      </div>
+    `;
+  }
+  html += '</div>';
+  app().innerHTML = html;
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   PERSON DETAIL
+   ═════════════════════════════════════════════════════════════════════ */
+async function renderPersonDetail(personId) {
+  app().innerHTML = '<div class="loading">Loading person...</div>';
+
+  let person;
+  try {
+    person = await api(`/people/${personId}`);
+  } catch {
+    app().innerHTML = '<div class="empty"><h3>Person not found</h3></div>';
+    return;
+  }
+
+  const bioText = person.bio || person.inclusion_notes || '';
+  const metaParts = [person.age ? `Age ${person.age}` : null, person.net_worth].filter(Boolean);
+  const tags = (person.expertise_domains || []).map(t =>
+    `<span class="tag-pill" style="cursor:pointer;" onclick="event.stopPropagation();navigate('people',{tag:'${t}'})">${t.replace(/_/g,' ')}</span>`
+  ).join(' ');
+
+  // Build shift lookup per topic
+  const shiftByTopic = {};
+  (person.shifts || []).forEach(s => { if (s.topic_slug) shiftByTopic[s.topic_slug] = s; });
+
+  let html = `
+    <div class="back-link" onclick="navigate('people')">← Back to people</div>
+    <div class="person-header">
+      ${avatarHTML(person.photo_initials, person.accent_color, 'lg')}
+      <div class="person-header-info">
+        <div class="person-detail-name">${person.name}</div>
+        ${person.role_title ? `<div class="person-detail-role">${person.role_title}</div>` : ''}
+        ${metaParts.length ? `<div class="person-detail-meta">${metaParts.join(' · ')}</div>` : ''}
+      </div>
+    </div>
+    <div style="margin-bottom:16px;">${tags}</div>
+    ${bioText ? `<div class="person-bio" style="border-color:${person.accent_color || '#666'};">${bioText}</div>` : ''}
+  `;
+
+  // Positions
+  if (person.positions && person.positions.length) {
+    html += `<div class="positions-section"><h2>Current Positions</h2>`;
+    for (const pos of person.positions) {
+      const hasShift = shiftByTopic[pos.topic];
+      html += `
+        <div class="position-item">
+          <div class="position-header">
+            <div class="sentiment-dot ${sentimentClass(pos.sentiment)}"></div>
+            <span class="position-topic" onclick="navigate('people',{tag:'${pos.topic || ''}'})"> ${pos.topic_name || pos.topic || ''}</span>
+            ${hasShift ? '<span class="shift-badge">⚡ SHIFTED</span>' : ''}
+            <span class="position-date">${timeAgo(pos.last_updated)}</span>
+          </div>
+          <div class="position-text">${pos.current_position || ''}</div>
+          ${hasShift ? `<div class="position-shift-note">⚡ ${hasShift.shift_note || hasShift.position_summary || ''}</div>` : ''}
+        </div>
+      `;
+    }
+    html += '</div>';
+  }
+
+  // Appearances
+  if (person.appearances && person.appearances.length) {
+    html += `<div class="appearances-section"><h2>Recent Appearances</h2>`;
+    for (const a of person.appearances) {
+      html += `
+        <div class="appearance-row" onclick="navigate('episode','${a.video_id}')">
+          <div class="appearance-info">
+            <div class="appearance-title">${a.video_title || 'Untitled'}</div>
+            <div class="appearance-meta">${a.channel_name || ''} · ${formatDate(a.published_at)}</div>
+          </div>
+          ${a.watch_verdict ? `<span class="verdict ${verdictClass(a.watch_verdict)}" style="flex-shrink:0;">${verdictLabel(a.watch_verdict)}</span>` : ''}
+        </div>
+      `;
+    }
+    html += '</div>';
+  }
+
+  app().innerHTML = html;
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   CHANNELS PAGE
+   ═════════════════════════════════════════════════════════════════════ */
+async function renderChannels() {
+  app().innerHTML = '<div class="loading">Loading channels...</div>';
+
+  try {
+    _channelsData = await api('/channels');
+  } catch {
+    app().innerHTML = '<div class="empty"><h3>Could not load channels</h3></div>';
+    return;
+  }
+
+  let html = `
+    <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h1>Your Channels</h1>
+        <p>${_channelsData.length} channels tracked</p>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('channel')">+ Add Channel</button>
+    </div>
+    <div class="channels-grid">
+  `;
+
+  _channelsData.forEach((ch, i) => {
+    const color = channelColor(ch.name, i);
+    const scanned = ch.last_scanned_at ? `Checked ${timeAgo(ch.last_scanned_at)}` : 'Never scanned';
+    html += `
+      <div class="channel-card" style="border-left-color:${color};" onclick="navigate('feed',{channel:'${ch.id}'})">
+        <div class="channel-name">${ch.name}</div>
+        <div class="channel-handle">${ch.youtube_channel_id}</div>
+        <div class="channel-count" style="color:${color};">${ch.video_count || 0}</div>
+        <div class="channel-count-label">videos tracked</div>
+        <div class="channel-bottom">
+          <span class="channel-scanned">${scanned}</span>
+          <button class="btn-check" onclick="event.stopPropagation();scanChannel('${ch.id}',this)">↻ Check Now</button>
+        </div>
+      </div>
+    `;
+  });
+
+  if (!_channelsData.length) {
+    html += '<div class="empty" style="grid-column:1/-1;"><h3>No channels yet</h3><p>Click "+ Add Channel" to start tracking a YouTube channel.</p></div>';
+  }
+
+  html += '</div>';
+  app().innerHTML = html;
+}
+
+async function scanChannel(id, btn) {
+  btn.textContent = '⏳ Checking...'; btn.disabled = true;
+  try {
+    const res = await apiPost(`/channels/${id}/scan`, {});
+    btn.textContent = `✓ ${res.new_videos || 0} new`;
+    setTimeout(() => renderChannels(), 2000);
+  } catch (e) {
+    btn.textContent = '✗ Failed';
+    setTimeout(() => { btn.textContent = '↻ Check Now'; btn.disabled = false; }, 2000);
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   INIT
+   ═════════════════════════════════════════════════════════════════════ */
+if (!location.hash) location.hash = '#feed';
+route();
+</script>
 </body>
-
 </html>

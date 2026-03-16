@@ -82,6 +82,18 @@ def seed_people(session: Session) -> int:
     for item in data:
         existing = session.query(People).filter(People.name == item["name"]).first()
         if existing:
+            # Upsert: update bio fields on existing records (v2)
+            existing.domain = item.get("domain") or existing.domain
+            existing.tier = item.get("tier", existing.tier)
+            existing.inclusion_notes = item.get("inclusion_notes") or existing.inclusion_notes
+            existing.expertise_domains = item.get("expertise_domains") or existing.expertise_domains
+            existing.youtube_search_queries = item.get("youtube_search_queries") or existing.youtube_search_queries
+            existing.bio = item.get("bio") or existing.bio
+            existing.role_title = item.get("role_title") or existing.role_title
+            existing.net_worth = item.get("net_worth") or existing.net_worth
+            existing.age = item.get("age") or existing.age
+            existing.photo_initials = item.get("photo_initials") or existing.photo_initials
+            existing.accent_color = item.get("accent_color") or existing.accent_color
             continue
         person = People(
             name=item["name"],
@@ -90,6 +102,12 @@ def seed_people(session: Session) -> int:
             inclusion_notes=item["inclusion_notes"],
             expertise_domains=item.get("expertise_domains", []),
             youtube_search_queries=item.get("youtube_search_queries", []),
+            bio=item.get("bio"),
+            role_title=item.get("role_title"),
+            net_worth=item.get("net_worth"),
+            age=item.get("age"),
+            photo_initials=item.get("photo_initials"),
+            accent_color=item.get("accent_color"),
         )
         session.add(person)
         count += 1

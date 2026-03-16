@@ -74,6 +74,12 @@ def list_people(
             "tier": p.tier,
             "domain": p.domain,
             "expertise_domains": p.expertise_domains,
+            "role_title": p.role_title,
+            "bio": p.bio,
+            "net_worth": p.net_worth,
+            "age": p.age,
+            "photo_initials": p.photo_initials or _initials(p.name),
+            "accent_color": p.accent_color or "#666",
             "claim_count": db.query(Claims).filter(
                 Claims.person_id == p.id,
                 Claims.review_status == "approved",
@@ -120,6 +126,12 @@ def get_person(
         "domain": person.domain,
         "expertise_domains": person.expertise_domains,
         "inclusion_notes": person.inclusion_notes,
+        "role_title": person.role_title,
+        "bio": person.bio,
+        "net_worth": person.net_worth,
+        "age": person.age,
+        "photo_initials": person.photo_initials or _initials(person.name),
+        "accent_color": person.accent_color or "#666",
         "active": person.active,
         "claim_count": claim_count,
         "claims": [_claim_summary(c) for c in claims],
@@ -127,11 +139,47 @@ def get_person(
             {
                 "topic_id": str(p.topic_id),
                 "topic": p.topic.slug if p.topic else None,
+                "topic_name": p.topic.name if p.topic else None,
                 "current_position": p.current_position,
+                "sentiment": p.sentiment,
                 "claim_count": p.claim_count,
                 "last_updated": p.last_updated.isoformat() if p.last_updated else None,
             }
             for p in positions
+        ],
+        "shifts": [
+            {
+                "topic_name": s.topic.name if s.topic else None,
+                "topic_slug": s.topic.slug if s.topic else None,
+                "position_summary": s.position_summary,
+                "previous_position": s.previous_position,
+                "shift_note": s.shift_note,
+                "recorded_at": s.recorded_at.isoformat() if s.recorded_at else None,
+            }
+            for s in (
+                db.query(PositionHistoryLog)
+                .filter(PositionHistoryLog.person_id == person.id, PositionHistoryLog.is_shift == True)
+                .order_by(PositionHistoryLog.recorded_at.desc())
+                .limit(10)
+                .all()
+            )
+        ],
+        "appearances": [
+            {
+                "video_id": str(s.video_id),
+                "video_title": s.video.title if s.video else None,
+                "channel_name": s.video.podcast_channel.name if s.video and s.video.podcast_channel else None,
+                "published_at": s.video.published_at.isoformat() if s.video and s.video.published_at else None,
+                "watch_verdict": s.watch_verdict,
+                "tldr": s.tldr,
+            }
+            for s in (
+                db.query(EpisodeSummaries)
+                .filter(EpisodeSummaries.person_focus_id == person.id)
+                .order_by(EpisodeSummaries.generated_at.desc())
+                .limit(10)
+                .all()
+            )
         ],
     }
 
@@ -576,7 +624,12 @@ def _summary_card(s: EpisodeSummaries, db: Session) -> dict:
         "video_id": str(s.video_id),
         "video_title": video.title if video else None,
         "channel_name": video.podcast_channel.name if video and video.podcast_channel else None,
+        "channel_id": str(video.podcast_channel_id) if video and video.podcast_channel_id else None,
         "published_at": video.published_at.isoformat() if video and video.published_at else None,
+        "duration_seconds": video.duration_seconds if video else None,
+        "duration_display": _format_duration(video.duration_seconds) if video and video.duration_seconds else None,
+        "youtube_video_id": yt_id,
+        "discovery_method": video.discovery_method if video else None,
         "summary_type": s.summary_type,
         "person_focus_name": s.person_focus.name if s.person_focus else None,
         "person_focus_id": str(s.person_focus_id) if s.person_focus_id else None,
@@ -795,3 +848,273 @@ def _format_timestamp(seconds: int) -> str:
     m = (seconds % 3600) // 60
     s = seconds % 60
     return f"{h}:{m:02d}:{s:02d}"
+
+
+def _format_duration(seconds: int | None) -> str:
+    """Format seconds as a human-readable duration string."""
+    if not seconds:
+        return ""
+    h, remainder = divmod(seconds, 3600)
+    m, s = divmod(remainder, 60)
+    if h > 0:
+        return f"{h}:{m:02d}:{s:02d}"
+    return f"{m}:{s:02d}"
+
+
+def _initials(name: str) -> str:
+    """Generate 2-char initials from a name."""
+    parts = name.split()
+    return (parts[0][0] + parts[-1][0]).upper() if len(parts) >= 2 else name[:2].upper()
+
+
+# ── Channels ────────────────────────────────────────────────────────────
+
+@router.get("/channels")
+def list_channels(db: Session = Depends(get_db)):
+    """List all active channels with video counts and scan status."""
+    channels = (
+        db.query(PodcastChannels)
+        .filter(PodcastChannels.active == True)  # noqa: E712
+        .order_by(PodcastChannels.tier, PodcastChannels.name)
+        .all()
+    )
+    return [
+        {
+            "id": str(ch.id),
+            "name": ch.name,
+            "youtube_channel_id": ch.youtube_channel_id,
+            "tier": ch.tier,
+            "monitoring_mode": ch.monitoring_mode,
+            "video_count": (
+                db.query(Videos)
+                .filter(Videos.podcast_channel_id == ch.id)
+                .count()
+            ),
+            "last_scanned_at": (
+                ch.last_scanned_at.isoformat() if ch.last_scanned_at else None
+            ),
+        }
+        for ch in channels
+    ]
+
+
+class ChannelCreate(BaseModel):
+    url_or_handle: str  # "@dwarkesh" or "https://youtube.com/@dwarkesh" or channel ID
+
+
+@router.post("/channels")
+def add_channel(req: ChannelCreate, db: Session = Depends(get_db)):
+    """Add a new YouTube channel to monitor."""
+    import re
+    import subprocess
+
+    raw = req.url_or_handle.strip()
+
+    # Resolve to channel ID
+    if raw.startswith("UC") and len(raw) == 24:
+        # Already a channel ID
+        channel_id = raw
+        channel_name = raw
+    else:
+        # Build URL if just a handle
+        if raw.startswith("@"):
+            url = f"https://youtube.com/{raw}"
+        elif not raw.startswith("http"):
+            url = f"https://youtube.com/@{raw}"
+        else:
+            url = raw
+
+        # Resolve via yt-dlp
+        try:
+            from src.youtube import run_yt_dlp
+            proc = run_yt_dlp(
+                ["--print", "channel_id", "--print", "channel", "--playlist-items", "1", url],
+                timeout=30,
+            )
+            if proc.returncode != 0:
+                raise HTTPException(400, f"Could not resolve channel: {(proc.stderr or '')[:200]}")
+            lines = proc.stdout.strip().split("\n")
+            channel_id = lines[0].strip() if lines else None
+            channel_name = lines[1].strip() if len(lines) > 1 else raw
+            if not channel_id or channel_id == "NA":
+                raise HTTPException(400, "Could not resolve channel ID")
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(500, f"Failed to resolve channel: {e}")
+
+    # Check for duplicates
+    existing = db.query(PodcastChannels).filter(
+        PodcastChannels.youtube_channel_id == channel_id
+    ).first()
+    if existing:
+        raise HTTPException(409, f"Channel already tracked: {existing.name}")
+
+    ch = PodcastChannels(
+        youtube_channel_id=channel_id,
+        name=channel_name,
+        tier=2,
+        monitoring_mode="channel_feed",
+    )
+    db.add(ch)
+    db.commit()
+
+    return {
+        "id": str(ch.id),
+        "name": ch.name,
+        "youtube_channel_id": ch.youtube_channel_id,
+        "status": "created",
+    }
+
+
+@router.post("/channels/{channel_id}/scan")
+def trigger_channel_scan(channel_id: UUID, db: Session = Depends(get_db)):
+    """Scan a single channel for new videos."""
+    channel = db.query(PodcastChannels).filter(PodcastChannels.id == channel_id).first()
+    if not channel:
+        raise HTTPException(404, "Channel not found")
+
+    from src.pipeline.discovery import _scan_single_channel, ScanResult
+    result = ScanResult()
+    try:
+        _scan_single_channel(db, channel, result)
+    except Exception as e:
+        raise HTTPException(500, f"Scan failed: {e}")
+
+    channel.last_scanned_at = datetime.now(timezone.utc)
+    channel.video_count = db.query(Videos).filter(Videos.podcast_channel_id == channel.id).count()
+    db.commit()
+
+    return {
+        "status": "scanned",
+        "new_videos": result.videos_found,
+        "total_videos": channel.video_count,
+    }
+
+
+# ── Video Add ──────────────────────────────────────────────────────────
+
+class VideoAddRequest(BaseModel):
+    youtube_url: str
+
+
+@router.post("/videos/add")
+def add_video(req: VideoAddRequest, db: Session = Depends(get_db)):
+    """Add a single video for transcription and summarization."""
+    import re
+
+    # Parse YouTube video ID from various URL formats
+    url = req.youtube_url.strip()
+    video_id = None
+
+    # youtu.be/ID
+    m = re.search(r"youtu\.be/([\w-]+)", url)
+    if m:
+        video_id = m.group(1)
+
+    # youtube.com/watch?v=ID
+    if not video_id:
+        m = re.search(r"[?&]v=([\w-]+)", url)
+        if m:
+            video_id = m.group(1)
+
+    # youtube.com/embed/ID or /v/ID
+    if not video_id:
+        m = re.search(r"youtube\.com/(?:embed|v)/([\w-]+)", url)
+        if m:
+            video_id = m.group(1)
+
+    # Bare ID (11 chars)
+    if not video_id and re.match(r"^[\w-]{11}$", url):
+        video_id = url
+
+    if not video_id:
+        raise HTTPException(400, "Could not parse YouTube video ID from URL")
+
+    # Check for duplicates
+    existing = db.query(Videos).filter(Videos.youtube_video_id == video_id).first()
+    if existing:
+        return {
+            "video_id": str(existing.id),
+            "youtube_video_id": video_id,
+            "status": "already_exists",
+            "current_status": existing.status,
+        }
+
+    # Fetch title via yt-dlp (quick metadata grab)
+    title = None
+    channel_yt_id = None
+    try:
+        from src.youtube import run_yt_dlp
+        proc = run_yt_dlp(
+            ["--print", "title", "--print", "channel_id", "--skip-download",
+             f"https://youtube.com/watch?v={video_id}"],
+            timeout=15,
+        )
+        if proc.returncode == 0:
+            lines = proc.stdout.strip().split("\n")
+            title = lines[0] if lines and lines[0] != "NA" else None
+            channel_yt_id = lines[1].strip() if len(lines) > 1 and lines[1].strip() != "NA" else None
+    except Exception:
+        pass  # Not critical, we can proceed without title
+
+    # Try to match to a tracked channel
+    podcast_channel_id = None
+    if channel_yt_id:
+        tracked = db.query(PodcastChannels).filter(
+            PodcastChannels.youtube_channel_id == channel_yt_id
+        ).first()
+        if tracked:
+            podcast_channel_id = tracked.id
+
+    video = Videos(
+        youtube_video_id=video_id,
+        title=title,
+        source_channel_youtube_id=channel_yt_id,
+        podcast_channel_id=podcast_channel_id,
+        discovery_method="manual",
+        status="discovered",
+    )
+    db.add(video)
+    db.commit()
+
+    return {
+        "video_id": str(video.id),
+        "youtube_video_id": video_id,
+        "title": title,
+        "status": "queued",
+    }
+
+
+# ── Position Shifts ─────────────────────────────────────────────────────
+
+@router.get("/positions/shifts")
+def recent_position_shifts(
+    limit: int = Query(default=10, le=50),
+    db: Session = Depends(get_db),
+):
+    """Recent position shifts across all tracked people."""
+    shifts = (
+        db.query(PositionHistoryLog)
+        .filter(PositionHistoryLog.is_shift == True)  # noqa: E712
+        .order_by(PositionHistoryLog.recorded_at.desc())
+        .limit(limit)
+        .all()
+    )
+    return [
+        {
+            "id": str(s.id),
+            "person_id": str(s.person_id),
+            "person_name": s.person.name if s.person else None,
+            "person_photo_initials": (s.person.photo_initials or _initials(s.person.name)) if s.person else None,
+            "person_accent_color": (s.person.accent_color or "#666") if s.person else None,
+            "topic_id": str(s.topic_id),
+            "topic_name": s.topic.name if s.topic else None,
+            "topic_slug": s.topic.slug if s.topic else None,
+            "position_summary": s.position_summary,
+            "previous_position": s.previous_position,
+            "shift_note": s.shift_note,
+            "recorded_at": s.recorded_at.isoformat() if s.recorded_at else None,
+        }
+        for s in shifts
+    ]

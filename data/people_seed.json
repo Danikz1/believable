@@ -5,7 +5,13 @@
     "tier": 1,
     "inclusion_notes": "History's most successful macro investor. His frameworks on debt cycles, economic machinery, and changing world order are foundational to understanding macro regimes. Founded Bridgewater, the world's largest hedge fund.",
     "expertise_domains": ["macro", "debt_cycles", "geopolitics", "value_investing"],
-    "youtube_search_queries": ["Ray Dalio interview", "Ray Dalio keynote"]
+    "youtube_search_queries": ["Ray Dalio interview", "Ray Dalio keynote"],
+    "role_title": "Founder, Bridgewater Associates",
+    "bio": "Built the world's largest hedge fund ($150B+ AUM at peak). Author of 'Principles' and 'The Changing World Order.' Known for radical transparency, systematic decision-making, and macro frameworks based on historical debt cycles. Stepped down as co-CIO in 2022 but remains the most-cited voice in macro circles.",
+    "net_worth": "$15.4B",
+    "age": 76,
+    "photo_initials": "RD",
+    "accent_color": "#f59e0b"
   },
   {
     "name": "Chamath Palihapitiya",
@@ -13,7 +19,13 @@
     "tier": 1,
     "inclusion_notes": "Social Capital founder, All-In Podcast host. Bridges venture capital, macro policy, and technology investing. Known for contrarian takes on fiscal policy and tech regulation.",
     "expertise_domains": ["venture_capital", "macro", "fiscal_policy", "platform_dynamics"],
-    "youtube_search_queries": ["Chamath Palihapitiya interview"]
+    "youtube_search_queries": ["Chamath Palihapitiya interview"],
+    "role_title": "CEO, Social Capital",
+    "bio": "Former Facebook VP of Growth who became one of Silicon Valley's most outspoken investors. All-In Podcast co-host. Known for contrarian takes on fiscal policy, healthcare costs, and tech regulation. Early SPAC pioneer turned skeptic.",
+    "net_worth": "$1.2B",
+    "age": 49,
+    "photo_initials": "CP",
+    "accent_color": "#3b82f6"
   },
   {
     "name": "David Sacks",
@@ -21,7 +33,13 @@
     "tier": 1,
     "inclusion_notes": "Craft Ventures founder, All-In Podcast host, former PayPal COO. Deep expertise in SaaS metrics, AI enterprise adoption, and tech policy. Early Yammer, PayPal mafia.",
     "expertise_domains": ["venture_capital", "saas_pricing", "enterprise_ai", "geopolitics"],
-    "youtube_search_queries": ["David Sacks interview"]
+    "youtube_search_queries": ["David Sacks interview"],
+    "role_title": "General Partner, Craft Ventures",
+    "bio": "PayPal COO and part of the PayPal mafia. Founded Yammer (sold to Microsoft for $1.2B). All-In Podcast co-host. Known for sharp SaaS metrics analysis and increasingly prominent voice on US foreign policy and tech regulation.",
+    "net_worth": "$200M",
+    "age": 52,
+    "photo_initials": "DS",
+    "accent_color": "#6366f1"
   },
   {
     "name": "David Friedberg",
@@ -29,7 +47,13 @@
     "tier": 1,
     "inclusion_notes": "The Production Board CEO, All-In Podcast host. Unique blend of climate science, food tech, and AI. Founded The Climate Corporation (sold to Monsanto for $1.1B).",
     "expertise_domains": ["climate", "energy", "ai_infrastructure", "startup_formation"],
-    "youtube_search_queries": ["David Friedberg interview"]
+    "youtube_search_queries": ["David Friedberg interview"],
+    "role_title": "CEO, The Production Board",
+    "bio": "Founded The Climate Corporation (sold to Monsanto for $1.1B). All-In Podcast co-host. Runs The Production Board, a holding company focused on science-driven businesses in food, energy, and healthcare. The group's resident scientist and data thinker.",
+    "net_worth": "$500M",
+    "age": 44,
+    "photo_initials": "DF",
+    "accent_color": "#22c55e"
   },
   {
     "name": "Jason Calacanis",
@@ -37,7 +61,13 @@
     "tier": 1,
     "inclusion_notes": "World's top angel investor, All-In Podcast host, LAUNCH founder. Deep pulse on startup formation, seed investing, and founder dynamics.",
     "expertise_domains": ["venture_capital", "startup_formation", "creator_economy"],
-    "youtube_search_queries": ["Jason Calacanis interview"]
+    "youtube_search_queries": ["Jason Calacanis interview"],
+    "role_title": "Founder, LAUNCH & Inside.com",
+    "bio": "One of the world's most prolific angel investors with early bets on Uber, Robinhood, and Calm. All-In Podcast co-host and moderator. Founded LAUNCH accelerator and Inside.com. Self-made from Queens, NY.",
+    "net_worth": "$100M",
+    "age": 54,
+    "photo_initials": "JC",
+    "accent_color": "#ef4444"
   },
   {
     "name": "Bill Gurley",
@@ -45,7 +75,13 @@
     "tier": 1,
     "inclusion_notes": "Legendary VC at Benchmark. Led Uber investment. Known for rigorous thinking on marketplace dynamics, competitive advantage, and tech valuations. BG2Pod co-host.",
     "expertise_domains": ["venture_capital", "platform_dynamics", "value_investing"],
-    "youtube_search_queries": ["Bill Gurley interview", "Bill Gurley talk"]
+    "youtube_search_queries": ["Bill Gurley interview", "Bill Gurley talk"],
+    "role_title": "General Partner, Benchmark",
+    "bio": "Benchmark's most celebrated investor. Led the Uber investment and is considered the gold standard for marketplace investing. BG2Pod co-host. Known for 'Running Down a Dream' talk and rigorous first-principles thinking on unit economics.",
+    "net_worth": "$2B",
+    "age": 58,
+    "photo_initials": "BG",
+    "accent_color": "#8b5cf6"
   },
   {
     "name": "Brad Gerstner",
@@ -53,7 +89,13 @@
     "tier": 1,
     "inclusion_notes": "Altimeter Capital founder, BG2Pod co-host. Bridges public and private tech markets. Known for shareholder activism (Meta open letter) and AI infrastructure thesis.",
     "expertise_domains": ["ai_infrastructure", "venture_capital", "platform_dynamics"],
-    "youtube_search_queries": ["Brad Gerstner interview"]
+    "youtube_search_queries": ["Brad Gerstner interview"],
+    "role_title": "Founder & CEO, Altimeter Capital",
+    "bio": "Founder of Altimeter Capital, a $20B+ tech-focused investment firm. BG2Pod co-host. Famous for his open letter to Zuckerberg that catalysed Meta's efficiency pivot. Strong thesis on AI infrastructure being the 'next cloud.'",
+    "net_worth": "$1B",
+    "age": 53,
+    "photo_initials": "BG",
+    "accent_color": "#0ea5e9"
   },
   {
     "name": "Lex Fridman",
@@ -61,7 +103,13 @@
     "tier": 1,
     "inclusion_notes": "MIT researcher and top-tier interviewer. His podcast consistently surfaces deep technical insights on AI safety, consciousness, and geopolitics from world-class guests.",
     "expertise_domains": ["ai_safety", "ai_infrastructure", "geopolitics"],
-    "youtube_search_queries": ["Lex Fridman podcast"]
+    "youtube_search_queries": ["Lex Fridman podcast"],
+    "role_title": "Podcaster & AI Researcher, MIT",
+    "bio": "MIT researcher turned the world's most influential long-form interviewer on AI and technology. His podcast features 3-5 hour conversations with world leaders, scientists, and technologists. Known for thoughtful, philosophical questions.",
+    "net_worth": null,
+    "age": 39,
+    "photo_initials": "LF",
+    "accent_color": "#a855f7"
   },
   {
     "name": "Jensen Huang",
@@ -69,7 +117,13 @@
     "tier": 1,
     "inclusion_notes": "NVIDIA CEO. The central figure in AI infrastructure buildout. His keynotes and interviews define the narrative around GPU compute, inference scaling, and AI's industrial adoption.",
     "expertise_domains": ["ai_infrastructure", "inference_compute", "enterprise_ai"],
-    "youtube_search_queries": ["Jensen Huang interview", "Jensen Huang keynote"]
+    "youtube_search_queries": ["Jensen Huang interview", "Jensen Huang keynote"],
+    "role_title": "Founder & CEO, NVIDIA",
+    "bio": "Co-founded NVIDIA in 1993 and built it into the most valuable semiconductor company in history. His bet on GPU computing for AI proved prescient. Famous for leather jacket keynotes that set the AI infrastructure narrative globally.",
+    "net_worth": "$77B",
+    "age": 62,
+    "photo_initials": "JH",
+    "accent_color": "#84cc16"
   },
   {
     "name": "Sam Altman",
@@ -77,7 +131,13 @@
     "tier": 1,
     "inclusion_notes": "OpenAI CEO, former YC president. Ground zero for AI capabilities trajectory. His statements on safety, scaling laws, and commercialization shape the entire AI landscape.",
     "expertise_domains": ["ai_infrastructure", "ai_safety", "ai_regulation", "startup_formation"],
-    "youtube_search_queries": ["Sam Altman interview", "Sam Altman talk"]
+    "youtube_search_queries": ["Sam Altman interview", "Sam Altman talk"],
+    "role_title": "CEO, OpenAI",
+    "bio": "Former Y Combinator president turned CEO of OpenAI, the company behind GPT and ChatGPT. Survived a boardroom coup in November 2023. His statements on AGI timelines, safety, and commercialization define the AI industry's trajectory.",
+    "net_worth": "$1B",
+    "age": 40,
+    "photo_initials": "SA",
+    "accent_color": "#14b8a6"
   },
   {
     "name": "Dario Amodei",
@@ -85,7 +145,13 @@
     "tier": 1,
     "inclusion_notes": "Anthropic CEO. Former OpenAI VP of Research. Leading voice on AI safety, interpretability, and responsible scaling. His essays and interviews define the safety-first AI development paradigm.",
     "expertise_domains": ["ai_safety", "ai_regulation", "ai_infrastructure"],
-    "youtube_search_queries": ["Dario Amodei interview"]
+    "youtube_search_queries": ["Dario Amodei interview"],
+    "role_title": "CEO, Anthropic",
+    "bio": "Co-founded Anthropic after leaving OpenAI over safety disagreements. Former VP of Research at OpenAI. His essay 'Machines of Loving Grace' outlines a positive vision for AI. Building Claude with a constitution-first approach.",
+    "net_worth": "$1B",
+    "age": 42,
+    "photo_initials": "DA",
+    "accent_color": "#d97706"
   },
   {
     "name": "Satya Nadella",
@@ -93,7 +159,13 @@
     "tier": 1,
     "inclusion_notes": "Microsoft CEO. Orchestrated the OpenAI partnership and enterprise AI pivot. His strategy decisions on cloud, AI copilots, and platform economics affect the entire tech landscape.",
     "expertise_domains": ["enterprise_ai", "ai_infrastructure", "platform_dynamics"],
-    "youtube_search_queries": ["Satya Nadella interview"]
+    "youtube_search_queries": ["Satya Nadella interview"],
+    "role_title": "Chairman & CEO, Microsoft",
+    "bio": "Transformed Microsoft from a stagnant Windows company into the world's most valuable enterprise cloud and AI company. Orchestrated the $13B OpenAI partnership. Known for 'growth mindset' culture and the Copilot AI strategy.",
+    "net_worth": "$1.1B",
+    "age": 57,
+    "photo_initials": "SN",
+    "accent_color": "#0284c7"
   },
   {
     "name": "Howard Marks",
@@ -101,7 +173,13 @@
     "tier": 1,
     "inclusion_notes": "Oaktree Capital co-founder. His memos on market cycles, risk assessment, and contrarian thinking are required reading for institutional investors. Master of second-level thinking.",
     "expertise_domains": ["macro", "debt_cycles", "value_investing"],
-    "youtube_search_queries": ["Howard Marks interview", "Howard Marks Oaktree"]
+    "youtube_search_queries": ["Howard Marks interview", "Howard Marks Oaktree"],
+    "role_title": "Co-Chairman, Oaktree Capital",
+    "bio": "Co-founded Oaktree Capital ($170B+ AUM), the world's premier distressed debt firm. His investment memos are read by every major allocator. Author of 'The Most Important Thing.' Master of second-level thinking and market cycle analysis.",
+    "net_worth": "$2.2B",
+    "age": 79,
+    "photo_initials": "HM",
+    "accent_color": "#b45309"
   },
   {
     "name": "Warren Buffett",
@@ -109,7 +187,13 @@
     "tier": 1,
     "inclusion_notes": "Berkshire Hathaway chairman. The definitive voice on value investing, capital allocation, and long-term economic thinking. His annual meetings and interviews are landmark events.",
     "expertise_domains": ["value_investing", "macro", "fiscal_policy"],
-    "youtube_search_queries": ["Warren Buffett interview", "Berkshire Hathaway annual meeting"]
+    "youtube_search_queries": ["Warren Buffett interview", "Berkshire Hathaway annual meeting"],
+    "role_title": "Chairman & CEO, Berkshire Hathaway",
+    "bio": "The Oracle of Omaha. Built Berkshire Hathaway from a textile mill into a $900B+ conglomerate. The most successful investor in history by total returns. His annual shareholder letters and Omaha meetings are landmark events in finance.",
+    "net_worth": "$133B",
+    "age": 94,
+    "photo_initials": "WB",
+    "accent_color": "#059669"
   },
   {
     "name": "Charlie Munger",
@@ -117,7 +201,13 @@
     "tier": 1,
     "inclusion_notes": "Berkshire Hathaway vice chairman. Master of multidisciplinary thinking and mental models. His talks on human misjudgment and investment philosophy are foundational.",
     "expertise_domains": ["value_investing", "macro"],
-    "youtube_search_queries": ["Charlie Munger interview", "Charlie Munger talk"]
+    "youtube_search_queries": ["Charlie Munger interview", "Charlie Munger talk"],
+    "role_title": "Vice Chairman, Berkshire Hathaway (d. 2023)",
+    "bio": "Warren Buffett's partner for 60 years. Master of multidisciplinary mental models — psychology, physics, biology applied to investing. His speech 'The Psychology of Human Misjudgment' is a foundational text. Passed away November 2023 at age 99.",
+    "net_worth": "$2.7B",
+    "age": null,
+    "photo_initials": "CM",
+    "accent_color": "#78716c"
   },
   {
     "name": "Marc Andreessen",
@@ -125,7 +215,13 @@
     "tier": 1,
     "inclusion_notes": "a16z co-founder, Netscape creator. Defines the techno-optimist narrative. His frameworks on software eating the world, AI adoption curves, and startup scaling are widely influential.",
     "expertise_domains": ["venture_capital", "ai_infrastructure", "startup_formation", "ai_open_source"],
-    "youtube_search_queries": ["Marc Andreessen interview"]
+    "youtube_search_queries": ["Marc Andreessen interview"],
+    "role_title": "Co-Founder & GP, Andreessen Horowitz",
+    "bio": "Created the Mosaic web browser and co-founded Netscape, then built a16z into the most influential VC firm of the 2010s-2020s. Author of 'The Techno-Optimist Manifesto.' His frameworks on software eating the world have shaped a generation of founders.",
+    "net_worth": "$1.7B",
+    "age": 53,
+    "photo_initials": "MA",
+    "accent_color": "#dc2626"
   },
   {
     "name": "Ben Horowitz",
@@ -133,7 +229,13 @@
     "tier": 2,
     "inclusion_notes": "a16z co-founder. Deep expertise in company building, management, and the hard things about hard things. Brings operator perspective to venture investing.",
     "expertise_domains": ["venture_capital", "startup_formation", "enterprise_ai"],
-    "youtube_search_queries": ["Ben Horowitz interview"]
+    "youtube_search_queries": ["Ben Horowitz interview"],
+    "role_title": "Co-Founder & GP, Andreessen Horowitz",
+    "bio": "Co-founded a16z with Marc Andreessen. Author of 'The Hard Thing About Hard Things,' the definitive book on startup management. Former CEO of Opsware (sold to HP for $1.6B). Brings rare operator perspective to venture.",
+    "net_worth": "$600M",
+    "age": 58,
+    "photo_initials": "BH",
+    "accent_color": "#e11d48"
   },
   {
     "name": "Patrick Collison",
@@ -141,7 +243,13 @@
     "tier": 1,
     "inclusion_notes": "Stripe CEO. Rare founder who thinks deeply about economic infrastructure, scientific progress (founded Arc Institute), and internet commerce at global scale.",
     "expertise_domains": ["payments", "startup_formation", "platform_dynamics"],
-    "youtube_search_queries": ["Patrick Collison interview"]
+    "youtube_search_queries": ["Patrick Collison interview"],
+    "role_title": "Co-Founder & CEO, Stripe",
+    "bio": "Co-founded Stripe at age 19 with his brother John. Built it into the world's most valuable private fintech company ($95B). Co-founded Arc Institute for basic science research. Known for deep reading, fast execution, and long-term thinking.",
+    "net_worth": "$11.5B",
+    "age": 36,
+    "photo_initials": "PC",
+    "accent_color": "#6d28d9"
   },
   {
     "name": "John Collison",
@@ -149,7 +257,13 @@
     "tier": 2,
     "inclusion_notes": "Stripe president. Deep operational expertise in global payments infrastructure, developer platforms, and fintech ecosystem building.",
     "expertise_domains": ["payments", "startup_formation", "platform_dynamics"],
-    "youtube_search_queries": ["John Collison interview"]
+    "youtube_search_queries": ["John Collison interview"],
+    "role_title": "Co-Founder & President, Stripe",
+    "bio": "Co-founded Stripe with brother Patrick. Became the world's youngest self-made billionaire at 26. Leads Stripe's product and engineering. Known for operational excellence in scaling global payments infrastructure.",
+    "net_worth": "$11.5B",
+    "age": 34,
+    "photo_initials": "JC",
+    "accent_color": "#7c3aed"
   },
   {
     "name": "Elon Musk",
@@ -157,7 +271,13 @@
     "tier": 1,
     "inclusion_notes": "Tesla, SpaceX, xAI CEO. His statements on AI development (Grok/xAI), energy transition, space commercialization, and social media dynamics are market-moving.",
     "expertise_domains": ["ai_infrastructure", "energy", "space", "ai_open_source"],
-    "youtube_search_queries": ["Elon Musk interview"]
+    "youtube_search_queries": ["Elon Musk interview"],
+    "role_title": "CEO, Tesla & SpaceX; Founder, xAI",
+    "bio": "Runs Tesla, SpaceX, xAI, and Neuralink simultaneously. The world's richest person. Founded xAI to build Grok. His statements on AI, energy transition, and space colonization are market-moving. Most followed person on X.",
+    "net_worth": "$195B",
+    "age": 53,
+    "photo_initials": "EM",
+    "accent_color": "#f43f5e"
   },
   {
     "name": "Vinod Khosla",
@@ -165,7 +285,13 @@
     "tier": 1,
     "inclusion_notes": "Khosla Ventures founder, Sun Microsystems co-founder. Pioneer in climate tech investing. Bold thesis on AI replacing 80% of knowledge work. Contrarian on energy transition timelines.",
     "expertise_domains": ["climate", "energy", "venture_capital", "ai_infrastructure"],
-    "youtube_search_queries": ["Vinod Khosla interview"]
+    "youtube_search_queries": ["Vinod Khosla interview"],
+    "role_title": "Founder, Khosla Ventures",
+    "bio": "Co-founded Sun Microsystems, then built Khosla Ventures into the top climate-tech VC. Bold thesis that AI will replace 80% of knowledge work. Pioneer in green energy investing. Contrarian on economic timelines and technology disruption.",
+    "net_worth": "$6.8B",
+    "age": 70,
+    "photo_initials": "VK",
+    "accent_color": "#16a34a"
   },
   {
     "name": "Stanley Druckenmiller",
@@ -173,7 +299,13 @@
     "tier": 1,
     "inclusion_notes": "Duquesne Capital founder. One of the greatest macro traders in history. His views on fiscal policy, debt sustainability, and market positioning are highly influential.",
     "expertise_domains": ["macro", "fiscal_policy", "interest_rates", "debt_cycles"],
-    "youtube_search_queries": ["Stanley Druckenmiller interview"]
+    "youtube_search_queries": ["Stanley Druckenmiller interview"],
+    "role_title": "Founder, Duquesne Family Office",
+    "bio": "Returned 30%+ annually for 30 years with no losing year — arguably history's best risk-adjusted track record. Former lead portfolio manager for George Soros. Now runs Duquesne family office. Known for fierce views on US fiscal irresponsibility.",
+    "net_worth": "$6.9B",
+    "age": 72,
+    "photo_initials": "SD",
+    "accent_color": "#ca8a04"
   },
   {
     "name": "Cathie Wood",
@@ -181,7 +313,13 @@
     "tier": 2,
     "inclusion_notes": "ARK Invest CEO. Leading voice on disruptive innovation investing — AI, genomics, robotics, blockchain. Controversial but data-driven theses on deflation and innovation convergence.",
     "expertise_domains": ["ai_infrastructure", "crypto", "energy", "healthcare"],
-    "youtube_search_queries": ["Cathie Wood interview", "Cathie Wood ARK"]
+    "youtube_search_queries": ["Cathie Wood interview", "Cathie Wood ARK"],
+    "role_title": "Founder & CEO, ARK Invest",
+    "bio": "Founded ARK Invest after 12 years at AllianceBernstein. Pioneered open research in asset management. Known for bold 5-year price targets and thematic innovation investing across AI, genomics, robotics, and crypto.",
+    "net_worth": "$250M",
+    "age": 69,
+    "photo_initials": "CW",
+    "accent_color": "#ec4899"
   },
   {
     "name": "Balaji Srinivasan",
@@ -189,7 +327,13 @@
     "tier": 2,
     "inclusion_notes": "Former a16z GP, CTO of Coinbase. Provocative thinker on crypto, network states, and technological sovereignty. His predictions are deliberately extreme but directionally insightful.",
     "expertise_domains": ["crypto", "stablecoins", "geopolitics", "platform_dynamics"],
-    "youtube_search_queries": ["Balaji Srinivasan interview"]
+    "youtube_search_queries": ["Balaji Srinivasan interview"],
+    "role_title": "Angel Investor & Author",
+    "bio": "Former a16z GP and Coinbase CTO. Author of 'The Network State.' Known for provocative predictions on crypto, technological sovereignty, and media realignment. Founded multiple startups including Counsyl (acquired by Myriad).",
+    "net_worth": "$200M",
+    "age": 44,
+    "photo_initials": "BS",
+    "accent_color": "#f97316"
   },
   {
     "name": "Demis Hassabis",
@@ -197,7 +341,13 @@
     "tier": 1,
     "inclusion_notes": "Google DeepMind CEO and Nobel laureate. At the frontier of AI capabilities research — AlphaFold, Gemini. His views on AGI timelines and scientific AI applications carry unique weight.",
     "expertise_domains": ["ai_infrastructure", "ai_safety", "healthcare"],
-    "youtube_search_queries": ["Demis Hassabis interview"]
+    "youtube_search_queries": ["Demis Hassabis interview"],
+    "role_title": "CEO, Google DeepMind",
+    "bio": "Founded DeepMind in 2010, merged into Google DeepMind. Nobel Prize in Chemistry 2024 for AlphaFold. Created AI systems that mastered Go, protein folding, and weather prediction. Building Gemini. A chess prodigy turned AI pioneer.",
+    "net_worth": "$800M",
+    "age": 48,
+    "photo_initials": "DH",
+    "accent_color": "#2563eb"
   },
   {
     "name": "Yann LeCun",
@@ -205,7 +355,13 @@
     "tier": 2,
     "inclusion_notes": "Meta Chief AI Scientist, Turing Award winner. Leading voice for open-source AI and critic of doomerism. His technical blog posts and debates shape AI research direction.",
     "expertise_domains": ["ai_open_source", "ai_safety", "ai_infrastructure"],
-    "youtube_search_queries": ["Yann LeCun interview"]
+    "youtube_search_queries": ["Yann LeCun interview"],
+    "role_title": "Chief AI Scientist, Meta",
+    "bio": "Turing Award winner (2018) for work on convolutional neural networks. VP & Chief AI Scientist at Meta. The loudest voice for open-source AI and against AI doomerism. Pioneer of self-supervised learning approaches.",
+    "net_worth": null,
+    "age": 64,
+    "photo_initials": "YL",
+    "accent_color": "#1d4ed8"
   },
   {
     "name": "Ilya Sutskever",
@@ -213,7 +369,13 @@
     "tier": 1,
     "inclusion_notes": "Safe Superintelligence Inc founder, former OpenAI chief scientist. Co-inventor of modern deep learning. Rare public appearances carry enormous signal on AI trajectory.",
     "expertise_domains": ["ai_safety", "ai_infrastructure"],
-    "youtube_search_queries": ["Ilya Sutskever interview"]
+    "youtube_search_queries": ["Ilya Sutskever interview"],
+    "role_title": "Co-Founder, Safe Superintelligence Inc",
+    "bio": "Former chief scientist of OpenAI and co-inventor of AlexNet, the breakthrough that launched modern deep learning. Left OpenAI after the board crisis to found Safe Superintelligence Inc. Rare appearances carry enormous signal.",
+    "net_worth": null,
+    "age": 38,
+    "photo_initials": "IS",
+    "accent_color": "#7c3aed"
   },
   {
     "name": "Ben Thompson",
@@ -221,7 +383,13 @@
     "tier": 2,
     "inclusion_notes": "Stratechery founder. The definitive analyst on tech business strategy — aggregation theory, platform dynamics, and the economics of digital markets.",
     "expertise_domains": ["platform_dynamics", "enterprise_ai", "saas_pricing"],
-    "youtube_search_queries": ["Ben Thompson Stratechery interview"]
+    "youtube_search_queries": ["Ben Thompson Stratechery interview"],
+    "role_title": "Founder, Stratechery",
+    "bio": "Founded Stratechery, the most influential individual tech analysis publication. Created Aggregation Theory. Former Microsoft and Apple employee. Writes from Taiwan. His daily updates are read by tech CEOs and investors globally.",
+    "net_worth": null,
+    "age": 41,
+    "photo_initials": "BT",
+    "accent_color": "#06b6d4"
   },
   {
     "name": "Scott Galloway",
@@ -229,7 +397,13 @@
     "tier": 2,
     "inclusion_notes": "NYU Stern professor, Prof G Pod host. Provocative analysis on Big Tech regulation, higher education disruption, and generational wealth dynamics.",
     "expertise_domains": ["platform_dynamics", "macro", "real_estate"],
-    "youtube_search_queries": ["Scott Galloway interview", "Prof G"]
+    "youtube_search_queries": ["Scott Galloway interview", "Prof G"],
+    "role_title": "Professor, NYU Stern",
+    "bio": "NYU Stern marketing professor and serial entrepreneur. Prof G Pod co-host. Author of 'The Four' and 'The Algebra of Happiness.' Known for provocative Big Tech antitrust takes and generational wealth analysis.",
+    "net_worth": "$50M",
+    "age": 60,
+    "photo_initials": "SG",
+    "accent_color": "#e879f9"
   },
   {
     "name": "Tyler Cowen",
@@ -237,7 +411,13 @@
     "tier": 2,
     "inclusion_notes": "George Mason economist, Conversations with Tyler host, Marginal Revolution blogger. Uniquely broad intellectual range spanning economics, culture, talent assessment.",
     "expertise_domains": ["macro", "fiscal_policy", "labor_market"],
-    "youtube_search_queries": ["Tyler Cowen interview"]
+    "youtube_search_queries": ["Tyler Cowen interview"],
+    "role_title": "Professor, George Mason University",
+    "bio": "Economist, Marginal Revolution blogger, and 'Conversations with Tyler' host. Author of 'The Great Stagnation' and 'Talent.' Uniquely broad intellectual range spanning economics, cuisine, culture, and talent assessment.",
+    "net_worth": null,
+    "age": 63,
+    "photo_initials": "TC",
+    "accent_color": "#65a30d"
   },
   {
     "name": "Dwarkesh Patel",
@@ -245,7 +425,13 @@
     "tier": 2,
     "inclusion_notes": "Dwarkesh Podcast host. Rising interviewer who consistently surfaces novel insights on AI scaling, historical analogies, and economic growth from top researchers.",
     "expertise_domains": ["ai_infrastructure", "ai_safety", "macro"],
-    "youtube_search_queries": ["Dwarkesh Patel podcast"]
+    "youtube_search_queries": ["Dwarkesh Patel podcast"],
+    "role_title": "Host, Dwarkesh Podcast",
+    "bio": "Host of the Dwarkesh Podcast, the fastest-rising deep-interview show in tech. Known for rigorous preparation and novel questions that surface insights other interviewers miss. Guests include Zuckerberg, Carmack, and leading AI researchers.",
+    "net_worth": null,
+    "age": 25,
+    "photo_initials": "DP",
+    "accent_color": "#f97316"
   },
   {
     "name": "David Senra",
@@ -253,7 +439,13 @@
     "tier": 2,
     "inclusion_notes": "Founders Podcast host. Deep study of history's greatest entrepreneurs. His synthesis of founder biographies surfaces timeless patterns in company building.",
     "expertise_domains": ["startup_formation", "value_investing"],
-    "youtube_search_queries": ["Founders Podcast David Senra"]
+    "youtube_search_queries": ["Founders Podcast David Senra"],
+    "role_title": "Host, Founders Podcast",
+    "bio": "Reads a biography of a great founder every week and distills the lessons on his podcast. Over 350 episodes covering everyone from Rockefeller to Jobs to Chanel. The entrepreneur's educator. Backed by Patrick Collison.",
+    "net_worth": null,
+    "age": 38,
+    "photo_initials": "DS",
+    "accent_color": "#d946ef"
   },
   {
     "name": "Tim Ferriss",
@@ -261,7 +453,13 @@
     "tier": 2,
     "inclusion_notes": "Author, podcaster, angel investor. His show surfaces diverse thinkers across technology, health, and investing. Gateway interviewer for hard-to-access minds.",
     "expertise_domains": ["startup_formation", "venture_capital"],
-    "youtube_search_queries": ["Tim Ferriss Show interview"]
+    "youtube_search_queries": ["Tim Ferriss Show interview"],
+    "role_title": "Author & Investor",
+    "bio": "Author of 'The 4-Hour Workweek.' Early investor in Uber, Facebook, Shopify, and many others. His podcast has 900M+ downloads. Known for deconstructing world-class performance across diverse fields from chess to cooking to combat sports.",
+    "net_worth": "$100M",
+    "age": 48,
+    "photo_initials": "TF",
+    "accent_color": "#0d9488"
   },
   {
     "name": "Harry Stebbings",
@@ -269,7 +467,13 @@
     "tier": 2,
     "inclusion_notes": "20VC founder, youngest VC fund manager. His show (20 Minute VC / 20VC) is the highest-volume source of VC opinions. 3,000+ published interviews.",
     "expertise_domains": ["venture_capital", "startup_formation", "saas_pricing"],
-    "youtube_search_queries": ["Harry Stebbings 20VC"]
+    "youtube_search_queries": ["Harry Stebbings 20VC"],
+    "role_title": "Founder & GP, 20VC",
+    "bio": "Started the 20 Minute VC podcast at age 18 from his London bedroom. Now manages a $400M fund. Youngest major VC fund manager. Over 3,000 published episodes — the highest-volume source of VC opinions in the world.",
+    "net_worth": "$400M",
+    "age": 28,
+    "photo_initials": "HS",
+    "accent_color": "#ea580c"
   },
   {
     "name": "Shane Parrish",
@@ -277,7 +481,13 @@
     "tier": 2,
     "inclusion_notes": "Farnam Street / The Knowledge Project founder. Deep interviews on mental models, decision-making frameworks, and wisdom. Surfaces non-obvious thinking from elite performers.",
     "expertise_domains": ["value_investing", "startup_formation"],
-    "youtube_search_queries": ["Shane Parrish Knowledge Project"]
+    "youtube_search_queries": ["Shane Parrish Knowledge Project"],
+    "role_title": "Founder, Farnam Street",
+    "bio": "Former Canadian intelligence officer turned founder of Farnam Street, the most widely read blog on mental models and decision-making. Author of 'Clear Thinking.' The Knowledge Project podcast interviews elite performers across fields.",
+    "net_worth": null,
+    "age": 45,
+    "photo_initials": "SP",
+    "accent_color": "#4f46e5"
   },
   {
     "name": "Patrick O'Shaughnessy",
@@ -285,7 +495,13 @@
     "tier": 2,
     "inclusion_notes": "Invest Like the Best host, O'Shaughnessy Asset Management CEO. Best-in-class interviews on business quality, capital allocation, and emerging market structures.",
     "expertise_domains": ["value_investing", "venture_capital", "platform_dynamics"],
-    "youtube_search_queries": ["Patrick O'Shaughnessy Invest Like the Best"]
+    "youtube_search_queries": ["Patrick O'Shaughnessy Invest Like the Best"],
+    "role_title": "CEO, O'Shaughnessy Asset Management",
+    "bio": "Host of 'Invest Like the Best,' the most respected investing podcast among institutional allocators. CEO of O'Shaughnessy Asset Management. Known for discovering great investors and business operators before they become widely known.",
+    "net_worth": null,
+    "age": 38,
+    "photo_initials": "PO",
+    "accent_color": "#0891b2"
   },
   {
     "name": "Sundar Pichai",
@@ -293,7 +509,13 @@
     "tier": 2,
     "inclusion_notes": "Alphabet/Google CEO. His strategy on Gemini, search AI integration, and cloud AI shapes the competitive landscape against Microsoft/OpenAI.",
     "expertise_domains": ["ai_infrastructure", "enterprise_ai", "platform_dynamics"],
-    "youtube_search_queries": ["Sundar Pichai interview"]
+    "youtube_search_queries": ["Sundar Pichai interview"],
+    "role_title": "CEO, Alphabet & Google",
+    "bio": "Leads Alphabet, Google's parent company. Overseeing Google's AI pivot with Gemini in direct competition with OpenAI/Microsoft. Former Chrome and Android product lead. Born in Chennai, India. Quiet operator running a $2T company.",
+    "net_worth": "$1.5B",
+    "age": 52,
+    "photo_initials": "SP",
+    "accent_color": "#4285f4"
   },
   {
     "name": "Mark Zuckerberg",
@@ -301,7 +523,13 @@
     "tier": 2,
     "inclusion_notes": "Meta CEO. Leading the open-source AI push with Llama. His strategy on social AI, mixed reality, and creator economics is market-defining.",
     "expertise_domains": ["ai_open_source", "ai_infrastructure", "platform_dynamics", "creator_economy"],
-    "youtube_search_queries": ["Mark Zuckerberg interview"]
+    "youtube_search_queries": ["Mark Zuckerberg interview"],
+    "role_title": "Founder & CEO, Meta",
+    "bio": "Founded Facebook at 19, now leads Meta. Pivoted from metaverse to AI in 2023. Leading the open-source AI charge with Llama. Built Instagram and WhatsApp into global platforms. Quiet reinvention from most-hated to respected tech leader.",
+    "net_worth": "$177B",
+    "age": 40,
+    "photo_initials": "MZ",
+    "accent_color": "#1877f2"
   },
   {
     "name": "Brian Chesky",
@@ -309,7 +537,13 @@
     "tier": 2,
     "inclusion_notes": "Airbnb CEO. Master of marketplace dynamics, design-led company building, and platform economics. His management philosophy (founder mode) has become widely discussed.",
     "expertise_domains": ["platform_dynamics", "startup_formation"],
-    "youtube_search_queries": ["Brian Chesky interview"]
+    "youtube_search_queries": ["Brian Chesky interview"],
+    "role_title": "Co-Founder & CEO, Airbnb",
+    "bio": "Co-founded Airbnb from an air mattress in San Francisco. Pioneered 'founder mode' management philosophy — running Airbnb with only a handful of direct reports and deep involvement in product details. RISD-trained designer turned CEO.",
+    "net_worth": "$11B",
+    "age": 43,
+    "photo_initials": "BC",
+    "accent_color": "#ff385c"
   },
   {
     "name": "Jamie Dimon",
@@ -317,7 +551,13 @@
     "tier": 2,
     "inclusion_notes": "JPMorgan Chase CEO. The most influential voice in traditional finance. His annual letters and public statements on interest rates, regulation, and geopolitics move markets.",
     "expertise_domains": ["macro", "interest_rates", "fiscal_policy", "payments"],
-    "youtube_search_queries": ["Jamie Dimon interview"]
+    "youtube_search_queries": ["Jamie Dimon interview"],
+    "role_title": "Chairman & CEO, JPMorgan Chase",
+    "bio": "Longest-serving and most respected major bank CEO. Led JPMorgan through 2008 crisis and built it into the world's largest bank by market cap. His annual shareholder letters are required reading in finance. Known for blunt macro takes.",
+    "net_worth": "$2.2B",
+    "age": 69,
+    "photo_initials": "JD",
+    "accent_color": "#1e3a5f"
   },
   {
     "name": "Larry Fink",
@@ -325,7 +565,13 @@
     "tier": 2,
     "inclusion_notes": "BlackRock CEO. Manages $10T+. His annual letters define institutional investing narratives on infrastructure, energy transition, and retirement.",
     "expertise_domains": ["macro", "energy", "real_estate", "value_investing"],
-    "youtube_search_queries": ["Larry Fink interview", "Larry Fink BlackRock"]
+    "youtube_search_queries": ["Larry Fink interview", "Larry Fink BlackRock"],
+    "role_title": "Chairman & CEO, BlackRock",
+    "bio": "Founded BlackRock in 1988, grew it to $10T+ AUM — the world's largest asset manager. His annual letters to CEOs shape corporate governance globally. Pivoted from ESG champion to 'energy pragmatist.' Created the modern ETF industry.",
+    "net_worth": "$1.2B",
+    "age": 72,
+    "photo_initials": "LF",
+    "accent_color": "#334155"
   },
   {
     "name": "Ryan Petersen",
@@ -333,7 +579,13 @@
     "tier": 3,
     "inclusion_notes": "Flexport CEO. Real-time signal on global trade flows, supply chain disruptions, and logistics economics. His Twitter threads during supply chain crises were essential reading.",
     "expertise_domains": ["macro", "geopolitics", "us_china"],
-    "youtube_search_queries": ["Ryan Petersen Flexport interview"]
+    "youtube_search_queries": ["Ryan Petersen Flexport interview"],
+    "role_title": "Founder & CEO, Flexport",
+    "bio": "Founded Flexport to modernize global freight forwarding. His real-time Twitter threads during COVID supply chain crises became essential reading for policymakers and investors. The go-to voice on global trade flow dynamics.",
+    "net_worth": "$200M",
+    "age": 42,
+    "photo_initials": "RP",
+    "accent_color": "#0369a1"
   },
   {
     "name": "Tobi Lütke",
@@ -341,7 +593,13 @@
     "tier": 3,
     "inclusion_notes": "Shopify CEO. Defines the narrative on e-commerce infrastructure, creator commerce, and AI-augmented development. His management philosophy is widely studied.",
     "expertise_domains": ["platform_dynamics", "enterprise_ai", "creator_economy"],
-    "youtube_search_queries": ["Tobi Lutke interview"]
+    "youtube_search_queries": ["Tobi Lutke interview"],
+    "role_title": "Founder & CEO, Shopify",
+    "bio": "Founded Shopify as a snowboard equipment store, pivoted to the platform powering millions of merchants. Pioneer of remote-first work culture. Known for systems thinking and AI-native development philosophy.",
+    "net_worth": "$6.5B",
+    "age": 44,
+    "photo_initials": "TL",
+    "accent_color": "#95bf47"
   },
   {
     "name": "Daniel Ek",
@@ -349,7 +607,13 @@
     "tier": 3,
     "inclusion_notes": "Spotify CEO. His strategy on audio marketplaces, creator economics, and AI-curated content shapes the digital media landscape.",
     "expertise_domains": ["platform_dynamics", "creator_economy"],
-    "youtube_search_queries": ["Daniel Ek interview"]
+    "youtube_search_queries": ["Daniel Ek interview"],
+    "role_title": "Co-Founder & CEO, Spotify",
+    "bio": "Co-founded Spotify in Stockholm in 2006, transforming music from piracy-plagued downloads to streaming. Now expanding into podcasts, audiobooks, and AI-curated audio. The definitive marketplace builder in digital media.",
+    "net_worth": "$5.5B",
+    "age": 42,
+    "photo_initials": "DE",
+    "accent_color": "#1db954"
   },
   {
     "name": "Lisa Su",
@@ -357,7 +621,13 @@
     "tier": 2,
     "inclusion_notes": "AMD CEO. Transformed AMD into a competitive force in AI chips. Her execution and product roadmap statements are key signals for the semiconductor competitive landscape.",
     "expertise_domains": ["ai_infrastructure", "inference_compute"],
-    "youtube_search_queries": ["Lisa Su interview", "Lisa Su AMD"]
+    "youtube_search_queries": ["Lisa Su interview", "Lisa Su AMD"],
+    "role_title": "Chair & CEO, AMD",
+    "bio": "Took over a near-bankrupt AMD and engineered one of tech's greatest turnarounds. Now competing with NVIDIA in AI accelerators. MIT PhD in electrical engineering. Jensen Huang's distant cousin. Known for methodical execution.",
+    "net_worth": "$1.1B",
+    "age": 55,
+    "photo_initials": "LS",
+    "accent_color": "#e11d48"
   },
   {
     "name": "Andrej Karpathy",
@@ -365,7 +635,13 @@
     "tier": 1,
     "inclusion_notes": "Former Tesla AI director and OpenAI founding member. The most effective AI educator alive. His YouTube lectures, blog posts, and project releases define how practitioners think about AI.",
     "expertise_domains": ["ai_infrastructure", "ai_open_source", "ai_safety"],
-    "youtube_search_queries": ["Andrej Karpathy"]
+    "youtube_search_queries": ["Andrej Karpathy"],
+    "role_title": "AI Researcher & Educator",
+    "bio": "Former director of AI at Tesla (Autopilot), OpenAI founding member. The most effective AI educator alive — his YouTube lectures ('Neural Networks: Zero to Hero') have taught millions. Creator of minGPT, nanoGPT, and other paradigm-setting open-source projects.",
+    "net_worth": null,
+    "age": 38,
+    "photo_initials": "AK",
+    "accent_color": "#c026d3"
   },
   {
     "name": "Naval Ravikant",
@@ -373,6 +649,12 @@
     "tier": 2,
     "inclusion_notes": "AngelList co-founder. Rare appearances carry outsized signal on wealth creation, technology philosophy, and startup ecosystems. His almanack is widely read.",
     "expertise_domains": ["venture_capital", "startup_formation", "crypto"],
-    "youtube_search_queries": ["Naval Ravikant interview"]
+    "youtube_search_queries": ["Naval Ravikant interview"],
+    "role_title": "Co-Founder, AngelList",
+    "bio": "Co-founded AngelList, revolutionizing startup fundraising. Author of 'The Almanack of Naval Ravikant.' Known for aphoristic wisdom on wealth creation, happiness, and technology philosophy. Rare public appearances carry outsized signal.",
+    "net_worth": "$500M",
+    "age": 50,
+    "photo_initials": "NR",
+    "accent_color": "#0f766e"
   }
 ]

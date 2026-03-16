@@ -40,6 +40,12 @@ class People(Base):
     expertise_domains = Column(ARRAY(Text))
     youtube_search_queries = Column(ARRAY(Text))
     x_handle = Column(Text, nullable=True)  # Phase 3: X/Twitter handle
+    bio = Column(Text)                 # 3-4 sentence bio
+    role_title = Column(Text)          # "CEO, Anthropic"
+    net_worth = Column(Text)           # "$15.4B" as display string
+    age = Column(Integer)              # nullable
+    photo_initials = Column(Text)      # "DA" — 2 chars for avatar
+    accent_color = Column(Text)        # "#8b5cf6" hex
     active = Column(Boolean, default=True, nullable=False)
     created_at = Column(
         DateTime(timezone=True),
@@ -86,6 +92,8 @@ class PodcastChannels(Base):
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
+    last_scanned_at = Column(DateTime(timezone=True))
+    video_count = Column(Integer, default=0)
 
     # relationships
     channel_roles = relationship("ChannelRoles", back_populates="channel")
@@ -130,7 +138,7 @@ class Videos(Base):
     podcast_channel_id = Column(
         UUID(as_uuid=True), ForeignKey("podcast_channels.id"), nullable=True
     )
-    source_channel_youtube_id = Column(Text, nullable=False)
+    source_channel_youtube_id = Column(Text, nullable=True)
     published_at = Column(DateTime(timezone=True))
     duration_seconds = Column(Integer)
     description = Column(Text)
@@ -359,7 +367,7 @@ class Claims(Base):
         Index("ix_claims_x_post_id", "x_post_id"),
         CheckConstraint(
             "(video_id IS NOT NULL) OR (x_post_id IS NOT NULL)",
-            name="ck_claims_source_required",
+            name="ck_claims_source_xor",
         ),
     )
 
@@ -452,6 +460,7 @@ class PersonTopicPositions(Base):
     current_position = Column(Text)
     last_updated = Column(DateTime(timezone=True))
     claim_count = Column(Integer)
+    sentiment = Column(Text)  # bullish / bearish / neutral / cautious / urgent / strong
 
     # relationships
     person = relationship("People", back_populates="topic_positions")
@@ -474,6 +483,8 @@ class PositionHistoryLog(Base):
     position_summary = Column(Text, nullable=False)
     source_claim_id = Column(UUID(as_uuid=True), ForeignKey("claims.id"), nullable=True)
     is_shift = Column(Boolean, default=False, nullable=False)
+    shift_note = Column(Text)          # Human-readable shift explanation
+    previous_position = Column(Text)   # What the prior position was
     recorded_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
