@@ -10,6 +10,9 @@ from src.cli.scan import app as scan_app
 from src.cli.topics import app as topics_app
 from src.cli.transcribe import app as transcribe_app
 from src.cli.brief import brief_app
+from src.cli.favorites import app as favorites_app
+from src.cli.summaries_cli import app as summaries_app
+from src.cli.x_cli import app as x_app
 
 app = typer.Typer(
     name="bm",
@@ -25,6 +28,9 @@ app.add_typer(transcribe_app, name="transcribe", help="Transcript extraction")
 app.add_typer(identify_app, name="identify", help="Speaker identification")
 app.add_typer(enrich_app, name="enrich", help="LLM enrichment & claims")
 app.add_typer(brief_app, name="brief", help="Intelligence brief generation")
+app.add_typer(favorites_app, name="favorites", help="Manage favorite people & channels")
+app.add_typer(summaries_app, name="summaries", help="Episode summary generation")
+app.add_typer(x_app, name="x", help="X/Twitter post ingestion")
 
 
 @app.command()

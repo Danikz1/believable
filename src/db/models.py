@@ -39,6 +39,7 @@ class People(Base):
     inclusion_notes = Column(Text, nullable=False)
     expertise_domains = Column(ARRAY(Text))
     youtube_search_queries = Column(ARRAY(Text))
+    x_handle = Column(Text, nullable=True)  # Phase 3: X/Twitter handle
     active = Column(Boolean, default=True, nullable=False)
     created_at = Column(
         DateTime(timezone=True),
@@ -278,14 +279,49 @@ class Topics(Base):
 
 
 # ---------------------------------------------------------------------------
-# 9. claims
+# 9. x_posts (Phase 3: X/Twitter)
+# ---------------------------------------------------------------------------
+class XPosts(Base):
+    __tablename__ = "x_posts"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    platform_post_id = Column(Text, unique=True, nullable=False)  # e.g. "1234567890"
+    person_id = Column(UUID(as_uuid=True), ForeignKey("people.id"), nullable=False)
+    post_text = Column(Text, nullable=False)
+    post_url = Column(Text, nullable=False)
+    posted_at = Column(DateTime(timezone=True), nullable=True)
+    is_thread = Column(Boolean, default=False, nullable=False)
+    thread_parent_id = Column(UUID(as_uuid=True), ForeignKey("x_posts.id"), nullable=True)
+    discovery_method = Column(Text, nullable=False)  # 'manual' / 'api_scan'
+    status = Column(Text, nullable=False, default="pending")  # 'pending' / 'enriched' / 'skipped'
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    # relationships
+    person = relationship("People")
+    thread_parent = relationship("XPosts", remote_side="XPosts.id")
+    claims = relationship("Claims", back_populates="x_post")
+
+    __table_args__ = (
+        Index("idx_x_posts_person", "person_id"),
+        Index("idx_x_posts_status", "status"),
+        Index("idx_x_posts_posted_at", "posted_at"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# 10. claims
 # ---------------------------------------------------------------------------
 class Claims(Base):
     __tablename__ = "claims"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     person_id = Column(UUID(as_uuid=True), ForeignKey("people.id"), nullable=False)
-    video_id = Column(UUID(as_uuid=True), ForeignKey("videos.id"), nullable=False)
+    video_id = Column(UUID(as_uuid=True), ForeignKey("videos.id"), nullable=True)  # nullable for X posts
+    x_post_id = Column(UUID(as_uuid=True), ForeignKey("x_posts.id"), nullable=True)  # Phase 3
     claim_text = Column(Text, nullable=False)
     reasoning_text = Column(Text)
     claim_type = Column(Text)  # prediction / opinion / recommendation / observation / analysis
@@ -312,6 +348,7 @@ class Claims(Base):
     # relationships
     person = relationship("People", back_populates="claims")
     video = relationship("Videos", back_populates="claims")
+    x_post = relationship("XPosts", back_populates="claims")
     claim_topics = relationship("ClaimTopics", back_populates="claim")
     evidence = relationship("ClaimEvidence", back_populates="claim")
     embeddings = relationship("ClaimEmbeddings", back_populates="claim")
@@ -319,6 +356,11 @@ class Claims(Base):
     __table_args__ = (
         Index("ix_claims_person_id", "person_id"),
         Index("ix_claims_review_status", "review_status"),
+        Index("ix_claims_x_post_id", "x_post_id"),
+        CheckConstraint(
+            "(video_id IS NOT NULL) OR (x_post_id IS NOT NULL)",
+            name="ck_claims_source_required",
+        ),
     )
 
 
@@ -352,20 +394,23 @@ class ClaimEvidence(Base):
     segment_id = Column(
         UUID(as_uuid=True),
         ForeignKey("transcript_segments.id"),
-        nullable=False,
+        nullable=True,  # nullable for X post claims
     )
     evidence_order = Column(Integer, nullable=False)
     quote_text = Column(Text, nullable=False)
-    start_ms = Column(BigInteger, nullable=False)
-    end_ms = Column(BigInteger, nullable=False)
-    quote_type = Column(Text, nullable=False)  # 'direct_quote' / 'paraphrase' / 'multi_segment_synthesis'
+    start_ms = Column(BigInteger, nullable=True)  # nullable for X posts
+    end_ms = Column(BigInteger, nullable=True)    # nullable for X posts
+    quote_type = Column(Text, nullable=False)  # 'direct_quote' / 'paraphrase' / 'multi_segment_synthesis' / 'x_post_text'
 
     # relationships
     claim = relationship("Claims", back_populates="evidence")
     segment = relationship("TranscriptSegments", back_populates="claim_evidence")
 
     __table_args__ = (
-        CheckConstraint("start_ms < end_ms", name="ck_evidence_timestamps"),
+        CheckConstraint(
+            "start_ms IS NULL OR end_ms IS NULL OR start_ms < end_ms",
+            name="ck_evidence_timestamps",
+        ),
     )
 
 
@@ -458,3 +503,91 @@ class Briefs(Base):
         nullable=False,
     )
     published_at = Column(DateTime(timezone=True), nullable=True)
+
+
+# ---------------------------------------------------------------------------
+# 10. favorites (Amendment 5: real FK constraints)
+# ---------------------------------------------------------------------------
+class Favorites(Base):
+    __tablename__ = "favorites"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    person_id = Column(UUID(as_uuid=True), ForeignKey("people.id", ondelete="CASCADE"), nullable=True)
+    channel_id = Column(UUID(as_uuid=True), ForeignKey("podcast_channels.id", ondelete="CASCADE"), nullable=True)
+    priority = Column(Integer, nullable=False, default=5)
+    notify = Column(Boolean, nullable=False, default=True)
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    # relationships
+    person = relationship("People")
+    channel = relationship("PodcastChannels")
+
+    __table_args__ = (
+        CheckConstraint(
+            "(person_id IS NOT NULL) <> (channel_id IS NOT NULL)",
+            name="ck_favorites_xor",
+        ),
+        CheckConstraint(
+            "priority >= 1 AND priority <= 10",
+            name="ck_favorites_priority",
+        ),
+        Index("idx_favorites_person", "person_id", unique=True, postgresql_where=text("person_id IS NOT NULL")),
+        Index("idx_favorites_channel", "channel_id", unique=True, postgresql_where=text("channel_id IS NOT NULL")),
+    )
+
+
+# ---------------------------------------------------------------------------
+# 11. episode_summaries (Amendment 1: 3 levels + watch verdict)
+# ---------------------------------------------------------------------------
+class EpisodeSummaries(Base):
+    __tablename__ = "episode_summaries"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    video_id = Column(UUID(as_uuid=True), ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)
+    summary_type = Column(Text, nullable=False)  # 'full_episode' or 'person_focused'
+    person_focus_id = Column(UUID(as_uuid=True), ForeignKey("people.id"), nullable=True)
+
+    # Three summary levels (Amendment 1)
+    tldr = Column(Text, nullable=False)
+    summary_body = Column(Text, nullable=False)
+    detailed_json = Column(JSONB, nullable=False, default=dict)
+    whats_new = Column(Text, nullable=True)
+
+    # Watch verdict (Amendment 1)
+    watch_verdict = Column(Text, nullable=False)  # essential, worth_skimming, skip_unless_fan
+    watch_verdict_reason = Column(Text, nullable=False)
+
+    # Metadata
+    model_used = Column(Text, nullable=False)
+    prompt_tokens = Column(Integer, nullable=True)
+    completion_tokens = Column(Integer, nullable=True)
+    generated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    # relationships
+    video = relationship("Videos")
+    person_focus = relationship("People")
+
+    __table_args__ = (
+        CheckConstraint(
+            "summary_type IN ('full_episode', 'person_focused')",
+            name="ck_episode_summaries_type",
+        ),
+        CheckConstraint(
+            "watch_verdict IN ('essential', 'worth_skimming', 'skip_unless_fan')",
+            name="ck_episode_summaries_verdict",
+        ),
+        Index("idx_episode_summaries_full", "video_id", unique=True,
+              postgresql_where=text("summary_type = 'full_episode'")),
+        Index("idx_episode_summaries_person", "video_id", "person_focus_id", unique=True,
+              postgresql_where=text("summary_type = 'person_focused' AND person_focus_id IS NOT NULL")),
+        Index("idx_episode_summaries_video", "video_id"),
+        Index("idx_episode_summaries_person_focus", "person_focus_id"),
+    )

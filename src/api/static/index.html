@@ -323,13 +323,51 @@
         }
         .evidence-panel.open { display: block; }
         .evidence-quote {
-            border-left: 3px solid var(--accent-blue);
+            background: var(--bg-primary);
+            border-left: 2px solid var(--accent-blue);
             padding: 8px 12px;
             margin: 8px 0;
             font-size: 13px;
             color: var(--text-secondary);
             font-style: italic;
         }
+        .source-line {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+        .source-line a {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+        .source-line a:hover {
+            text-decoration: underline;
+        }
+        .source-line .ts {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            background: rgba(59,130,246,0.1);
+            padding: 1px 5px;
+            border-radius: 3px;
+            color: var(--accent-blue);
+        }
+        .best-quote {
+            font-style: italic; color: var(--text-secondary); font-size: 0.88rem;
+            margin: 6px 0; padding-left: 10px; border-left: 2px solid var(--accent-blue);
+            max-height: 40px;
+            overflow: hidden;
+        }
+
+        /* Verdict badges */
+        .verdict-badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .verdict-essential { background: rgba(239,68,68,0.15); color: #ef4444; }
+        .verdict-worth_skimming { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        .verdict-skip_unless_fan { background: rgba(107,114,128,0.15); color: #6b7280; }
+        .summary-expand { cursor: pointer; color: var(--accent-blue); font-size: 12px; font-weight: 600; margin-top: 8px; display: inline-block; }
+        .summary-expand:hover { text-decoration: underline; }
 
         /* ── Sections ──────────────────────────────────── */
         .section-grid {
@@ -510,6 +548,9 @@
             <a class="nav-item active" onclick="navigate('dashboard')">
                 <span class="icon">📊</span> Dashboard
             </a>
+            <a class="nav-item" onclick="navigate('feed')">
+                <span class="icon">📰</span> Feed
+            </a>
             <a class="nav-item" onclick="navigate('people')">
                 <span class="icon">👤</span> People
             </a>
@@ -570,6 +611,7 @@
                 }
                 switch(page) {
                     case 'dashboard': await renderDashboard(main); break;
+                    case 'feed': await renderFeed(main); break;
                     case 'people': await renderPeople(main); break;
                     case 'claims': await renderClaims(main); break;
                     case 'topics': await renderTopics(main); break;
@@ -578,6 +620,101 @@
                 }
             } catch(e) {
                 main.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Error: ${e.message}</p></div>`;
+            }
+        }
+
+        // ── Feed ──
+        async function renderFeed(el) {
+            const feed = await api('/api/summaries/feed?limit=20');
+            const items = feed.items || [];
+
+            el.innerHTML = `
+                <div class="page-header fade-in">
+                    <h2>\ud83d\udcf0 Feed</h2>
+                    <p>Intelligence summaries for your tracked people and channels</p>
+                </div>
+                <div id="feed-list" class="fade-in">
+                    ${items.length ? items.map(s => feedCard(s)).join('') : `
+                        <div class="empty-state">
+                            <div class="icon">\ud83d\udcf0</div>
+                            <p>No summaries yet</p>
+                            <p style="font-size:13px;color:var(--text-muted)">Add favorites with <code>bm favorites add person "Ray Dalio"</code>, then run <code>bm summaries generate --pending</code></p>
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        function feedCard(s) {
+            const verdictClass = 'verdict-' + (s.watch_verdict || 'worth_skimming');
+            const verdictLabel = (s.watch_verdict || '').replace(/_/g, ' ');
+            const date = s.published_at ? new Date(s.published_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) : '';
+            const detailed = s.detailed || {};
+            const bestMoments = detailed.best_moments || [];
+            const sections = detailed.sections || [];
+            const cardId = 'feed-' + s.id.substring(0, 8);
+
+            return `
+                <div class="card" style="margin-bottom:16px">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+                        <div>
+                            <span style="font-size:12px;color:var(--text-muted)">${s.channel_name || ''} \u00b7 ${date}</span>
+                            ${s.person_focus_name ? `<span class="badge badge-type" style="margin-left:8px">\ud83c\udfaf ${s.person_focus_name}</span>` : ''}
+                        </div>
+                        <span class="verdict-badge ${verdictClass}">${verdictLabel}</span>
+                    </div>
+
+                    <div style="font-size:16px;font-weight:700;margin-bottom:8px">
+                        ${s.source_url ? `<a href="${s.source_url}" target="_blank" style="color:var(--text-primary);text-decoration:none">${s.video_title || 'Untitled'}</a>` : (s.video_title || 'Untitled')}
+                    </div>
+
+                    <p style="font-size:14px;line-height:1.6;color:var(--text-secondary);margin-bottom:8px">${s.tldr}</p>
+
+                    ${s.watch_verdict_reason ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">\u2192 ${s.watch_verdict_reason}</div>` : ''}
+
+                    <div id="${cardId}-body" style="display:none;margin-bottom:12px">
+                        <div style="font-size:14px;line-height:1.7;white-space:pre-line">${s.summary_body || ''}</div>
+                    </div>
+
+                    <span class="summary-expand" onclick="toggleFeedSection('${cardId}-body', this)">\u25b8 Read more</span>
+
+                    ${bestMoments.length ? `
+                        <div style="margin-top:12px">
+                            <div style="font-size:11px;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:8px">Best Moments</div>
+                            ${bestMoments.slice(0, 3).map(m => {
+                                const ts = m.timestamp_ms ? Math.floor(m.timestamp_ms / 1000) : null;
+                                const tsDisplay = ts ? (ts >= 3600 ? Math.floor(ts/3600)+':'+String(Math.floor((ts%3600)/60)).padStart(2,'0')+':'+String(ts%60).padStart(2,'0') : Math.floor(ts/60)+':'+String(ts%60).padStart(2,'0')) : '';
+                                const url = s.source_url && ts ? s.source_url + '&t=' + ts + 's' : s.source_url;
+                                return `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">
+                                    <span style="color:var(--accent-blue)">${tsDisplay ? `<a href="${url}" target="_blank" class="source-link">${tsDisplay}</a>` : ''}</span>
+                                    <span style="margin-left:8px">${m.quote_snippet || m.description || ''}</span>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    ` : ''}
+
+                    ${s.whats_new && s.whats_new !== 'Consistent with prior positions.' ? `
+                        <div style="margin-top:12px;padding:10px 14px;background:rgba(245,158,11,0.08);border-left:3px solid #f59e0b;border-radius:0 8px 8px 0;font-size:13px">
+                            <strong style="color:#f59e0b">What's New:</strong> ${s.whats_new}
+                        </div>
+                    ` : ''}
+
+                    <div style="margin-top:12px;display:flex;gap:8px">
+                        ${s.source_url ? `<a href="${s.source_url}" target="_blank" class="btn btn-ghost" style="font-size:12px">\u25b6 Watch Episode</a>` : ''}
+                        ${s.video_id ? `<button class="btn btn-ghost" style="font-size:12px" onclick="navigate('claims');setTimeout(()=>{},500)">View Claims</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleFeedSection(id, trigger) {
+            const el = document.getElementById(id);
+            if (el.style.display === 'none') {
+                el.style.display = 'block';
+                trigger.textContent = '\u25be Hide';
+            } else {
+                el.style.display = 'none';
+                trigger.textContent = '\u25b8 Read more';
             }
         }
 
@@ -626,7 +763,7 @@
                         <div class="card-title">🏷️ Active Topics</div>
                         ${topTopics.length ? topTopics.map(t => `
                             <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-                                <span class="badge badge-topic">${t.slug}</span>
+                                <span class="badge badge-topic" style="cursor:pointer" onclick="viewTopic('${t.slug}')">${t.slug}</span>
                                 <span style="font-size:13px;font-weight:600">${t.claim_count} claims</span>
                             </div>
                         `).join('') : '<div class="empty-state"><p>No active topics</p></div>'}
@@ -660,8 +797,9 @@
             el.innerHTML = `
                 <div class="page-header fade-in">
                     <h2>People</h2>
-                    <p>${people.length} tracked minds across multiple domains · claim counts show approved claims only</p>
+                    <p>${people.length} tracked minds across multiple domains \u00b7 claim counts show approved claims only</p>
                 </div>
+                <div id="people-topic-filters" class="fade-in" style="margin-bottom:16px"></div>
                 <div class="card fade-in">
                     <div class="table-wrap">
                         <table>
@@ -757,16 +895,15 @@
                                     <div class="history-item">
                                         <div class="history-topline">
                                             <div class="history-date">${formatDate(c.created_at)}</div>
-                                            ${c.source_video_url ? `<a class="history-source" href="${c.source_video_url}" target="_blank">${c.source_video_title || 'Source video'} ↗</a>` : ''}
+                                            ${c.source_video_url ? `<a class="history-source" href="${c.source_video_url}" target="_blank">${c.source_type === 'x_post' ? 'X' : 'vid'} ${c.source_video_title || 'Source'}${c.source_timestamp_display ? ' @'+c.source_timestamp_display : ''}</a>` : ''}
                                         </div>
                                         <div class="claim-text">${c.claim_text}</div>
+                                        ${c.best_quote ? `<div class="best-quote">"${c.best_quote}"</div>` : ''}
                                         <div class="claim-meta">
                                             <span class="badge badge-trust-${c.trust_level}">${c.trust_level}</span>
                                             ${c.claim_type ? `<span class="badge badge-type">${c.claim_type}</span>` : ''}
-                                            ${(c.topics || []).map(t => `<span class="badge badge-topic">${t}</span>`).join('')}
+                                            ${(c.topics || []).map(t => `<span class="badge badge-topic" style="cursor:pointer" onclick="event.stopPropagation();viewTopic('${t}')">${t}</span>`).join('')}
                                             ${c.sentiment ? `<span class="badge badge-sentiment-${c.sentiment}">${c.sentiment}</span>` : ''}
-                                            ${c.attribution_confidence ? `<span class="confidence">attr: ${(c.attribution_confidence * 100).toFixed(0)}%</span>` : ''}
-                                            ${c.extraction_confidence ? `<span class="confidence">extr: ${(c.extraction_confidence * 100).toFixed(0)}%</span>` : ''}
                                         </div>
                                     </div>
                                 `).join('')}
@@ -796,10 +933,47 @@
                     <input class="search-input" placeholder="Search claims..." id="claim-search" onkeydown="if(event.key==='Enter')searchClaims()">
                     <button class="btn btn-primary" onclick="searchClaims()">Search</button>
                 </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px" class="fade-in">
+                    <span style="font-size:12px;color:var(--text-muted);margin-right:4px">Source:</span>
+                    <button class="btn btn-ghost source-filter active" data-source="" onclick="filterBySource(this, '')">All</button>
+                    <button class="btn btn-ghost source-filter" data-source="video" onclick="filterBySource(this, 'video')">Video</button>
+                    <button class="btn btn-ghost source-filter" data-source="x_post" onclick="filterBySource(this, 'x_post')">X</button>
+                </div>
+                <div id="claims-topic-filters" class="fade-in" style="margin-bottom:16px"></div>
                 <div id="claims-list" class="fade-in">
                     ${claims.length ? claims.map(c => claimCard(c)).join('') : '<div class="empty-state"><div class="icon">💬</div><p>No claims found</p></div>'}
                 </div>
             `;
+
+            // Track active source filter
+            window._claimsSourceFilter = '';
+
+            // Load topic filter chips
+            loadTopicChips('claims-topic-filters', async (topic) => {
+                const list = document.getElementById('claims-list');
+                list.innerHTML = '<div class="loading"><div class="spinner"></div> Filtering...</div>';
+                let url = `/api/claims?limit=50`;
+                if (topic) url += `&topic=${encodeURIComponent(topic)}`;
+                if (window._claimsSourceFilter) url += `&source=${window._claimsSourceFilter}`;
+                const filtered = await api(url);
+                list.innerHTML = filtered.length ?
+                    filtered.map(c => claimCard(c)).join('') :
+                    '<div class="empty-state"><p>No claims for this filter</p></div>';
+            });
+        }
+
+        async function filterBySource(btn, source) {
+            window._claimsSourceFilter = source;
+            document.querySelectorAll('.source-filter').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const list = document.getElementById('claims-list');
+            list.innerHTML = '<div class="loading"><div class="spinner"></div> Filtering...</div>';
+            let url = `/api/claims?limit=50`;
+            if (source) url += `&source=${source}`;
+            const filtered = await api(url);
+            list.innerHTML = filtered.length ?
+                filtered.map(c => claimCard(c)).join('') :
+                '<div class="empty-state"><p>No claims for this source</p></div>';
         }
 
         async function searchClaims() {
@@ -823,13 +997,13 @@
                 <div class="claim-card" onclick="toggleEvidence('${c.id}')">
                     <div class="person-name">${c.person_name || 'Unknown'}</div>
                     <div class="claim-text">${c.claim_text}</div>
+                    ${c.best_quote ? `<div class="best-quote">"${c.best_quote}"</div>` : ''}
+                    ${sourceLineHtml(c)}
                     <div class="claim-meta">
                         <span class="badge badge-trust-${c.trust_level}">${c.trust_level}</span>
                         ${c.claim_type ? `<span class="badge badge-type">${c.claim_type}</span>` : ''}
-                        ${(c.topics || []).map(t => `<span class="badge badge-topic">${t}</span>`).join('')}
+                        ${(c.topics || []).map(t => `<span class="badge badge-topic" style="cursor:pointer" onclick="event.stopPropagation();viewTopic('${t}')">${t}</span>`).join('')}
                         ${c.sentiment ? `<span class="badge badge-sentiment-${c.sentiment}">${c.sentiment}</span>` : ''}
-                        ${c.attribution_confidence ? `<span class="confidence">attr: ${(c.attribution_confidence * 100).toFixed(0)}%</span>` : ''}
-                        ${c.extraction_confidence ? `<span class="confidence">extr: ${(c.extraction_confidence * 100).toFixed(0)}%</span>` : ''}
                         ${showSimilarity && c.similarity ? `<span class="confidence">sim: ${(c.similarity * 100).toFixed(0)}%</span>` : ''}
                     </div>
                     <div class="evidence-panel" id="evidence-${c.id}"></div>
@@ -842,6 +1016,7 @@
                 <div style="padding:8px 0;border-bottom:1px solid var(--border)">
                     <div class="person-name" style="font-size:11px">${c.person_name}</div>
                     <div style="font-size:13px;margin-top:2px">${c.claim_text.substring(0, 120)}${c.claim_text.length > 120 ? '...' : ''}</div>
+                    ${sourceLineHtml(c)}
                     <div class="claim-meta" style="margin-top:6px">
                         <span class="badge badge-trust-${c.trust_level}">${c.trust_level}</span>
                         ${c.claim_type ? `<span class="badge badge-type">${c.claim_type}</span>` : ''}
@@ -889,6 +1064,16 @@
             const s = Math.floor(ms / 1000);
             const m = Math.floor(s / 60);
             return `${m}:${String(s % 60).padStart(2, '0')}`;
+        }
+
+        function sourceLineHtml(c) {
+            if (!c.source_video_url) return '';
+            const icon = c.source_type === 'x_post' ? '𝕏' : '🎬';
+            const title = c.source_video_title || 'Source';
+            const ts = c.source_timestamp_display ? `<span class="ts">@${c.source_timestamp_display}</span>` : '';
+            return `<div class="source-line" onclick="event.stopPropagation()">
+                ${icon} <a href="${c.source_video_url}" target="_blank">${title}</a> ${ts}
+            </div>`;
         }
 
         function formatDate(value) {
@@ -941,44 +1126,49 @@
         }
 
         async function viewTopic(slug) {
+            currentPage = 'topics';
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => {
+                if (el.textContent.trim().toLowerCase().includes('topics')) el.classList.add('active');
+            });
+
             const main = document.getElementById('main-content');
             main.innerHTML = '<div class="loading"><div class="spinner"></div> Loading topic...</div>';
 
             try {
-                const [positions, consensus] = await Promise.all([
-                    api(`/api/topics/${slug}/positions`),
-                    api(`/api/topics/${slug}/consensus`),
-                ]);
+                const detail = await api(`/api/topics/${encodeURIComponent(slug)}`);
 
                 main.innerHTML = `
                     <div class="page-header fade-in">
-                        <h2>Topic: ${slug}</h2>
-                        <p>${consensus.total_claims} claims · ${positions.positions.length} people with positions</p>
-                        <button class="btn btn-ghost" onclick="navigate('topics')" style="margin-top:8px">← Back</button>
+                        <h2>Topic: ${detail.name || slug}</h2>
+                        <p>${detail.claim_count} claims \u00b7 ${detail.person_count} people with positions</p>
+                        <button class="btn btn-ghost" onclick="navigate('topics')" style="margin-top:8px">\u2190 Back</button>
                     </div>
                     <div class="section-grid fade-in">
                         <div class="card">
-                            <div class="card-title">📍 Positions</div>
-                            ${positions.positions.map(p => `
-                                <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+                            <div class="card-title">\ud83d\udccd People & Positions</div>
+                            ${detail.people_with_positions.length ? detail.people_with_positions.map(p => `
+                                <div style="padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('person-${p.person_id}')">
                                     <div class="person-name">${p.person_name}</div>
-                                    <div style="font-size:13px;margin-top:4px">${p.current_position || '—'}</div>
+                                    <div style="font-size:13px;margin-top:4px">${p.current_position || '\u2014'}</div>
                                     <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${p.claim_count} claims</div>
                                 </div>
-                            `).join('') || '<p style="color:var(--text-muted)">No positions yet</p>'}
+                            `).join('') : '<p style="color:var(--text-muted)">No positions yet</p>'}
                         </div>
                         <div class="card">
-                            <div class="card-title">📊 Consensus</div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-                                <div style="text-align:center;padding:12px;background:rgba(16,185,129,0.08);border-radius:var(--radius-sm)">
-                                    <div style="font-size:24px;font-weight:700;color:var(--accent-green)">${(consensus.consensus.bullish || []).length}</div>
-                                    <div style="font-size:11px;color:var(--text-muted)">Bullish</div>
+                            <div class="card-title">\ud83d\udcac Recent Claims</div>
+                            ${detail.recent_claims.length ? detail.recent_claims.map(c => `
+                                <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+                                    <div class="person-name" style="font-size:11px">${c.person_name}</div>
+                                    <div style="font-size:13px;margin-top:2px">${c.claim_text.substring(0, 150)}${c.claim_text.length > 150 ? '...' : ''}</div>
+                                    ${c.best_quote ? `<div class="best-quote">"${c.best_quote}"</div>` : ''}
+                                    ${sourceLineHtml(c)}
+                                    <div class="claim-meta" style="margin-top:6px">
+                                        <span class="badge badge-trust-${c.trust_level}">${c.trust_level}</span>
+                                        ${c.claim_type ? `<span class="badge badge-type">${c.claim_type}</span>` : ''}
+                                    </div>
                                 </div>
-                                <div style="text-align:center;padding:12px;background:rgba(239,68,68,0.08);border-radius:var(--radius-sm)">
-                                    <div style="font-size:24px;font-weight:700;color:var(--accent-red)">${(consensus.consensus.bearish || []).length}</div>
-                                    <div style="font-size:11px;color:var(--text-muted)">Bearish</div>
-                                </div>
-                            </div>
+                            `).join('') : '<p style="color:var(--text-muted)">No approved claims on this topic yet</p>'}
                         </div>
                     </div>
                 `;
@@ -1014,10 +1204,12 @@
                 <div class="claim-card" id="review-${c.id}">
                     <div class="person-name">${c.person_name || 'Unknown'}</div>
                     <div class="claim-text">${c.claim_text}</div>
+                    ${c.best_quote ? `<div class="best-quote">"${c.best_quote}"</div>` : ''}
+                    ${sourceLineHtml(c)}
                     <div class="claim-meta">
                         <span class="badge badge-trust-${c.trust_level}">${c.trust_level}</span>
                         ${c.claim_type ? `<span class="badge badge-type">${c.claim_type}</span>` : ''}
-                        ${(c.topics || []).map(t => `<span class="badge badge-topic">${t}</span>`).join('')}
+                        ${(c.topics || []).map(t => `<span class="badge badge-topic" style="cursor:pointer" onclick="event.stopPropagation();viewTopic('${t}')">${t}</span>`).join('')}
                     </div>
                     <div style="margin-top:12px;display:flex;gap:8px">
                         <button class="btn btn-success" onclick="reviewClaim('${c.id}', 'approved')">✓ Approve</button>
@@ -1117,6 +1309,46 @@
                     <div style="font-size:10px;color:var(--text-muted)">${label}</div>
                 </div>
             `;
+        }
+
+        // ── Topic Filter Chips (reusable) ──
+        async function loadTopicChips(containerId, onFilterChange) {
+            try {
+                const topics = await api('/api/topics');
+                const active = topics.filter(t => t.claim_count > 0).sort((a,b) => b.claim_count - a.claim_count).slice(0, 12);
+                const container = document.getElementById(containerId);
+                if (!container || !active.length) return;
+
+                container.innerHTML = `
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+                        <span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-right:4px">Filter:</span>
+                        <button class="badge badge-topic topic-chip" data-topic="" onclick="filterByTopicChip(this, '${containerId}')"
+                            style="cursor:pointer;border:1px solid var(--accent-blue)">All</button>
+                        ${active.map(t => `
+                            <button class="badge badge-topic topic-chip" data-topic="${t.slug}" onclick="filterByTopicChip(this, '${containerId}')"
+                                style="cursor:pointer;opacity:0.7">${t.slug} (${t.claim_count})</button>
+                        `).join('')}
+                    </div>
+                `;
+
+                container._onFilter = onFilterChange;
+            } catch(e) {
+                // silently skip if topics fail to load
+            }
+        }
+
+        function filterByTopicChip(chip, containerId) {
+            event.stopPropagation();
+            const container = document.getElementById(containerId);
+            container.querySelectorAll('.topic-chip').forEach(c => {
+                c.style.opacity = '0.7';
+                c.style.border = 'none';
+            });
+            chip.style.opacity = '1';
+            chip.style.border = '1px solid var(--accent-blue)';
+
+            const topic = chip.dataset.topic;
+            if (container._onFilter) container._onFilter(topic || null);
         }
 
         // ── Init ──

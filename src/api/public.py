@@ -8,6 +8,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from src.db.models import (
@@ -15,12 +16,16 @@ from src.db.models import (
     ClaimEmbeddings,
     Claims,
     ClaimTopics,
+    EpisodeSummaries,
+    Favorites,
     People,
     PersonTopicPositions,
+    PodcastChannels,
     PositionHistoryLog,
     Topics,
     VideoPeople,
     Videos,
+    XPosts,
 )
 from src.db.session import get_session
 
@@ -41,6 +46,7 @@ def get_db():
 def list_people(
     tier: int | None = None,
     domain: str | None = None,
+    topic: list[str] | None = Query(None),
     active: bool = True,
     db: Session = Depends(get_db),
 ):
@@ -49,6 +55,16 @@ def list_people(
         q = q.filter(People.tier == tier)
     if domain:
         q = q.filter(People.domain == domain)
+    if topic:
+        # Filter people who have approved claims on any of the given topics
+        q = q.filter(
+            People.id.in_(
+                db.query(Claims.person_id)
+                .filter(Claims.review_status == "approved")
+                .filter(or_(*[Claims.topics.any(t) for t in topic]))
+                .distinct()
+            )
+        )
 
     people = q.order_by(People.tier, People.name).all()
     return [
@@ -125,9 +141,10 @@ def get_person(
 @router.get("/claims")
 def list_claims(
     person_id: UUID | None = None,
-    topic: str | None = None,
+    topic: list[str] | None = Query(None),
     claim_type: str | None = None,
     trust_level: str | None = None,
+    source: str | None = None,  # Phase 4: 'video' / 'x_post' / None (all)
     days_back: int = 30,
     limit: int = Query(default=50, le=200),
     db: Session = Depends(get_db),
@@ -137,11 +154,16 @@ def list_claims(
     if person_id:
         q = q.filter(Claims.person_id == person_id)
     if topic:
-        q = q.filter(Claims.topics.any(topic))
+        # Multi-topic filter with OR logic + DISTINCT (Amendment 6)
+        q = q.filter(or_(*[Claims.topics.any(t) for t in topic])).distinct(Claims.id)
     if claim_type:
         q = q.filter(Claims.claim_type == claim_type)
     if trust_level:
         q = q.filter(Claims.trust_level == trust_level)
+    if source == "video":
+        q = q.filter(Claims.video_id.isnot(None))
+    elif source == "x_post":
+        q = q.filter(Claims.x_post_id.isnot(None))
     if days_back:
         cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
         q = q.filter(Claims.created_at >= cutoff)
@@ -170,11 +192,18 @@ def get_claim(claim_id: UUID, db: Session = Depends(get_db)):
         "reasoning_text": claim.reasoning_text,
         "evidence_spans": [
             {
-                "segment_id": str(e.segment_id),
+                "order": e.evidence_order,
+                "segment_id": str(e.segment_id) if e.segment_id else None,
                 "quote_text": e.quote_text,
+                "quote_type": e.quote_type,
                 "start_ms": e.start_ms,
                 "end_ms": e.end_ms,
-                "quote_type": e.quote_type,
+                "source_url": (
+                    f"https://youtube.com/watch?v={video.youtube_video_id}&t={e.start_ms // 1000}s"
+                    if video and video.youtube_video_id and e.start_ms
+                    else None
+                ),
+                "timestamp_display": _format_timestamp(e.start_ms // 1000) if e.start_ms else "",
             }
             for e in evidence
         ],
@@ -245,6 +274,56 @@ def list_topics(db: Session = Depends(get_db)):
         }
         for t in topics
     ]
+
+
+@router.get("/topics/{slug}")
+def topic_detail(slug: str, db: Session = Depends(get_db)):
+    """Enriched topic detail with recent claims and people with positions."""
+    topic = db.query(Topics).filter(Topics.slug == slug).first()
+    if not topic:
+        raise HTTPException(404, "Topic not found")
+
+    # Recent approved claims on this topic
+    recent_claims = (
+        db.query(Claims)
+        .filter(Claims.topics.any(slug), Claims.review_status == "approved")
+        .order_by(Claims.created_at.desc())
+        .limit(10)
+        .all()
+    )
+
+    # People with positions on this topic
+    positions = (
+        db.query(PersonTopicPositions)
+        .filter(PersonTopicPositions.topic_id == topic.id)
+        .all()
+    )
+
+    # Total claim count
+    claim_count = (
+        db.query(ClaimTopics)
+        .join(Claims)
+        .filter(ClaimTopics.topic_id == topic.id, Claims.review_status == "approved")
+        .count()
+    )
+
+    return {
+        "slug": topic.slug,
+        "name": topic.name,
+        "claim_count": claim_count,
+        "person_count": len(positions),
+        "recent_claims": [_claim_summary(c) for c in recent_claims],
+        "people_with_positions": [
+            {
+                "person_id": str(p.person_id),
+                "person_name": p.person.name if p.person else None,
+                "current_position": p.current_position,
+                "claim_count": p.claim_count,
+                "last_updated": p.last_updated.isoformat() if p.last_updated else None,
+            }
+            for p in positions
+        ],
+    }
 
 
 @router.get("/topics/{slug}/positions")
@@ -447,6 +526,133 @@ def get_latest_brief(db: Session = Depends(get_db)):
     }
 
 
+# ── Summaries Feed ───────────────────────────────────────────────────
+
+@router.get("/summaries/feed")
+def summaries_feed(
+    limit: int = Query(default=20, le=50),
+    person_id: UUID | None = None,
+    channel_id: UUID | None = None,
+    summary_type: str | None = None,
+    db: Session = Depends(get_db),
+):
+    """Reverse-chronological feed of episode summaries."""
+    q = db.query(EpisodeSummaries)
+
+    if person_id:
+        q = q.filter(EpisodeSummaries.person_focus_id == person_id)
+    if channel_id:
+        q = q.join(Videos).filter(Videos.podcast_channel_id == channel_id)
+    if summary_type:
+        q = q.filter(EpisodeSummaries.summary_type == summary_type)
+
+    summaries = q.order_by(EpisodeSummaries.generated_at.desc()).limit(limit).all()
+
+    return {
+        "items": [_summary_card(s, db) for s in summaries],
+        "total": q.count(),
+    }
+
+
+@router.get("/summaries/{video_id}")
+def video_summaries(video_id: UUID, db: Session = Depends(get_db)):
+    """All summaries for a specific video."""
+    summaries = (
+        db.query(EpisodeSummaries)
+        .filter(EpisodeSummaries.video_id == video_id)
+        .all()
+    )
+    return [_summary_card(s, db) for s in summaries]
+
+
+def _summary_card(s: EpisodeSummaries, db: Session) -> dict:
+    """Format a summary for the feed API response."""
+    video = s.video
+    yt_id = video.youtube_video_id if video else None
+    return {
+        "id": str(s.id),
+        "video_id": str(s.video_id),
+        "video_title": video.title if video else None,
+        "channel_name": video.podcast_channel.name if video and video.podcast_channel else None,
+        "published_at": video.published_at.isoformat() if video and video.published_at else None,
+        "summary_type": s.summary_type,
+        "person_focus_name": s.person_focus.name if s.person_focus else None,
+        "person_focus_id": str(s.person_focus_id) if s.person_focus_id else None,
+        "tldr": s.tldr,
+        "summary_body": s.summary_body,
+        "detailed": s.detailed_json,
+        "whats_new": s.whats_new,
+        "watch_verdict": s.watch_verdict,
+        "watch_verdict_reason": s.watch_verdict_reason,
+        "source_url": f"https://youtube.com/watch?v={yt_id}" if yt_id else None,
+        "generated_at": s.generated_at.isoformat() if s.generated_at else None,
+    }
+
+
+# ── Favorites ────────────────────────────────────────────────────────
+
+@router.get("/favorites")
+def list_favorites(db: Session = Depends(get_db)):
+    """List all favorites."""
+    favs = db.query(Favorites).order_by(Favorites.priority, Favorites.created_at).all()
+    return [
+        {
+            "id": str(f.id),
+            "type": "person" if f.person_id else "channel",
+            "person_id": str(f.person_id) if f.person_id else None,
+            "person_name": f.person.name if f.person else None,
+            "channel_id": str(f.channel_id) if f.channel_id else None,
+            "channel_name": f.channel.name if f.channel else None,
+            "priority": f.priority,
+            "notify": f.notify,
+            "created_at": f.created_at.isoformat() if f.created_at else None,
+        }
+        for f in favs
+    ]
+
+
+class FavoriteCreate(BaseModel):
+    person_id: UUID | None = None
+    channel_id: UUID | None = None
+    priority: int = 5
+    notify: bool = True
+
+
+@router.post("/favorites")
+def add_favorite(req: FavoriteCreate, db: Session = Depends(get_db)):
+    """Add a person or channel as a favorite."""
+    if not req.person_id and not req.channel_id:
+        raise HTTPException(400, "Must specify person_id or channel_id")
+    if req.person_id and req.channel_id:
+        raise HTTPException(400, "Specify only one of person_id or channel_id")
+
+    fav = Favorites(
+        person_id=req.person_id,
+        channel_id=req.channel_id,
+        priority=req.priority,
+        notify=req.notify,
+    )
+    db.add(fav)
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(409, f"Favorite already exists or invalid: {e}")
+
+    return {"id": str(fav.id), "status": "created"}
+
+
+@router.delete("/favorites/{fav_id}")
+def remove_favorite(fav_id: UUID, db: Session = Depends(get_db)):
+    """Remove a favorite."""
+    fav = db.query(Favorites).filter(Favorites.id == fav_id).first()
+    if not fav:
+        raise HTTPException(404, "Favorite not found")
+    db.delete(fav)
+    db.commit()
+    return {"status": "deleted"}
+
+
 # ── Pipeline Status ──────────────────────────────────────────────────
 
 @router.get("/pipeline/status")
@@ -477,11 +683,17 @@ def pipeline_status(db: Session = Depends(get_db)):
 # ── Helpers ──────────────────────────────────────────────────────────
 
 def _claim_summary(c: Claims) -> dict:
+    # Best evidence span for provenance
+    evidence_data = _get_best_evidence(c) if c.video else None
+
+    # Build source object (spec-compliant nested structure)
+    source = _build_source_object(c, evidence_data)
+
     return {
         "id": str(c.id),
         "person_id": str(c.person_id),
         "person_name": c.person.name if c.person else None,
-        "video_id": str(c.video_id),
+        "video_id": str(c.video_id) if c.video_id else None,
         "claim_text": c.claim_text,
         "claim_type": c.claim_type,
         "speaker_certainty": c.speaker_certainty,
@@ -493,11 +705,91 @@ def _claim_summary(c: Claims) -> dict:
         "temporal_marker": c.temporal_marker,
         "review_status": c.review_status,
         "created_at": c.created_at.isoformat() if c.created_at else None,
-        "source_video_title": c.video.title if c.video else None,
-        "source_video_youtube_id": c.video.youtube_video_id if c.video else None,
-        "source_video_url": (
-            f"https://youtube.com/watch?v={c.video.youtube_video_id}"
-            if c.video and c.video.youtube_video_id
-            else None
-        ),
+        "source": source,
+        # Flat fields kept for backward compatibility with existing frontend
+        "source_type": source["type"] if source else "video",
+        "source_video_title": source.get("title") if source else None,
+        "source_video_url": source.get("source_url") if source else None,
+        "source_timestamp_display": source.get("timestamp_display") if source else None,
+        "best_quote": source.get("evidence_quote") if source else None,
     }
+
+
+def _build_source_object(c: Claims, evidence_data: dict | None) -> dict | None:
+    """Build spec-compliant source object for a claim (video or X post)."""
+
+    # X post source
+    if c.x_post_id and c.x_post:
+        xp = c.x_post
+        return {
+            "type": "x_post",
+            "title": f"@{xp.platform_post_id}" if xp else "X Post",
+            "source_url": xp.post_url,
+            "timestamp_display": "",
+            "timestamp_ms": None,
+            "published_at": xp.posted_at.isoformat() if xp.posted_at else None,
+            "evidence_quote": (evidence_data or {}).get("quote_text"),
+            "evidence_type": "x_post_text",
+            "x_handle": c.person.x_handle if c.person else None,
+        }
+
+    # Video source
+    if not c.video:
+        return None
+
+    yt_id = c.video.youtube_video_id
+    if not yt_id:
+        return None
+
+    ev = evidence_data or {}
+    start_ms = ev.get("start_ms")
+    start_s = int(start_ms / 1000) if start_ms else None
+
+    base_url = f"https://youtube.com/watch?v={yt_id}"
+    source_url = f"{base_url}&t={start_s}s" if start_s else base_url
+
+    return {
+        "type": "video",
+        "title": c.video.title or "Unknown video",
+        "source_url": source_url,
+        "timestamp_display": _format_timestamp(start_s) if start_s else "",
+        "timestamp_ms": start_ms,
+        "published_at": c.video.published_at.isoformat() if c.video.published_at else None,
+        "evidence_quote": ev.get("quote_text"),
+        "evidence_type": ev.get("quote_type", "direct_quote"),
+    }
+
+
+def _get_best_evidence(claim: Claims) -> dict | None:
+    """Return the first evidence span for a claim (cheapest query)."""
+    from sqlalchemy.orm import object_session
+
+    session = object_session(claim)
+    if not session:
+        return None
+
+    ev = (
+        session.query(ClaimEvidence)
+        .filter(ClaimEvidence.claim_id == claim.id)
+        .order_by(ClaimEvidence.evidence_order)
+        .first()
+    )
+    if not ev:
+        return None
+
+    return {
+        "quote_text": ev.quote_text,
+        "quote_type": ev.quote_type,
+        "start_ms": ev.start_ms,
+        "end_ms": ev.end_ms,
+    }
+
+
+def _format_timestamp(seconds: int) -> str:
+    """Format seconds as MM:SS or H:MM:SS."""
+    if seconds < 3600:
+        return f"{seconds // 60}:{seconds % 60:02d}"
+    h = seconds // 3600
+    m = (seconds % 3600) // 60
+    s = seconds % 60
+    return f"{h}:{m:02d}:{s:02d}"
