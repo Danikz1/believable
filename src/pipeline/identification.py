@@ -356,6 +356,11 @@ def _auto_create_person(session: Session, name: str) -> People | None:
 
     clean_name = name.strip()
 
+    # Validate this looks like an actual person name
+    if not _is_valid_person_name(clean_name):
+        logger.warning(f"Rejected invalid person name: '{clean_name}'")
+        return None
+
     # Double-check dedup (case-insensitive exact match)
     existing = session.query(People).filter(
         People.name.ilike(clean_name)
@@ -373,6 +378,52 @@ def _auto_create_person(session: Session, name: str) -> People | None:
     session.flush()
     logger.info(f"Auto-created person: {clean_name} (id={person.id})")
     return person
+
+
+def _is_valid_person_name(name: str) -> bool:
+    """Check if a string looks like a real person name vs. a transcript fragment."""
+    import re
+
+    # Must be 1-5 words
+    words = name.split()
+    if len(words) > 5 or len(words) == 0:
+        return False
+
+    # Reject very long "names"
+    if len(name) > 60:
+        return False
+
+    # Reject names starting with common sentence starters / articles / conjunctions
+    lower = name.lower()
+    bad_starts = [
+        "the ", "a ", "an ", "and ", "or ", "but ", "this ", "that ",
+        "these ", "those ", "it ", "its ", "there ", "here ", "what ",
+        "which ", "who ", "how ", "why ", "when ", "where ", "if ",
+        "for ", "with ", "from ", "about ", "into ", "some ", "any ",
+        "transcript ", "episode ", "part ", "section ", "chapter ",
+    ]
+    for prefix in bad_starts:
+        if lower.startswith(prefix):
+            return False
+
+    # Reject common non-name patterns
+    bad_patterns = [
+        r"^unknown", r"^speaker", r"^narrator", r"^host$",
+        r"^guest$", r"^interviewer", r"^interviewee",
+        r"\d{3,}",  # numbers with 3+ digits
+        r"^https?://",  # URLs
+        r"@",  # emails/handles
+    ]
+    for pattern in bad_patterns:
+        if re.search(pattern, lower):
+            return False
+
+    # At least one word should start with uppercase (looks like a proper noun)
+    has_capital = any(w[0].isupper() for w in words if w)
+    if not has_capital:
+        return False
+
+    return True
 
 
 # ── Orchestrator ─────────────────────────────────────────────────────

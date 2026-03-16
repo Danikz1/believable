@@ -65,12 +65,27 @@ def process_all(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin),
 ):
-    """Run the full pipeline: transcribe → identify → enrich → summarize."""
+    """Run the full pipeline: clean → transcribe → identify → enrich → summarize."""
     from src.pipeline.transcription import transcribe_pending
-    from src.pipeline.identification import identify_pending
-    from src.pipeline.enrichment import enrich_pending
+    from src.pipeline.identification import identify_pending, _is_valid_person_name
 
     results = {}
+
+    # Step 0: Clean up invalid people names (transcript fragments, etc.)
+    from src.db.models import People as PeopleModel, VideoPeople as VP, Claims as ClaimsModel
+    from sqlalchemy import text
+
+    invalid_people = [p for p in db.query(PeopleModel).all() if not _is_valid_person_name(p.name)]
+    if invalid_people:
+        for p in invalid_people:
+            pid = str(p.id)
+            db.execute(text("DELETE FROM video_people WHERE person_id = :pid"), {"pid": pid})
+            db.execute(text("UPDATE claims SET person_id = NULL WHERE person_id = :pid"), {"pid": pid})
+            db.execute(text("DELETE FROM people WHERE id = :pid"), {"pid": pid})
+        db.commit()
+        results["cleanup"] = {"removed_invalid_people": len(invalid_people)}
+
+    from src.pipeline.enrichment import enrich_pending
 
     # Step 1: Transcribe discovered videos
     results["transcribe"] = transcribe_pending(db, limit=limit)
