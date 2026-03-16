@@ -48,9 +48,14 @@ Return ONLY valid JSON with these fields:
    - "start_ms": approximate start timestamp in milliseconds
    - "summary": 10-15 sentences per section. This is the MOST IMPORTANT field — be extremely thorough.
      Cover: the exact arguments made, specific examples and anecdotes mentioned, data points or numbers cited,
-     direct quotes from speakers, counterarguments or pushback, practical implications discussed,
+     counterarguments or pushback, practical implications discussed,
      and any conclusions reached. Include the full context of WHY something was said.
      A reader should feel like they watched this part of the episode after reading the section.
+   - "quotes": Array of 1-3 notable direct quotes from this section. These are CITATIONS — verbatim words
+     from the transcript that support the summary. Each quote object has:
+     - "speaker": who said it
+     - "text": the exact quote (verbatim from transcript, 1-3 sentences, under 200 chars)
+     - "timestamp_ms": approximate timestamp in milliseconds
    - "claims": array of claim references [{claim_id, text, speaker}]
 
 4. "best_moments": 5-8 most important/surprising/quotable moments with:

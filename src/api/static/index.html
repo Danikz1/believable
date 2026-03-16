@@ -169,6 +169,11 @@
     .ts-badge-green:hover { background: rgba(34,197,94,0.3); }
     .section-title { font-weight: 600; font-size: 14px; color: #e5e5e5; }
     .section-summary { font-size: 13px; color: #888; margin-top: 2px; }
+    .section-quote { margin: 8px 0 4px 0; padding: 8px 12px; border-left: 3px solid #2a6; background: rgba(42,170,102,0.06); border-radius: 0 6px 6px 0; }
+    .section-quote-text { font-size: 13px; color: #aab; font-style: italic; line-height: 1.5; }
+    .section-quote-attr { font-size: 11px; color: #666; margin-top: 4px; }
+    .section-quote-ts { color: #2a6; text-decoration: none; margin-left: 6px; font-weight: 500; }
+    .section-quote-ts:hover { text-decoration: underline; }
     .moments-list { display: flex; flex-direction: column; gap: 14px; margin-top: 24px; }
     .moment-item { display: flex; gap: 12px; align-items: flex-start; }
     .moment-desc { font-weight: 600; font-size: 13px; color: #e5e5e5; }
@@ -800,12 +805,28 @@ function setDepth(depth, btn) {
       const tsSeconds = Math.floor(tsMs / 1000);
       const tsDisplay = tsSeconds ? `${Math.floor(tsSeconds/60)}:${String(tsSeconds%60).padStart(2,'0')}` : '';
       const tsLink = d.ytId ? `https://youtube.com/watch?v=${d.ytId}&t=${tsSeconds}s` : '#';
+      const quotes = (s.quotes || []).map(q => {
+        const qMs = q.timestamp_ms || tsMs;
+        const qSec = Math.floor(qMs / 1000);
+        const qDisplay = qSec ? `${Math.floor(qSec/60)}:${String(qSec%60).padStart(2,'0')}` : '';
+        const qLink = d.ytId ? `https://youtube.com/watch?v=${d.ytId}&t=${qSec}s` : '#';
+        return `
+          <div class="section-quote">
+            <div class="section-quote-text">"${q.text}"</div>
+            <div class="section-quote-attr">
+              — ${q.speaker || 'Speaker'}
+              ${qDisplay ? `<a href="${qLink}" target="_blank" class="section-quote-ts">${qDisplay}</a>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
       return `
         <div class="section-item">
           <a href="${tsLink}" target="_blank" class="ts-badge">${tsDisplay || '—'}</a>
           <div>
             <div class="section-title">${s.title || ''}</div>
             <div class="section-summary">${s.summary || ''}</div>
+            ${quotes}
           </div>
         </div>
       `;
