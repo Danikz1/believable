@@ -187,6 +187,46 @@ def process_all(
     return {"status": "completed", "results": results}
 
 
+@router.post("/pipeline/regenerate-summaries")
+def regenerate_summaries(
+    limit: int = 1,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_admin),
+):
+    """Regenerate summaries for videos with empty sections. Limit=1 to avoid timeout."""
+    from src.pipeline.summaries import generate_episode_summary
+    from src.db.models import EpisodeSummaries, Videos as VideosModel
+
+    existing_summaries = db.query(EpisodeSummaries).filter(
+        EpisodeSummaries.summary_type == "full_episode"
+    ).all()
+
+    videos_needing_regen = []
+    for s in existing_summaries:
+        detailed = s.detailed_json or {}
+        sections = detailed.get("sections", []) if isinstance(detailed, dict) else []
+        if not sections:
+            videos_needing_regen.append(s.video_id)
+
+    if not videos_needing_regen:
+        return {"status": "no_work", "message": "All summaries already have sections"}
+
+    videos = db.query(VideosModel).filter(
+        VideosModel.id.in_(videos_needing_regen)
+    ).all()
+
+    stats = {"regenerated": 0, "errors": [], "remaining": len(videos) - limit}
+    for video in videos[:limit]:
+        try:
+            summary = generate_episode_summary(video.id, "full_episode", db)
+            if summary:
+                stats["regenerated"] += 1
+        except Exception as e:
+            stats["errors"].append(f"{video.title}: {str(e)[:200]}")
+
+    return {"status": "completed", "stats": stats}
+
+
 # ── Claim Review ─────────────────────────────────────────────────────
 
 class ReviewRequest(BaseModel):
