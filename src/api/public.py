@@ -926,13 +926,13 @@ def add_channel(req: ChannelCreate, db: Session = Depends(get_db)):
 
         # Resolve via yt-dlp (metadata only — no download/format needed)
         try:
+            import json as _json
             from src.youtube import run_yt_dlp
             proc = run_yt_dlp(
                 [
                     "--flat-playlist",
                     "--skip-download",
-                    "--print", "channel_id",
-                    "--print", "channel",
+                    "--dump-single-json",
                     "--playlist-items", "1",
                     url,
                 ],
@@ -940,10 +940,10 @@ def add_channel(req: ChannelCreate, db: Session = Depends(get_db)):
             )
             if proc.returncode != 0:
                 raise HTTPException(400, f"Could not resolve channel: {(proc.stderr or '')[:200]}")
-            lines = proc.stdout.strip().split("\n")
-            channel_id = lines[0].strip() if lines else None
-            channel_name = lines[1].strip() if len(lines) > 1 else raw
-            if not channel_id or channel_id == "NA":
+            meta = _json.loads(proc.stdout)
+            channel_id = meta.get("channel_id")
+            channel_name = meta.get("channel") or meta.get("uploader") or raw
+            if not channel_id:
                 raise HTTPException(400, "Could not resolve channel ID")
         except HTTPException:
             raise
