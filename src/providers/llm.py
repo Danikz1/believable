@@ -563,7 +563,7 @@ def _api_call_with_retry(url: str, headers: dict, payload: dict) -> dict:
 
     for attempt in range(max_retries + 1):
         try:
-            with httpx.Client(timeout=120) as client:
+            with httpx.Client(timeout=300) as client:
                 resp = client.post(url, headers=headers, json=payload)
 
             if resp.status_code == 200:
