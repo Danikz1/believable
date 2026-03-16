@@ -187,50 +187,96 @@ def process_all(
     return {"status": "completed", "results": results}
 
 
+import threading
+import time as _time
+
+_regen_status = {"running": False, "last_result": None}
+
+
 @router.post("/pipeline/regenerate-summaries")
 def regenerate_summaries(
-    limit: int = 1,
+    limit: int = 3,
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin),
 ):
-    """Regenerate summaries for videos with empty sections. Limit=1 to avoid timeout."""
-    from src.pipeline.summaries import generate_episode_summary
-    from src.db.models import EpisodeSummaries, Videos as VideosModel
+    """Start background regeneration of summaries with empty sections."""
+    if _regen_status["running"]:
+        return {"status": "already_running", "last_result": _regen_status["last_result"]}
+
+    # Check how many need regeneration
+    from src.db.models import EpisodeSummaries
 
     existing_summaries = db.query(EpisodeSummaries).filter(
         EpisodeSummaries.summary_type == "full_episode"
     ).all()
 
-    videos_needing_regen = []
+    count_needing = 0
     for s in existing_summaries:
         detailed = s.detailed_json or {}
         sections = detailed.get("sections", []) if isinstance(detailed, dict) else []
         if not sections:
-            videos_needing_regen.append(s.video_id)
+            count_needing += 1
 
-    if not videos_needing_regen:
+    if count_needing == 0:
         return {"status": "no_work", "message": "All summaries already have sections"}
 
-    videos = db.query(VideosModel).filter(
-        VideosModel.id.in_(videos_needing_regen)
-    ).all()
+    # Fire and forget in background thread
+    _regen_status["running"] = True
+    _regen_status["last_result"] = {"status": "started", "total": count_needing, "limit": limit}
 
-    stats = {"regenerated": 0, "errors": [], "remaining": len(videos) - limit}
-    for video in videos[:limit]:
+    def _bg_regenerate(limit_val):
         try:
-            summary = generate_episode_summary(video.id, "full_episode", db)
-            if summary:
-                # Check if sections were actually generated
-                detailed = summary.detailed_json or {}
-                sec_count = len(detailed.get("sections", [])) if isinstance(detailed, dict) else 0
-                stats["regenerated"] += 1
-                stats["errors"].append(f"OK: {video.title[:40]} → {sec_count} sections")
-            else:
-                stats["errors"].append(f"RETURNED_NONE: {video.title[:60]}")
-        except Exception as e:
-            stats["errors"].append(f"EXCEPTION: {video.title[:40]}: {str(e)[:200]}")
+            from src.pipeline.summaries import generate_episode_summary
+            from src.db.models import EpisodeSummaries as ES, Videos as VM
+            from src.db.session import get_session
 
-    return {"status": "completed", "stats": stats}
+            session = get_session()
+            try:
+                summaries = session.query(ES).filter(ES.summary_type == "full_episode").all()
+                video_ids = []
+                for s in summaries:
+                    detailed = s.detailed_json or {}
+                    secs = detailed.get("sections", []) if isinstance(detailed, dict) else []
+                    if not secs:
+                        video_ids.append(s.video_id)
+
+                videos = session.query(VM).filter(VM.id.in_(video_ids)).all()
+                stats = {"regenerated": 0, "errors": [], "total": len(videos)}
+
+                for video in videos[:limit_val]:
+                    try:
+                        summary = generate_episode_summary(video.id, "full_episode", session)
+                        if summary:
+                            detailed = summary.detailed_json or {}
+                            sec_count = len(detailed.get("sections", [])) if isinstance(detailed, dict) else 0
+                            stats["regenerated"] += 1
+                            stats["errors"].append(f"OK: {video.title[:40]} → {sec_count} sections")
+                        else:
+                            stats["errors"].append(f"NONE: {video.title[:60]}")
+                    except Exception as e:
+                        stats["errors"].append(f"ERR: {video.title[:40]}: {str(e)[:100]}")
+
+                _regen_status["last_result"] = stats
+            finally:
+                session.close()
+        except Exception as e:
+            _regen_status["last_result"] = {"error": str(e)[:300]}
+        finally:
+            _regen_status["running"] = False
+
+    thread = threading.Thread(target=_bg_regenerate, args=(limit,), daemon=True)
+    thread.start()
+
+    return {"status": "started", "total_needing": count_needing, "limit": limit}
+
+
+@router.get("/pipeline/regenerate-summaries/status")
+def regenerate_summaries_status(_: str = Depends(verify_admin)):
+    """Check status of background summary regeneration."""
+    return {
+        "running": _regen_status["running"],
+        "result": _regen_status["last_result"],
+    }
 
 
 # ── Claim Review ─────────────────────────────────────────────────────
