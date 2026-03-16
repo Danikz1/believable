@@ -65,13 +65,27 @@ def process_all(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin),
 ):
-    """Run the full pipeline: clean → transcribe → identify → enrich → summarize."""
+    """Run the full pipeline: configure → clean → transcribe → identify → enrich → summarize."""
     from src.pipeline.transcription import transcribe_pending
     from src.pipeline.identification import identify_pending, _is_valid_person_name
 
     results = {}
 
-    # Step 0: Clean up invalid people names (transcript fragments, etc.)
+    # Step 0a: Auto-configure transcript settings for known channels
+    from src.db.models import PodcastChannels
+    channels = db.query(PodcastChannels).all()
+    configured_count = 0
+    for channel in channels:
+        config = KNOWN_TRANSCRIPT_CONFIGS.get(channel.youtube_channel_id)
+        if config and not channel.transcript_url_pattern:
+            channel.transcript_url_pattern = config["transcript_url_pattern"]
+            channel.transcript_parser = config["transcript_parser"]
+            configured_count += 1
+    if configured_count:
+        db.commit()
+        results["configure_transcripts"] = configured_count
+
+    # Step 0b: Clean up invalid people names (transcript fragments, etc.)
     from src.db.models import People as PeopleModel
     from sqlalchemy import text
 
@@ -307,3 +321,81 @@ def wipe_all_video_data(
         raise HTTPException(500, f"Wipe failed: {str(e)[:300]}")
 
     return {"status": "wiped", "deleted": counts}
+
+
+# ── Channel Transcript Config ──────────────────────────────────────────
+
+# Known channel transcript configurations
+KNOWN_TRANSCRIPT_CONFIGS = {
+    "UCSHZKyawb77ixDdsGog4iWA": {  # Lex Fridman Podcast
+        "transcript_url_pattern": "https://lexfridman.com/{slug}-transcript",
+        "transcript_parser": "lex_fridman",
+    },
+    "UC2LCFMxIkk0VtFbPaX3s00A": {  # Dwarkesh Podcast
+        "transcript_url_pattern": "https://www.dwarkesh.com/p/{slug}",
+        "transcript_parser": "dwarkesh_substack",
+    },
+    "UCXl4i9dYBrFOabk0xGmbkRA": {  # Dwarkesh Patel (alt channel ID)
+        "transcript_url_pattern": "https://www.dwarkesh.com/p/{slug}",
+        "transcript_parser": "dwarkesh_substack",
+    },
+}
+
+
+class ChannelTranscriptConfig(BaseModel):
+    transcript_url_pattern: str | None = None
+    transcript_parser: str | None = None
+
+
+@router.patch("/channels/{channel_id}/transcript-config")
+def update_channel_transcript_config(
+    channel_id: UUID,
+    config: ChannelTranscriptConfig,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_admin),
+):
+    """Update transcript URL pattern and parser for a channel."""
+    from src.db.models import PodcastChannels
+
+    channel = db.query(PodcastChannels).filter(PodcastChannels.id == channel_id).first()
+    if not channel:
+        raise HTTPException(404, "Channel not found")
+
+    if config.transcript_url_pattern is not None:
+        channel.transcript_url_pattern = config.transcript_url_pattern
+    if config.transcript_parser is not None:
+        channel.transcript_parser = config.transcript_parser
+
+    db.commit()
+    return {
+        "channel_id": str(channel.id),
+        "name": channel.name,
+        "transcript_url_pattern": channel.transcript_url_pattern,
+        "transcript_parser": channel.transcript_parser,
+    }
+
+
+@router.post("/channels/auto-configure-transcripts")
+def auto_configure_transcripts(
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_admin),
+):
+    """Auto-configure transcript settings for known channels."""
+    from src.db.models import PodcastChannels
+
+    channels = db.query(PodcastChannels).all()
+    configured = []
+
+    for channel in channels:
+        config = KNOWN_TRANSCRIPT_CONFIGS.get(channel.youtube_channel_id)
+        if config:
+            channel.transcript_url_pattern = config["transcript_url_pattern"]
+            channel.transcript_parser = config["transcript_parser"]
+            configured.append({
+                "name": channel.name,
+                "transcript_url_pattern": config["transcript_url_pattern"],
+                "transcript_parser": config["transcript_parser"],
+            })
+
+    db.commit()
+    return {"configured": configured, "total": len(configured)}
