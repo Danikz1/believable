@@ -350,7 +350,10 @@ def _match_speaker_name(
 
 
 def _auto_create_person(session: Session, name: str) -> People | None:
-    """Auto-create a new People record from a speaker name found in a transcript."""
+    """Auto-create a new People record from a speaker name found in a transcript.
+
+    Uses LLM to fill in the profile (role, bio, net worth, etc.).
+    """
     if not name or len(name.strip()) < 2:
         return None
 
@@ -368,16 +371,58 @@ def _auto_create_person(session: Session, name: str) -> People | None:
     if existing:
         return existing
 
+    # Use LLM to generate profile
+    profile = _generate_person_profile(clean_name)
+
     person = People(
         name=clean_name,
         tier=3,  # Auto-discovered people start at tier 3
         active=True,
+        role_title=profile.get("role_title"),
+        domain=profile.get("domain"),
+        bio=profile.get("bio"),
+        net_worth=profile.get("net_worth"),
+        age=profile.get("age"),
+        expertise_domains=profile.get("expertise_domains", []),
         inclusion_notes=f"Auto-created from transcript speaker identification",
     )
     session.add(person)
     session.flush()
     logger.info(f"Auto-created person: {clean_name} (id={person.id})")
     return person
+
+
+PERSON_PROFILE_PROMPT = """You are a research assistant. Given a person's name, return their public profile as JSON.
+
+Return ONLY valid JSON with these fields:
+- "role_title": Their current or most notable role (e.g. "CEO, Tesla & SpaceX", "AI Researcher & Educator"). Max 60 chars.
+- "domain": Their primary field (e.g. "AI Research / Education", "Venture Capital", "Tech Entrepreneurship"). Max 40 chars.
+- "bio": 2-3 sentence bio covering their most notable achievements and current role. Under 300 chars.
+- "net_worth": Estimated net worth as a display string (e.g. "$2.5B", "$100M", null if unknown or under $10M).
+- "age": Their current age as an integer (null if unknown).
+- "expertise_domains": Array of 2-4 topic tags from this list ONLY:
+  ai_infrastructure, ai_open_source, ai_safety, ai_regulation, climate, creator_economy,
+  crypto, debt_cycles, energy, enterprise_ai, fiscal_policy, geopolitics, healthcare,
+  inference_compute, interest_rates, labor_market, macro, payments, platform_dynamics,
+  real_estate, saas_pricing, space, stablecoins, startup_formation, us_china,
+  value_investing, venture_capital
+
+If you don't know who this person is, return: {"role_title": null, "domain": null, "bio": null, "net_worth": null, "age": null, "expertise_domains": []}"""
+
+
+def _generate_person_profile(name: str) -> dict:
+    """Use LLM to generate a person's public profile."""
+    try:
+        from src.providers.llm import call_llm_json
+        result = call_llm_json(
+            PERSON_PROFILE_PROMPT,
+            f"Generate a profile for: {name}",
+        )
+        logger.info(f"Generated profile for {name}: {result.get('role_title', 'unknown')}")
+        return result
+    except Exception as e:
+        logger.warning(f"Failed to generate profile for {name}: {e}")
+        return {}
 
 
 def _is_valid_person_name(name: str) -> bool:
