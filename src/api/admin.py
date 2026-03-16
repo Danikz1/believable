@@ -196,13 +196,14 @@ def wipe_all_video_data(
 ):
     """Delete ALL video-related data for a clean slate."""
     from src.db.models import (
-        ClaimEmbeddings, ClaimEvidence, ClaimTopics,
+        Briefs, ClaimEmbeddings, ClaimEvidence, ClaimTopics,
         EpisodeSummaries, PersonTopicPositions, PositionHistoryLog,
-        TranscriptSegments, VideoPeople,
+        TranscriptRuns, TranscriptSegments, VideoPeople, XPosts,
     )
 
     counts = {}
     for model, name in [
+        (Briefs, "briefs"),
         (PositionHistoryLog, "position_history"),
         (PersonTopicPositions, "person_topic_positions"),
         (ClaimEmbeddings, "claim_embeddings"),
@@ -210,8 +211,10 @@ def wipe_all_video_data(
         (ClaimTopics, "claim_topics"),
         (Claims, "claims"),
         (EpisodeSummaries, "episode_summaries"),
+        (TranscriptRuns, "transcript_runs"),
         (TranscriptSegments, "transcript_segments"),
         (VideoPeople, "video_people"),
+        (XPosts, "x_posts"),
         (Videos, "videos"),
     ]:
         n = db.query(model).delete(synchronize_session=False)

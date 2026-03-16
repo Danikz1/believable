@@ -1016,11 +1016,53 @@ async function renderChannels() {
       <div id="pipeline-stats" class="pipeline-stats">
         <div class="pipe-stat"><div class="pipe-stat-num clr-gray">—</div><div class="pipe-stat-label">Loading...</div></div>
       </div>
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-check" onclick="triggerPipeline('transcribe',this)">▶ Transcribe</button>
+        <button class="btn-check" onclick="triggerPipeline('identify',this)">▶ Identify</button>
+        <button class="btn-check" onclick="triggerPipeline('enrich',this)">▶ Enrich</button>
+        <button class="btn-delete" onclick="wipeAllData(this)">⚠ Reset All Data</button>
+      </div>
     </div>
   `;
 
   app().innerHTML = html;
   refreshPipelineStatus();
+}
+
+const ADMIN_KEY = 'bm-admin-key';
+function adminPost(path) {
+  return fetch('/admin' + path, { method: 'POST', headers: { 'X-Admin-Key': ADMIN_KEY, 'Content-Type': 'application/json' } }).then(r => {
+    if (!r.ok) return r.json().then(e => { throw new Error(e.detail || 'Request failed'); });
+    return r.json();
+  });
+}
+
+async function triggerPipeline(stage, btn) {
+  btn.textContent = '⏳ Running...'; btn.disabled = true;
+  try {
+    const res = await adminPost(`/pipeline/trigger/${stage}?limit=10`);
+    showToast(`${stage}: done`);
+    btn.textContent = '✓ Done';
+    refreshPipelineStatus();
+  } catch (e) {
+    showToast(`${stage} failed: ${e.message}`);
+    btn.textContent = '✗ Failed';
+  }
+  setTimeout(() => { btn.textContent = `▶ ${stage.charAt(0).toUpperCase() + stage.slice(1)}`; btn.disabled = false; }, 3000);
+}
+
+async function wipeAllData(btn) {
+  if (!confirm('Delete ALL video data? This cannot be undone.')) return;
+  btn.textContent = '⏳ Wiping...'; btn.disabled = true;
+  try {
+    const res = await adminPost('/wipe/videos');
+    showToast('All video data wiped!');
+    refreshPipelineStatus();
+    renderChannels();
+  } catch (e) {
+    showToast('Wipe failed: ' + e.message);
+  }
+  btn.textContent = '⚠ Reset All Data'; btn.disabled = false;
 }
 
 async function refreshPipelineStatus() {
