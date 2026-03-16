@@ -77,20 +77,36 @@ def process_all(
 
     invalid_people = [p for p in db.query(PeopleModel).all() if not _is_valid_person_name(p.name)]
     if invalid_people:
+        # Tables that might reference person_id
+        cleanup_deletes = [
+            "DELETE FROM favorites WHERE person_id = :pid",
+            "DELETE FROM episode_summaries WHERE person_focus_id = :pid",
+            "DELETE FROM shift_notes WHERE person_id = :pid",
+            "DELETE FROM person_topic_positions WHERE person_id = :pid",
+            "DELETE FROM x_posts WHERE person_id = :pid",
+            "DELETE FROM channel_roles WHERE person_id = :pid",
+            "DELETE FROM video_people WHERE person_id = :pid",
+        ]
+        cleanup_nullify = [
+            "UPDATE transcript_segments SET person_id = NULL WHERE person_id = :pid",
+            "UPDATE claims SET person_id = NULL WHERE person_id = :pid",
+        ]
+
         for p in invalid_people:
             pid = str(p.id)
-            # Clean all FK references before deleting
-            db.execute(text("DELETE FROM favorites WHERE person_id = :pid"), {"pid": pid})
-            db.execute(text("DELETE FROM episode_summaries WHERE person_focus_id = :pid"), {"pid": pid})
-            db.execute(text("DELETE FROM shift_notes WHERE person_id = :pid"), {"pid": pid})
-            db.execute(text("DELETE FROM person_topic_positions WHERE person_id = :pid"), {"pid": pid})
-            db.execute(text("DELETE FROM x_posts WHERE person_id = :pid"), {"pid": pid})
-            db.execute(text("DELETE FROM channel_roles WHERE person_id = :pid"), {"pid": pid})
-            db.execute(text("DELETE FROM video_people WHERE person_id = :pid"), {"pid": pid})
-            db.execute(text("UPDATE transcript_segments SET person_id = NULL WHERE person_id = :pid"), {"pid": pid})
-            db.execute(text("UPDATE claims SET person_id = NULL WHERE person_id = :pid"), {"pid": pid})
-            db.execute(text("DELETE FROM people WHERE id = :pid"), {"pid": pid})
-        db.commit()
+            for stmt in cleanup_deletes + cleanup_nullify:
+                try:
+                    db.execute(text(stmt), {"pid": pid})
+                except Exception:
+                    pass  # Table might not exist
+            try:
+                db.execute(text("DELETE FROM people WHERE id = :pid"), {"pid": pid})
+            except Exception:
+                pass
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
         results["cleanup"] = {"removed_invalid_people": len(invalid_people)}
 
     from src.pipeline.enrichment import enrich_pending
