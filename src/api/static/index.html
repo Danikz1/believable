@@ -1032,8 +1032,12 @@ async function renderChannels() {
 
 const ADMIN_KEY = 'bm-admin-key';
 function adminPost(path) {
-  return fetch('/admin' + path, { method: 'POST', headers: { 'X-Admin-Key': ADMIN_KEY, 'Content-Type': 'application/json' } }).then(r => {
-    if (!r.ok) return r.json().then(e => { throw new Error(e.detail || 'Request failed'); });
+  return fetch('/admin' + path, { method: 'POST', headers: { 'X-Admin-Key': ADMIN_KEY, 'Content-Type': 'application/json' } }).then(async r => {
+    if (!r.ok) {
+      let msg = 'Request failed';
+      try { const e = await r.json(); msg = e.detail || msg; } catch { msg = await r.text() || `HTTP ${r.status}`; }
+      throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+    }
     return r.json();
   });
 }

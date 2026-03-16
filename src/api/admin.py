@@ -194,31 +194,33 @@ def wipe_all_video_data(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin),
 ):
-    """Delete ALL video-related data for a clean slate."""
-    from src.db.models import (
-        Briefs, ClaimEmbeddings, ClaimEvidence, ClaimTopics,
-        EpisodeSummaries, PersonTopicPositions, PositionHistoryLog,
-        TranscriptRuns, TranscriptSegments, VideoPeople, XPosts,
-    )
+    """Delete ALL video-related data for a clean slate using TRUNCATE CASCADE."""
+    from sqlalchemy import text
+
+    tables = [
+        "briefs", "position_history_log", "person_topic_positions",
+        "claim_embeddings", "claim_evidence", "claim_topics", "claims",
+        "episode_summaries", "transcript_segments", "transcript_runs",
+        "video_people", "x_posts", "videos",
+    ]
 
     counts = {}
-    for model, name in [
-        (Briefs, "briefs"),
-        (PositionHistoryLog, "position_history"),
-        (PersonTopicPositions, "person_topic_positions"),
-        (ClaimEmbeddings, "claim_embeddings"),
-        (ClaimEvidence, "claim_evidence"),
-        (ClaimTopics, "claim_topics"),
-        (Claims, "claims"),
-        (EpisodeSummaries, "episode_summaries"),
-        (TranscriptRuns, "transcript_runs"),
-        (TranscriptSegments, "transcript_segments"),
-        (VideoPeople, "video_people"),
-        (XPosts, "x_posts"),
-        (Videos, "videos"),
-    ]:
-        n = db.query(model).delete(synchronize_session=False)
-        counts[name] = n
+    for table in tables:
+        try:
+            count_result = db.execute(text(f"SELECT COUNT(*) FROM {table}"))
+            counts[table] = count_result.scalar() or 0
+        except Exception:
+            counts[table] = -1  # table might not exist
 
-    db.commit()
+    try:
+        # TRUNCATE CASCADE handles all FK constraints automatically
+        existing_tables = [t for t in tables if counts.get(t, -1) >= 0]
+        if existing_tables:
+            table_list = ", ".join(existing_tables)
+            db.execute(text(f"TRUNCATE TABLE {table_list} CASCADE"))
+            db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"Wipe failed: {str(e)[:300]}")
+
     return {"status": "wiped", "deleted": counts}
