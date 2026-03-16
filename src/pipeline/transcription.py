@@ -677,11 +677,42 @@ def _try_official_transcript(
 
 
 def transcribe_pending(session: Session, limit: int = 10) -> dict:
-    """Transcribe all pending (discovered) videos, up to limit."""
+    """Transcribe all pending (discovered) videos, up to limit.
+
+    Prioritises videos from favorited channels/people.
+    """
+    from src.db.models import Favorites, PodcastChannels
+    from sqlalchemy import case, func
+
+    # LEFT JOIN to favorites via channel to get priority (lower = more important)
+    fav_channel = (
+        session.query(Favorites.channel_id, Favorites.priority)
+        .filter(Favorites.channel_id.isnot(None))
+        .subquery()
+    )
+    fav_person = (
+        session.query(Favorites.person_id, Favorites.priority)
+        .filter(Favorites.person_id.isnot(None))
+        .subquery()
+    )
+
+    # Priority: fav channel first, then fav discovered_by_person, then the rest
     videos = (
         session.query(Videos)
+        .outerjoin(fav_channel, Videos.podcast_channel_id == fav_channel.c.channel_id)
+        .outerjoin(fav_person, Videos.discovered_by_person_id == fav_person.c.person_id)
         .filter(Videos.status == "discovered")
-        .order_by(Videos.created_at)
+        .order_by(
+            # Favorited items first (non-null priority → 0, null → 1)
+            case(
+                (fav_channel.c.priority.isnot(None), 0),
+                (fav_person.c.priority.isnot(None), 0),
+                else_=1,
+            ),
+            # Within favorites, lower priority number = higher importance
+            func.coalesce(fav_channel.c.priority, fav_person.c.priority, 99),
+            Videos.created_at,
+        )
         .limit(limit)
         .all()
     )

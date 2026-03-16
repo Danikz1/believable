@@ -427,11 +427,38 @@ def enrich_video(session: Session, video: Videos) -> dict:
 
 
 def enrich_pending(session: Session, limit: int = 5) -> dict:
-    """Enrich all identified videos."""
+    """Enrich all identified videos.
+
+    Prioritises videos from favorited channels/people.
+    """
+    from src.db.models import Favorites
+    from sqlalchemy import case, func
+
+    fav_channel = (
+        session.query(Favorites.channel_id, Favorites.priority)
+        .filter(Favorites.channel_id.isnot(None))
+        .subquery()
+    )
+    fav_person = (
+        session.query(Favorites.person_id, Favorites.priority)
+        .filter(Favorites.person_id.isnot(None))
+        .subquery()
+    )
+
     videos = (
         session.query(Videos)
+        .outerjoin(fav_channel, Videos.podcast_channel_id == fav_channel.c.channel_id)
+        .outerjoin(fav_person, Videos.discovered_by_person_id == fav_person.c.person_id)
         .filter(Videos.status == "identified")
-        .order_by(Videos.created_at)
+        .order_by(
+            case(
+                (fav_channel.c.priority.isnot(None), 0),
+                (fav_person.c.priority.isnot(None), 0),
+                else_=1,
+            ),
+            func.coalesce(fav_channel.c.priority, fav_person.c.priority, 99),
+            Videos.created_at,
+        )
         .limit(limit)
         .all()
     )
