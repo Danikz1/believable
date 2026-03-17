@@ -1116,19 +1116,66 @@ async function refreshVideoQueue() {
       el.innerHTML = '<div style="color:#555;font-size:13px;padding:10px;">No videos yet. Add a channel or video to get started.</div>';
       return;
     }
-    el.innerHTML = videos.map(v => `
-      <div class="vq-row">
+    el.innerHTML = videos.map(v => {
+      const canProcess = ['discovered','transcribed','identified','enriched','error'].includes(v.status);
+      return `
+      <div class="vq-row" id="vq-${v.id}">
         <span class="vq-badge ${v.status}">${v.status}</span>
         <span class="vq-title" title="${(v.title || v.youtube_video_id).replace(/"/g, '&quot;')}">${v.title || v.youtube_video_id}</span>
         <span class="vq-channel">${v.channel_name || 'Manual'}</span>
         ${v.transcript_type ? `<span style="font-size:10px;color:#555;">${v.transcript_type}</span>` : ''}
         ${v.status === 'error' && v.error_message ? `<span style="font-size:10px;color:#ef4444;" title="${v.error_message.replace(/"/g, '&quot;')}">⚠</span>` : ''}
+        ${canProcess ? `<button onclick="processVideo('${v.id}',this)" style="background:none;border:1px solid #22c55e;color:#22c55e;cursor:pointer;font-size:11px;padding:2px 8px;border-radius:4px;transition:all 0.2s;" onmouseover="this.style.background='#22c55e';this.style.color='#000'" onmouseout="this.style.background='none';this.style.color='#22c55e'">▶ Process</button>` : ''}
         ${v.status === 'error' ? `<button onclick="retryVideo('${v.id}',this)" style="background:none;border:1px solid #333;color:#f59e0b;cursor:pointer;font-size:11px;padding:2px 8px;border-radius:4px;">↻ Retry</button>` : ''}
         <button onclick="deleteVideo('${v.id}',this)" style="background:none;border:none;color:#555;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;transition:color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#555'">✕</button>
       </div>
-    `).join('');
+    `;
+    }).join('');
   } catch {
     el.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:10px;">Could not load queue</div>';
+  }
+}
+
+async function processVideo(id, btn) {
+  btn.textContent = '⏳ Starting...'; btn.disabled = true;
+  btn.style.border = '1px solid #555'; btn.style.color = '#888';
+  try {
+    await adminPost(`/pipeline/process-video/${id}`);
+    // Poll for status
+    const stageLabels = {
+      starting: '⏳ Starting...',
+      transcribing: '🎙 Transcribing...',
+      identifying: '🔍 Identifying...',
+      enriching: '🧠 Enriching...',
+      summarizing: '📝 Summarizing...',
+      done: '✅ Done!',
+      error: '❌ Failed',
+    };
+    const poll = setInterval(async () => {
+      try {
+        const res = await fetch(`/admin/pipeline/process-video/${id}/status`, {
+          headers: { 'X-Admin-Key': ADMIN_KEY }
+        }).then(r => r.json());
+        btn.textContent = stageLabels[res.stage] || `⏳ ${res.stage}...`;
+        if (!res.running) {
+          clearInterval(poll);
+          if (res.error) {
+            btn.textContent = '❌ Failed';
+            btn.style.color = '#ef4444'; btn.style.borderColor = '#ef4444';
+            showToast(`Processing failed: ${res.error}`);
+          } else {
+            btn.textContent = '✅ Done!';
+            btn.style.color = '#22c55e'; btn.style.borderColor = '#22c55e';
+            showToast('Video processed successfully!');
+          }
+          setTimeout(() => refreshVideoQueue(), 2000);
+        }
+      } catch { /* ignore poll errors */ }
+    }, 3000);
+  } catch (e) {
+    showToast('Process failed: ' + e.message);
+    btn.textContent = '▶ Process'; btn.disabled = false;
+    btn.style.color = '#22c55e'; btn.style.borderColor = '#22c55e';
   }
 }
 

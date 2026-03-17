@@ -59,6 +59,118 @@ def trigger_pipeline(
     return {"stage": stage, "result": result}
 
 
+# ── Single Video Processing ──────────────────────────────────────────
+
+_video_process_status: dict[str, dict] = {}
+
+
+@router.post("/pipeline/process-video/{video_id}")
+def process_single_video(
+    video_id: UUID,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_admin),
+):
+    """Process a single video through the full pipeline in background."""
+    import threading
+
+    video = db.query(Videos).filter(Videos.id == video_id).first()
+    if not video:
+        raise HTTPException(404, "Video not found")
+
+    vid_str = str(video_id)
+
+    # Check if already processing
+    if _video_process_status.get(vid_str, {}).get("running"):
+        return {"status": "already_running", "video_id": vid_str}
+
+    _video_process_status[vid_str] = {
+        "running": True,
+        "stage": "starting",
+        "title": video.title or video.youtube_video_id,
+        "error": None,
+    }
+
+    def _bg_process(vid, vid_id_str):
+        try:
+            from src.db.session import get_session
+            session = get_session()
+            try:
+                v = session.query(Videos).filter(Videos.id == vid).first()
+                if not v:
+                    _video_process_status[vid_id_str]["error"] = "Video not found"
+                    return
+
+                # Reset error state if retrying
+                if v.status == "error":
+                    v.status = "discovered"
+                    v.error_message = None
+                    session.commit()
+
+                # Stage 1: Transcribe (if needed)
+                if v.status in ("discovered", "error"):
+                    _video_process_status[vid_id_str]["stage"] = "transcribing"
+                    from src.pipeline.transcription import transcribe_video
+                    result = transcribe_video(session, v)
+                    session.refresh(v)
+                    if v.status == "error":
+                        _video_process_status[vid_id_str]["error"] = v.error_message or "Transcription failed"
+                        return
+
+                # Stage 2: Identify (if needed)
+                if v.status == "transcribed":
+                    _video_process_status[vid_id_str]["stage"] = "identifying"
+                    from src.pipeline.identification import identify_video
+                    identify_video(session, v)
+                    session.refresh(v)
+
+                # Stage 3: Enrich (if needed)
+                if v.status == "identified":
+                    _video_process_status[vid_id_str]["stage"] = "enriching"
+                    from src.pipeline.enrichment import enrich_video
+                    enrich_video(session, v)
+                    session.refresh(v)
+
+                # Stage 4: Summarize
+                if v.status in ("enriched", "summarized"):
+                    _video_process_status[vid_id_str]["stage"] = "summarizing"
+                    from src.pipeline.summaries import generate_episode_summary
+                    generate_episode_summary(v.id, "full_episode", session)
+
+                _video_process_status[vid_id_str]["stage"] = "done"
+                _video_process_status[vid_id_str]["final_status"] = v.status
+
+            finally:
+                session.close()
+        except Exception as e:
+            _video_process_status[vid_id_str]["error"] = str(e)[:300]
+            _video_process_status[vid_id_str]["stage"] = "error"
+        finally:
+            _video_process_status[vid_id_str]["running"] = False
+
+    thread = threading.Thread(target=_bg_process, args=(video_id, vid_str), daemon=True)
+    thread.start()
+
+    return {
+        "status": "started",
+        "video_id": vid_str,
+        "title": video.title or video.youtube_video_id,
+        "current_status": video.status,
+    }
+
+
+@router.get("/pipeline/process-video/{video_id}/status")
+def process_video_status(
+    video_id: UUID,
+    _: str = Depends(verify_admin),
+):
+    """Check processing status of a single video."""
+    vid_str = str(video_id)
+    status = _video_process_status.get(vid_str)
+    if not status:
+        return {"status": "not_found", "message": "No processing record for this video"}
+    return status
+
+
 @router.post("/pipeline/process-all")
 def process_all(
     limit: int = 10,
