@@ -1,6 +1,9 @@
 """Admin API endpoints — protected by API key."""
 
+import logging
 from uuid import UUID
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
@@ -135,6 +138,12 @@ def process_single_video(
                     _video_process_status[vid_id_str]["stage"] = "summarizing"
                     from src.pipeline.summaries import generate_episode_summary
                     generate_episode_summary(v.id, "full_episode", session)
+
+                # Stage 5: Synthesize positions from claims
+                _video_process_status[vid_id_str]["stage"] = "synthesizing positions"
+                from src.pipeline.positions import update_positions_for_video
+                pos_stats = update_positions_for_video(session, v.id)
+                _video_process_status[vid_id_str]["positions"] = pos_stats
 
                 _video_process_status[vid_id_str]["stage"] = "done"
                 _video_process_status[vid_id_str]["final_status"] = v.status
@@ -296,7 +305,55 @@ def process_all(
 
     results["summarize"] = summary_stats
 
+    # Step 5: Synthesize positions from approved claims
+    from src.pipeline.positions import update_positions_for_video
+    position_stats = {"videos_processed": 0, "positions_updated": 0, "shifts": 0}
+    enriched_for_positions = (
+        db.query(VideosModel)
+        .filter(VideosModel.status.in_(["enriched", "summarized"]))
+        .all()
+    )
+    for v in enriched_for_positions[:limit]:
+        try:
+            ps = update_positions_for_video(db, v.id)
+            position_stats["videos_processed"] += 1
+            position_stats["positions_updated"] += ps.get("positions_updated", 0)
+            position_stats["shifts"] += ps.get("shifts", 0)
+        except Exception as e:
+            logger.warning(f"Position synthesis failed for {v.title}: {e}")
+    results["positions"] = position_stats
+
     return {"status": "completed", "results": results}
+
+
+@router.post("/pipeline/synthesize-positions")
+def synthesize_positions(
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_admin),
+):
+    """One-time catch-up: synthesize positions from all approved claims."""
+    from src.pipeline.positions import update_positions_for_video
+    from src.db.models import Videos as VideosModel
+
+    videos = (
+        db.query(VideosModel)
+        .filter(VideosModel.status.in_(["enriched", "summarized"]))
+        .limit(limit)
+        .all()
+    )
+
+    stats = {"videos_processed": 0, "positions_updated": 0, "shifts": 0, "errors": []}
+    for v in videos:
+        try:
+            ps = update_positions_for_video(db, v.id)
+            stats["videos_processed"] += 1
+            stats["positions_updated"] += ps.get("positions_updated", 0)
+            stats["shifts"] += ps.get("shifts", 0)
+        except Exception as e:
+            stats["errors"].append(f"{v.title}: {str(e)[:100]}")
+
+    return stats
 
 
 import threading

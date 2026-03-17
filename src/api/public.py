@@ -164,7 +164,22 @@ def get_person(
                 .all()
             )
         ],
-        "appearances": [
+        "appearances": _get_person_appearances(db, person),
+    }
+
+
+def _get_person_appearances(db: Session, person: People) -> list[dict]:
+    """Get recent video appearances for a person, using multiple data sources."""
+    # Primary: Person-focused episode summaries
+    focused = (
+        db.query(EpisodeSummaries)
+        .filter(EpisodeSummaries.person_focus_id == person.id)
+        .order_by(EpisodeSummaries.generated_at.desc())
+        .limit(10)
+        .all()
+    )
+    if focused:
+        return [
             {
                 "video_id": str(s.video_id),
                 "video_title": s.video.title if s.video else None,
@@ -173,15 +188,63 @@ def get_person(
                 "watch_verdict": s.watch_verdict,
                 "tldr": s.tldr,
             }
-            for s in (
-                db.query(EpisodeSummaries)
-                .filter(EpisodeSummaries.person_focus_id == person.id)
-                .order_by(EpisodeSummaries.generated_at.desc())
-                .limit(10)
-                .all()
-            )
-        ],
-    }
+            for s in focused
+        ]
+
+    # Fallback: Videos where person was identified as speaker (via video_people)
+    from src.db.models import VideoPeople, Videos as VideosModel
+    vp_entries = (
+        db.query(VideoPeople)
+        .filter(VideoPeople.person_id == person.id)
+        .all()
+    )
+    if not vp_entries:
+        return []
+
+    video_ids = [vp.video_id for vp in vp_entries]
+    # Get summaries for these videos
+    summaries = (
+        db.query(EpisodeSummaries)
+        .filter(
+            EpisodeSummaries.video_id.in_(video_ids),
+            EpisodeSummaries.summary_type == "full_episode",
+        )
+        .order_by(EpisodeSummaries.generated_at.desc())
+        .limit(10)
+        .all()
+    )
+    if summaries:
+        return [
+            {
+                "video_id": str(s.video_id),
+                "video_title": s.video.title if s.video else None,
+                "channel_name": s.video.podcast_channel.name if s.video and s.video.podcast_channel else None,
+                "published_at": s.video.published_at.isoformat() if s.video and s.video.published_at else None,
+                "watch_verdict": s.watch_verdict,
+                "tldr": s.tldr,
+            }
+            for s in summaries
+        ]
+
+    # Last fallback: just the videos themselves (no summaries yet)
+    videos = (
+        db.query(VideosModel)
+        .filter(VideosModel.id.in_(video_ids))
+        .order_by(VideosModel.published_at.desc().nullslast())
+        .limit(10)
+        .all()
+    )
+    return [
+        {
+            "video_id": str(v.id),
+            "video_title": v.title,
+            "channel_name": v.podcast_channel.name if v.podcast_channel else None,
+            "published_at": v.published_at.isoformat() if v.published_at else None,
+            "watch_verdict": None,
+            "tldr": None,
+        }
+        for v in videos
+    ]
 
 
 # ── Claims ───────────────────────────────────────────────────────────
