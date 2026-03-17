@@ -23,6 +23,7 @@ def update_positions_for_claim(session: Session, claim: Claims) -> list[dict]:
     """Update positions for all topics linked to an approved claim.
 
     Only processes approved claims per spec.
+    Falls back to person's expertise_domains if no claim-topic links exist.
     """
     if claim.review_status != "approved":
         return []
@@ -36,15 +37,33 @@ def update_positions_for_claim(session: Session, claim: Claims) -> list[dict]:
         .all()
     )
 
-    for ct in claim_topic_links:
-        topic = session.query(Topics).filter(Topics.id == ct.topic_id).first()
-        if not topic:
-            continue
+    if claim_topic_links:
+        for ct in claim_topic_links:
+            topic = session.query(Topics).filter(Topics.id == ct.topic_id).first()
+            if not topic:
+                continue
 
-        result = _update_position_for_topic(
-            session, claim.person_id, topic, claim
-        )
-        results.append(result)
+            result = _update_position_for_topic(
+                session, claim.person_id, topic, claim
+            )
+            results.append(result)
+    else:
+        # Fallback: use claim's topics array or person's expertise_domains
+        topic_slugs = claim.topics or []
+        if not topic_slugs and claim.person:
+            topic_slugs = (claim.person.expertise_domains or [])[:3]
+
+        for slug in topic_slugs:
+            topic = session.query(Topics).filter(Topics.slug == slug).first()
+            if not topic:
+                continue
+            # Create the missing claim-topic link
+            ct = ClaimTopics(claim_id=claim.id, topic_id=topic.id)
+            session.add(ct)
+            result = _update_position_for_topic(
+                session, claim.person_id, topic, claim
+            )
+            results.append(result)
 
     session.flush()
     return results
