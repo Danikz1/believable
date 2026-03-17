@@ -1,3 +1,4 @@
+from src.providers import official_transcript as ot_mod
 from src.providers.official_transcript import OfficialTranscriptProvider
 
 
@@ -13,8 +14,11 @@ def test_official_transcript_provider_prefers_description_url():
     assert url == "https://www.dwarkesh.com/p/elon-musk"
 
 
-def test_official_transcript_provider_derives_url_from_title():
+def test_official_transcript_provider_derives_url_from_title(monkeypatch):
     provider = OfficialTranscriptProvider("lex_fridman")
+
+    # Mock validate_url to avoid real HTTP calls — accept any lexfridman.com URL
+    monkeypatch.setattr(ot_mod, "validate_url", lambda url: "lexfridman.com" in url)
 
     url = provider.resolve_url(
         None,

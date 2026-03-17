@@ -1,6 +1,11 @@
 """Application configuration via environment variables."""
 
+import os
+import warnings
+
 from pydantic_settings import BaseSettings
+
+_DEFAULT_ADMIN_KEY = "bm-admin-key"
 
 
 class Settings(BaseSettings):
@@ -58,3 +63,14 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Warn loudly if using the default admin key in production
+if (
+    settings.admin_api_key == _DEFAULT_ADMIN_KEY
+    and os.environ.get("RAILWAY_ENVIRONMENT")
+):
+    warnings.warn(
+        "ADMIN_API_KEY is using the insecure default value! "
+        "Set a strong ADMIN_API_KEY in your environment variables.",
+        stacklevel=1,
+    )

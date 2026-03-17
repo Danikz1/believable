@@ -53,7 +53,7 @@ class _FakeSession:
 
 def test_enrich_video_keeps_video_identified_when_llm_extraction_fails(monkeypatch):
     person = SimpleNamespace(id="person-1", name="Alice Analyst")
-    video_person = SimpleNamespace(person=person, confidence=0.9)
+    video_person = SimpleNamespace(person=person, confidence=0.9, enrichment_status="pending")
     segment = SimpleNamespace(id="segment-1", person_id=person.id, segment_index=0)
     video = SimpleNamespace(
         id="video-1",

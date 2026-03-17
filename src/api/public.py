@@ -1,16 +1,18 @@
-"""Public read-only API endpoints.
+"""Public API endpoints.
 
-All claim endpoints default to review_status='approved'.
+GET endpoints are unauthenticated (read-only).
+All mutation endpoints (POST/PUT/DELETE) require admin auth via X-Admin-Key header.
 """
 
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload, subqueryload
 
+from src.config import settings
 from src.db.models import (
     ClaimEvidence,
     ClaimEmbeddings,
@@ -38,6 +40,12 @@ def get_db():
         yield session
     finally:
         session.close()
+
+
+def verify_admin(x_admin_key: str = Header(...)):
+    """Require admin API key for mutation endpoints."""
+    if x_admin_key != settings.admin_api_key:
+        raise HTTPException(403, "Invalid admin key")
 
 
 # ── People ───────────────────────────────────────────────────────────
@@ -759,7 +767,7 @@ class FavoriteCreate(BaseModel):
 
 
 @router.post("/favorites")
-def add_favorite(req: FavoriteCreate, db: Session = Depends(get_db)):
+def add_favorite(req: FavoriteCreate, db: Session = Depends(get_db), _: str = Depends(verify_admin)):
     """Add a person or channel as a favorite."""
     if not req.person_id and not req.channel_id:
         raise HTTPException(400, "Must specify person_id or channel_id")
@@ -783,7 +791,7 @@ def add_favorite(req: FavoriteCreate, db: Session = Depends(get_db)):
 
 
 @router.delete("/favorites/{fav_id}")
-def remove_favorite(fav_id: UUID, db: Session = Depends(get_db)):
+def remove_favorite(fav_id: UUID, db: Session = Depends(get_db), _: str = Depends(verify_admin)):
     """Remove a favorite."""
     fav = db.query(Favorites).filter(Favorites.id == fav_id).first()
     if not fav:
@@ -1015,7 +1023,7 @@ class ChannelCreate(BaseModel):
 
 
 @router.post("/channels")
-def add_channel(req: ChannelCreate, db: Session = Depends(get_db)):
+def add_channel(req: ChannelCreate, db: Session = Depends(get_db), _: str = Depends(verify_admin)):
     """Add a new YouTube channel to monitor."""
     import re
     import subprocess
@@ -1121,7 +1129,7 @@ def add_channel(req: ChannelCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/channels/{channel_id}/scan")
-def trigger_channel_scan(channel_id: UUID, db: Session = Depends(get_db)):
+def trigger_channel_scan(channel_id: UUID, db: Session = Depends(get_db), _: str = Depends(verify_admin)):
     """Scan a single channel for new videos."""
     channel = db.query(PodcastChannels).filter(PodcastChannels.id == channel_id).first()
     if not channel:
@@ -1146,7 +1154,7 @@ def trigger_channel_scan(channel_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.delete("/channels/{channel_id}")
-def delete_channel(channel_id: UUID, db: Session = Depends(get_db)):
+def delete_channel(channel_id: UUID, db: Session = Depends(get_db), _: str = Depends(verify_admin)):
     """Remove a channel and unlink its videos."""
     from src.db.models import ChannelRoles
 
@@ -1210,7 +1218,7 @@ def list_video_queue(
 # ── Video Retry ────────────────────────────────────────────────────────
 
 @router.post("/videos/{video_id}/retry")
-def retry_video(video_id: UUID, db: Session = Depends(get_db)):
+def retry_video(video_id: UUID, db: Session = Depends(get_db), _: str = Depends(verify_admin)):
     """Reset a video's status to 'discovered' so it can be reprocessed."""
     video = db.query(Videos).filter(Videos.id == video_id).first()
     if not video:
@@ -1232,7 +1240,7 @@ def retry_video(video_id: UUID, db: Session = Depends(get_db)):
 # ── Video Delete ───────────────────────────────────────────────────────
 
 @router.delete("/videos/{video_id}")
-def delete_video(video_id: UUID, db: Session = Depends(get_db)):
+def delete_video(video_id: UUID, db: Session = Depends(get_db), _: str = Depends(verify_admin)):
     """Remove a single video and all related data."""
     from sqlalchemy import text
 
@@ -1274,7 +1282,7 @@ class VideoAddRequest(BaseModel):
 
 
 @router.post("/videos/add")
-def add_video(req: VideoAddRequest, db: Session = Depends(get_db)):
+def add_video(req: VideoAddRequest, db: Session = Depends(get_db), _: str = Depends(verify_admin)):
     """Add a single video for transcription and summarization."""
     import re
 
