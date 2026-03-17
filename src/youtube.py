@@ -25,7 +25,13 @@ def run_yt_dlp(
     timeout: int,
     retries: int = 2,
 ) -> subprocess.CompletedProcess[str]:
-    """Run yt-dlp with shared hardened defaults and bounded retries."""
+    """Run yt-dlp with shared hardened defaults and bounded retries.
+
+    Automatically uses YOUTUBE_PROXY from settings if configured,
+    which helps avoid bot detection on cloud IPs (Railway, etc.).
+    """
+    from src.config import settings
+
     cmd = [
         YT_DLP_BIN,
         "--ignore-config",
@@ -40,8 +46,14 @@ def run_yt_dlp(
         "1",
         "--extractor-args",
         YOUTUBE_EXTRACTOR_ARGS,
-        *args,
     ]
+
+    # Inject proxy if configured (e.g. residential proxy for cloud deploys)
+    if settings.youtube_proxy:
+        cmd.extend(["--proxy", settings.youtube_proxy])
+        logger.debug("Using proxy: %s", settings.youtube_proxy.split("@")[-1])
+
+    cmd.extend(args)
 
     last_proc: subprocess.CompletedProcess[str] | None = None
     for attempt in range(retries + 1):

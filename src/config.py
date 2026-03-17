@@ -33,6 +33,16 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     admin_api_key: str = "bm-admin-key"
 
+    # YouTube proxy (for avoiding bot detection on cloud IPs)
+    # e.g. "socks5://user:pass@proxy:1080" or "http://proxy:8080"
+    youtube_proxy: str = ""
+
+    # Database connection pooling
+    db_pool_size: int = 10
+    db_max_overflow: int = 20
+    db_pool_recycle: int = 1800  # seconds — recycle connections after 30 min
+    db_pool_pre_ping: bool = True  # verify connections before use
+
     # Stage 8: Delivery
     telegram_bot_token: str = ""
     telegram_chat_id: str = ""

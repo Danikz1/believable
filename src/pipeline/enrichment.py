@@ -27,7 +27,8 @@ class EnrichmentError(RuntimeError):
 
 # ── Topic Taxonomy ───────────────────────────────────────────────────
 
-TOPIC_SLUGS = [
+# Hardcoded fallback — only used when the DB is unreachable.
+_FALLBACK_TOPIC_SLUGS = [
     "macro", "interest_rates", "duration", "inflation", "fiscal_policy",
     "debt_cycles", "geopolitics", "us_china", "ai_infrastructure", "ai_safety",
     "ai_regulation", "ai_open_source", "inference_compute", "enterprise_ai",
@@ -36,6 +37,21 @@ TOPIC_SLUGS = [
     "healthcare", "defense", "space", "creator_economy", "platform_dynamics",
     "value_investing",
 ]
+
+
+def _get_topic_slugs(session: Session) -> list[str]:
+    """Load active topic slugs from the database (single source of truth).
+
+    Falls back to the hardcoded list if the query fails.
+    """
+    try:
+        slugs = [
+            t.slug for t in session.query(Topics).filter(Topics.active == True).all()  # noqa: E712
+        ]
+        return slugs if slugs else _FALLBACK_TOPIC_SLUGS
+    except Exception:
+        logger.warning("Failed to load topics from DB, using fallback list")
+        return _FALLBACK_TOPIC_SLUGS
 
 # ── Prompts ──────────────────────────────────────────────────────────
 
@@ -189,9 +205,10 @@ def _extract_batch(
     # Build segment map for validation
     seg_map = {str(seg.id): seg for seg in all_segments}
 
-    # Format for LLM
+    # Format for LLM — load topics from DB
     segments_text = _format_segments_for_llm(batch)
-    topics_str = ", ".join(TOPIC_SLUGS)
+    topic_slugs = _get_topic_slugs(session)
+    topics_str = ", ".join(topic_slugs)
 
     system = EXTRACTION_SYSTEM_PROMPT.format(topics=topics_str)
     user = EXTRACTION_USER_TEMPLATE.format(
@@ -238,7 +255,7 @@ def _extract_batch(
 
         # Determine review_status per auto-review rules
         review_status = _determine_review_status(
-            trust_level, claim_topics, TOPIC_SLUGS
+            trust_level, claim_topics, topic_slugs
         )
 
         # Create claim
@@ -276,12 +293,15 @@ def _extract_batch(
             )
             session.add(evidence)
 
-        # Link to topics
+        # Link to topics (junction table is the single source of truth)
         for slug in claim_topics:
             topic = topic_lookup.get(slug)
             if topic:
                 ct = ClaimTopics(claim_id=claim.id, topic_id=topic.id)
                 session.add(ct)
+
+        # Sync the denormalized cache from the junction table
+        claim.sync_topics_cache()
 
         stored_claims.append({
             "claim_id": str(claim.id),
@@ -333,7 +353,11 @@ def _determine_review_status(
 # ── Orchestrator ─────────────────────────────────────────────────────
 
 def enrich_video(session: Session, video: Videos) -> dict:
-    """Extract claims from all tracked speakers in a video."""
+    """Extract claims from all tracked speakers in a video.
+
+    Idempotent: tracks per-speaker enrichment_status on VideoPeople so that
+    partially-completed runs can be resumed without duplicating claims.
+    """
     result = {"claims_extracted": 0, "people_processed": 0, "errors": [], "skipped": False}
     try:
         with session.begin_nested():
@@ -347,7 +371,17 @@ def enrich_video(session: Session, video: Videos) -> dict:
                 result["errors"].append("No identified people")
             else:
                 for vp in video_people:
+                    # Skip speakers already enriched (idempotent resumption)
+                    if vp.enrichment_status == "completed":
+                        logger.info(f"Skipping already-enriched speaker: {vp.person.name}")
+                        result["people_processed"] += 1
+                        continue
+
                     person = vp.person
+
+                    # Mark in-progress for crash recovery visibility
+                    vp.enrichment_status = "in_progress"
+                    session.flush()
 
                     # Get segments for this person
                     segments = (
@@ -377,6 +411,7 @@ def enrich_video(session: Session, video: Videos) -> dict:
                                 seg.person_id = person.id
                             session.flush()
                         else:
+                            vp.enrichment_status = "failed"
                             result["errors"].append(
                                 f"Skipped {person.name}: fast-path multi-speaker not upgraded"
                             )
@@ -396,6 +431,7 @@ def enrich_video(session: Session, video: Videos) -> dict:
 
                     if not segments:
                         logger.warning(f"No segments for {person.name} in {video.youtube_video_id}")
+                        vp.enrichment_status = "completed"  # Nothing to do, don't retry
                         continue
 
                     # Extract claims
@@ -404,6 +440,8 @@ def enrich_video(session: Session, video: Videos) -> dict:
                         session, video, person, segments, attribution_conf
                     )
 
+                    # Mark speaker as completed
+                    vp.enrichment_status = "completed"
                     result["claims_extracted"] += len(claims)
                     result["people_processed"] += 1
                     logger.info(f"Extracted {len(claims)} claims from {person.name}")

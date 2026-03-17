@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from src.api.cache import invalidate_all as _invalidate_cache
 from src.config import settings
 from src.db.models import Claims, People, Videos
 from src.db.session import get_session
@@ -59,6 +60,7 @@ def trigger_pipeline(
     else:
         raise HTTPException(400, f"Unknown stage: {stage}")
 
+    _invalidate_cache()  # Clear stale API responses after pipeline mutations
     return {"stage": stage, "result": result}
 
 
@@ -470,6 +472,7 @@ def review_claim(
 
     claim.review_status = req.review_status
     db.commit()
+    _invalidate_cache()
 
     # If approved, update positions
     if req.review_status == "approved":

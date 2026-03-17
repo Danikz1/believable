@@ -14,12 +14,41 @@ from sqlalchemy import (
     Index,
     Integer,
     Numeric,
+    String,
     Text,
     UniqueConstraint,
     text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import DeclarativeBase, relationship
+
+from src.db.enums import (
+    BriefStatus,
+    ChannelRole,
+    ClaimSentiment,
+    ClaimType,
+    DiscoveryMethod,
+    EnrichmentStatus,
+    IdentificationMethod,
+    MonitoringMode,
+    PositionSentiment,
+    QuoteType,
+    ReviewStatus,
+    SourceKind,
+    SpeakerCertainty,
+    SummaryType,
+    TranscriptMode,
+    TranscriptProvider,
+    TranscriptRunStatus,
+    TranscriptType,
+    TrustLevel,
+    VideoPersonRole,
+    VideoStatus,
+    WatchVerdict,
+    XPostDiscoveryMethod,
+    XPostStatus,
+)
 
 
 class Base(DeclarativeBase):
@@ -252,6 +281,11 @@ class VideoPeople(Base):
     role = Column(Text)  # 'host' / 'guest' / 'unknown'
     confidence = Column(Numeric(4, 3))  # 0.000–1.000
     identified_via = Column(Text)  # 'known_host' / 'diarization_llm' / 'metadata_only' / 'manual'
+    # Enrichment tracking for idempotent pipeline resumption
+    enrichment_status = Column(
+        Text, default=EnrichmentStatus.PENDING, nullable=False,
+        server_default=text("'pending'"),
+    )
 
     # relationships
     video = relationship("Videos", back_populates="video_people")
@@ -337,7 +371,7 @@ class Claims(Base):
     attribution_confidence = Column(Numeric(4, 3))  # 0.000–1.000
     extraction_confidence = Column(Numeric(4, 3))  # 0.000–1.000
     trust_level = Column(Text, nullable=False)  # 'high' / 'medium' / 'low' — NO DEFAULT
-    topics = Column(ARRAY(Text))  # denormalized cache
+    topics = Column(ARRAY(Text))  # DEPRECATED: use topic_slugs property; kept for migration compat
     sentiment = Column(Text)  # bullish / bearish / neutral / mixed
     temporal_marker = Column(Text)
     review_status = Column(Text, nullable=False)  # 'approved' / 'pending_review' / 'rejected' — NO DEFAULT
@@ -357,16 +391,25 @@ class Claims(Base):
     person = relationship("People", back_populates="claims")
     video = relationship("Videos", back_populates="claims")
     x_post = relationship("XPosts", back_populates="claims")
-    claim_topics = relationship("ClaimTopics", back_populates="claim")
+    claim_topics = relationship("ClaimTopics", back_populates="claim", lazy="selectin")
     evidence = relationship("ClaimEvidence", back_populates="claim")
     embeddings = relationship("ClaimEmbeddings", back_populates="claim")
+
+    @hybrid_property
+    def topic_slugs(self) -> list[str]:
+        """Derive topic slugs from the ClaimTopics junction table (single source of truth)."""
+        return [ct.topic.slug for ct in self.claim_topics if ct.topic]
+
+    def sync_topics_cache(self) -> None:
+        """Sync the denormalized topics[] array from ClaimTopics. Call after modifying claim_topics."""
+        self.topics = self.topic_slugs
 
     __table_args__ = (
         Index("ix_claims_person_id", "person_id"),
         Index("ix_claims_review_status", "review_status"),
         Index("ix_claims_x_post_id", "x_post_id"),
         CheckConstraint(
-            "(video_id IS NOT NULL) OR (x_post_id IS NOT NULL)",
+            "(video_id IS NOT NULL) <> (x_post_id IS NOT NULL)",
             name="ck_claims_source_xor",
         ),
     )

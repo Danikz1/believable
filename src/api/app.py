@@ -11,6 +11,10 @@ from fastapi.staticfiles import StaticFiles
 
 from src.api.admin import router as admin_router
 from src.api.public import router as public_router
+from src.logging_config import setup_logging
+
+# Initialize structured logging before anything else
+setup_logging()
 
 logger = logging.getLogger(__name__)
 

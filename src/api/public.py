@@ -8,8 +8,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import or_
-from sqlalchemy.orm import Session
+from sqlalchemy import func, or_
+from sqlalchemy.orm import Session, joinedload, subqueryload
 
 from src.db.models import (
     ClaimEvidence,
@@ -67,6 +67,22 @@ def list_people(
         )
 
     people = q.order_by(People.tier, People.name).all()
+
+    # Batch claim counts in a single query instead of N+1
+    person_ids = [p.id for p in people]
+    claim_counts = {}
+    if person_ids:
+        rows = (
+            db.query(Claims.person_id, func.count(Claims.id))
+            .filter(
+                Claims.person_id.in_(person_ids),
+                Claims.review_status == "approved",
+            )
+            .group_by(Claims.person_id)
+            .all()
+        )
+        claim_counts = {pid: cnt for pid, cnt in rows}
+
     return [
         {
             "id": str(p.id),
@@ -80,10 +96,7 @@ def list_people(
             "age": p.age,
             "photo_initials": p.photo_initials or _initials(p.name),
             "accent_color": p.accent_color or "#666",
-            "claim_count": db.query(Claims).filter(
-                Claims.person_id == p.id,
-                Claims.review_status == "approved",
-            ).count(),
+            "claim_count": claim_counts.get(p.id, 0),
         }
         for p in people
     ]
@@ -373,17 +386,26 @@ def search_claims(
 @router.get("/topics")
 def list_topics(db: Session = Depends(get_db)):
     topics = db.query(Topics).order_by(Topics.slug).all()
+
+    # Batch claim counts per topic in a single query instead of N+1
+    topic_ids = [t.id for t in topics]
+    topic_claim_counts = {}
+    if topic_ids:
+        rows = (
+            db.query(ClaimTopics.topic_id, func.count(ClaimTopics.id))
+            .join(Claims)
+            .filter(ClaimTopics.topic_id.in_(topic_ids), Claims.review_status == "approved")
+            .group_by(ClaimTopics.topic_id)
+            .all()
+        )
+        topic_claim_counts = {tid: cnt for tid, cnt in rows}
+
     return [
         {
             "id": str(t.id),
             "slug": t.slug,
             "label": t.name,
-            "claim_count": (
-                db.query(ClaimTopics)
-                .join(Claims)
-                .filter(ClaimTopics.topic_id == t.id, Claims.review_status == "approved")
-                .count()
-            ),
+            "claim_count": topic_claim_counts.get(t.id, 0),
         }
         for t in topics
     ]
@@ -777,20 +799,38 @@ def remove_favorite(fav_id: UUID, db: Session = Depends(get_db)):
 def pipeline_status(db: Session = Depends(get_db)):
     from src.db.models import TranscriptRuns, TranscriptSegments
 
+    # Batch video counts by status in a single query
+    video_status_rows = (
+        db.query(Videos.status, func.count(Videos.id))
+        .group_by(Videos.status)
+        .all()
+    )
+    video_by_status = {status: cnt for status, cnt in video_status_rows}
+    total_videos = sum(video_by_status.values())
+
+    # Batch claim counts by review_status
+    claim_status_rows = (
+        db.query(Claims.review_status, func.count(Claims.id))
+        .group_by(Claims.review_status)
+        .all()
+    )
+    claim_by_status = {status: cnt for status, cnt in claim_status_rows}
+    total_claims = sum(claim_by_status.values())
+
     return {
-        "people": db.query(People).filter(People.active == True).count(),
+        "people": db.query(People).filter(People.active == True).count(),  # noqa: E712
         "videos": {
-            "total": db.query(Videos).count(),
-            "discovered": db.query(Videos).filter(Videos.status == "discovered").count(),
-            "transcribed": db.query(Videos).filter(Videos.status == "transcribed").count(),
-            "identified": db.query(Videos).filter(Videos.status == "identified").count(),
-            "enriched": db.query(Videos).filter(Videos.status == "enriched").count(),
-            "skipped": db.query(Videos).filter(Videos.status == "skipped").count(),
+            "total": total_videos,
+            "discovered": video_by_status.get("discovered", 0),
+            "transcribed": video_by_status.get("transcribed", 0),
+            "identified": video_by_status.get("identified", 0),
+            "enriched": video_by_status.get("enriched", 0),
+            "skipped": video_by_status.get("skipped", 0),
         },
         "claims": {
-            "total": db.query(Claims).count(),
-            "approved": db.query(Claims).filter(Claims.review_status == "approved").count(),
-            "pending": db.query(Claims).filter(Claims.review_status == "pending_review").count(),
+            "total": total_claims,
+            "approved": claim_by_status.get("approved", 0),
+            "pending": claim_by_status.get("pending_review", 0),
         },
         "segments": db.query(TranscriptSegments).count(),
         "embeddings": db.query(ClaimEmbeddings).count(),
@@ -941,6 +981,19 @@ def list_channels(db: Session = Depends(get_db)):
         .order_by(PodcastChannels.tier, PodcastChannels.name)
         .all()
     )
+
+    # Batch video counts in a single query instead of N+1
+    channel_ids = [ch.id for ch in channels]
+    video_counts = {}
+    if channel_ids:
+        rows = (
+            db.query(Videos.podcast_channel_id, func.count(Videos.id))
+            .filter(Videos.podcast_channel_id.in_(channel_ids))
+            .group_by(Videos.podcast_channel_id)
+            .all()
+        )
+        video_counts = {cid: cnt for cid, cnt in rows}
+
     return [
         {
             "id": str(ch.id),
@@ -948,11 +1001,7 @@ def list_channels(db: Session = Depends(get_db)):
             "youtube_channel_id": ch.youtube_channel_id,
             "tier": ch.tier,
             "monitoring_mode": ch.monitoring_mode,
-            "video_count": (
-                db.query(Videos)
-                .filter(Videos.podcast_channel_id == ch.id)
-                .count()
-            ),
+            "video_count": video_counts.get(ch.id, 0),
             "last_scanned_at": (
                 ch.last_scanned_at.isoformat() if ch.last_scanned_at else None
             ),

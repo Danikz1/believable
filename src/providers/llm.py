@@ -14,6 +14,28 @@ import httpx
 from src.config import settings
 
 logger = logging.getLogger(__name__)
+
+# ── Module-level HTTP client (connection pooling) ───────────────────
+# Reuses TCP+TLS connections across LLM calls instead of paying
+# handshake cost on every request.
+_http_client: httpx.Client | None = None
+
+
+def _get_http_client() -> httpx.Client:
+    """Return a shared httpx.Client with connection pooling."""
+    global _http_client
+    if _http_client is None or _http_client.is_closed:
+        _http_client = httpx.Client(
+            timeout=300,
+            limits=httpx.Limits(
+                max_connections=20,
+                max_keepalive_connections=10,
+                keepalive_expiry=120,
+            ),
+        )
+    return _http_client
+
+
 DEFAULT_PROVIDER_PRIORITY = ("qwen", "anthropic", "openai")
 DEFAULT_OPENAI_MODEL = "gpt-5.2"
 DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-6"
@@ -558,13 +580,17 @@ def _is_auth_error(error: Exception) -> bool:
 # ── Retry logic (per spec) ───────────────────────────────────────────
 
 def _api_call_with_retry(url: str, headers: dict, payload: dict) -> dict:
-    """HTTP POST with retry logic per spec."""
+    """HTTP POST with retry logic per spec.
+
+    Uses a shared module-level httpx.Client for connection pooling,
+    avoiding TCP+TLS handshake overhead on every call.
+    """
     max_retries = 5
+    client = _get_http_client()
 
     for attempt in range(max_retries + 1):
         try:
-            with httpx.Client(timeout=300) as client:
-                resp = client.post(url, headers=headers, json=payload)
+            resp = client.post(url, headers=headers, json=payload)
 
             if resp.status_code == 200:
                 return resp.json()
