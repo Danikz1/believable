@@ -17,8 +17,6 @@ COPY alembic /app/alembic
 COPY data /app/data
 COPY tools /app/tools
 COPY scripts /app/scripts
-COPY believable_minds_final_spec.md /app/
-COPY believable_minds_addendum_official_transcripts.md /app/
 
 RUN pip install --upgrade pip \
     && pip install . \
