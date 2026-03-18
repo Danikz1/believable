@@ -140,6 +140,8 @@ def _generate_candidate_slugs(title: str) -> list[str]:
     # Remove channel name suffix (e.g., "| Lex Fridman Podcast #491")
     clean = re.sub(r"\|[^|]+$", "", title).strip()
     clean = re.sub(r"#\d+", "", clean).strip()
+    # Remove trailing "- Transcript" suffix (metadata, not content)
+    clean = re.sub(r"\s*[-–—]\s*Transcript\s*$", "", clean, flags=re.IGNORECASE).strip()
 
     # Candidate 1: part after last " - " (often the guest name)
     for delim in [" - ", " – ", " — "]:
