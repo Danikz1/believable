@@ -46,6 +46,8 @@ def run_yt_dlp(
         "1",
         "--extractor-args",
         YOUTUBE_EXTRACTOR_ARGS,
+        "--remote-components",
+        "ejs:github",
     ]
 
     # Inject proxy if configured (e.g. residential proxy for cloud deploys)

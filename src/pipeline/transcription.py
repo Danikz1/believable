@@ -453,9 +453,10 @@ class AssemblyAIProvider(TranscriptionProvider):
         tmpdir = tempfile.mkdtemp()
         output_path = os.path.join(tmpdir, f"{youtube_video_id}.%(ext)s")
 
-        # Use bestaudio without format conversion — more reliable on Railway
+        # Use bestaudio with fallback — more reliable on Railway
         proc = run_yt_dlp(
             [
+                "-f", "bestaudio/best",
                 "-x",
                 "--audio-quality", "5",
                 "-o", output_path,
